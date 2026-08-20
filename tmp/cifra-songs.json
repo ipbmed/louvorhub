@@ -1,0 +1,4167 @@
+[
+  {
+    "name": "1 - Doxologia",
+    "slug": "1-doxologia",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 328023,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 6,
+    "id": 326962,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "116 - Mais Perto Quero Estar ",
+    "slug": "116-mais-perto-quero-estar",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 353596,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 62,
+    "id": 352542,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "128 - Comunhão Preciosa",
+    "slug": "128-comunhao-preciosa",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 709705,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 26,
+    "id": 734938,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "136 rocha eterna",
+    "slug": "136-rocha-eterna",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1253562,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 8,
+    "id": 3102941,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "144 - Segurança e Alegria",
+    "slug": "144-seguranca-e-alegria",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 445253,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 38,
+    "id": 442485,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "151 O Bom Pastor",
+    "slug": "151-o-bom-pastor",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1460503,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 9,
+    "id": 3286222,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "162",
+    "slug": "162",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1275229,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 6,
+    "id": 3123444,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "162",
+    "slug": "162-2",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1275230,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 3,
+    "id": 3123445,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "221 - Um Vaso de Bênção",
+    "slug": "221-um-vaso-de-bencao",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 473165,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 52,
+    "id": 470167,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "237 Jesus Nasceu",
+    "slug": "237-jesus-nasceu",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1269216,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 3,
+    "id": 3117700,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "252 - Pão Celestial",
+    "slug": "252-pao-celestial",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1717837,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 0,
+    "id": 3405433,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "254 - Sossegai",
+    "slug": "254-sossegai",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "Db",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 706378,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 180,
+    "id": 731829,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 2,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "312 - Há trabalho certo",
+    "slug": "312-ha-trabalho-certo",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "E",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1313123,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 29,
+    "id": 3157548,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "320 - Brilha No Viver",
+    "slug": "320-brilha-no-viver",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 420242,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 72,
+    "id": 417923,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "351 Belas Palavras de Vida",
+    "slug": "351-belas-palavras-de-vida",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "E",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1253564,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 49,
+    "id": 3102943,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "352 - Leitura Bendita",
+    "slug": "352-leitura-bendita",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "Eb",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1272441,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 6,
+    "id": 3120761,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "368 - Despedida",
+    "slug": "368-despedida",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 490054,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 18,
+    "id": 486495,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "373 Ano Novo",
+    "slug": "373-ano-novo",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1269471,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 6,
+    "id": 3117949,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "5 - Trindade Adorada",
+    "slug": "5-trindade-adorada",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 490084,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 2,
+    "id": 486524,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "57 - Fonte de Todo o Bem",
+    "slug": "57-fonte-de-todo-o-bem",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 678353,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 9,
+    "id": 705678,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "57 - Fonte de Todo o Bem",
+    "slug": "57-fonte-de-todo-o-bem-",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 678356,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 4,
+    "id": 705681,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "58 - Ofertas",
+    "slug": "58-ofertas",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "E",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 678350,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 9,
+    "id": 705675,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Ações de Graça (Graças Dou Por Esta Vida)",
+    "slug": "acoes-de-graca-gracas-dou-por-esta-vida",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 492054,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 30,
+    "id": 488412,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Adoração (Nº 230)",
+    "slug": "adoracao-n-230",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1291180,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 16,
+    "id": 3137975,
+    "lyricId": 3614012,
+    "instrumentsCount": {
+      "guitar": 2,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Adoração À Trindade",
+    "slug": "adoracao-a-trindade",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 678036,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 4,
+    "id": 705378,
+    "lyricId": 1898945,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Aflição e Paz - 108",
+    "slug": "aflicao-e-paz-108",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1252514,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 12,
+    "id": 3101947,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Alegria e Gratidão - 55",
+    "slug": "alegria-e-gratidao-55",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1508727,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 7,
+    "id": 3327183,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Aleluia Ao Deus Trino",
+    "slug": "aleluia-ao-deus-trino",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 485991,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 8,
+    "id": 482514,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Alvo mais que a neve",
+    "slug": "alvo-mais-que-neve",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 245707,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 98,
+    "id": 246001,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Amém Triplice",
+    "slug": "amem-triplice",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 439413,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 242,
+    "id": 436464,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Ao Deus Grandioso",
+    "slug": "ao-deus-grandioso",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 301932,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 4,
+    "id": 301521,
+    "lyricId": 2012083,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "As Muitas Bênçãos",
+    "slug": "as-muitas-bencaos",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1278813,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 63,
+    "id": 3126743,
+    "lyricId": 3632442,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Castelo Forte",
+    "slug": "castelo-forte",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 432136,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 33,
+    "id": 429470,
+    "lyricId": 2545019,
+    "instrumentsCount": {
+      "guitar": 2,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Coroação",
+    "slug": "coroacao",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "sheet",
+        "name": "Partitura",
+        "kind": 4
+      },
+      "id": 9677,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 7,
+    "id": 332144,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 0,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 1
+    }
+  },
+  {
+    "name": "Culto À Trindade (hino 004)",
+    "slug": "culto-trindade",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 228298,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 10,
+    "id": 228225,
+    "lyricId": 1527643,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Deus de Abraão",
+    "slug": "deus-de-abraao",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "",
+      "label": {
+        "slug": "original",
+        "name": "Original"
+      },
+      "instrument": {
+        "slug": "lyrics",
+        "name": "Letra",
+        "kind": 11
+      },
+      "id": 1899760,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 6,
+    "id": 331604,
+    "lyricId": 1899760,
+    "instrumentsCount": {
+      "guitar": 0,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 1
+    }
+  },
+  {
+    "name": "Deus do Infinito o Criador",
+    "slug": "deus-do-infinito-o-criador",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "",
+      "label": {
+        "slug": "original",
+        "name": "Original"
+      },
+      "instrument": {
+        "slug": "lyrics",
+        "name": "Letra",
+        "kind": 11
+      },
+      "id": 1899767,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 6,
+    "id": 332141,
+    "lyricId": 1899767,
+    "instrumentsCount": {
+      "guitar": 0,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 1
+    }
+  },
+  {
+    "name": "Deus Está No Templo",
+    "slug": "deus-esta-no-templo",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "sheet",
+        "name": "Partitura",
+        "kind": 4
+      },
+      "id": 9657,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 3,
+    "id": 331595,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 0,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 1
+    }
+  },
+  {
+    "name": "Deus Seja Louvado",
+    "slug": "deus-seja-louvado",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "sheet",
+        "name": "Partitura",
+        "kind": 4
+      },
+      "id": 9662,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 4,
+    "id": 331602,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 0,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 1
+    }
+  },
+  {
+    "name": "Dia do Senhor",
+    "slug": "dia-do-senhor",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1259887,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 5,
+    "id": 3108887,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Glória a Trindade",
+    "slug": "gloria-a-trindade",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 485767,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 8,
+    "id": 331596,
+    "lyricId": 1899053,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 1
+    }
+  },
+  {
+    "name": "Graças Pelo Aniversário (hino 396)",
+    "slug": "gracas-pelo-aniversario-hino-396",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "E",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 197198,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 58,
+    "id": 198563,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Grandioso És Tu",
+    "slug": "grandioso-es-tu",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 484558,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 104,
+    "id": 481124,
+    "lyricId": 1899770,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino - N.º10 - a Criação e Seu Criador",
+    "slug": "hino-no10-a-criacao-e-seu-criador",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 367559,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 8,
+    "id": 366202,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino - N.º3 - a Igreja Em Adoração",
+    "slug": "hino-no3-a-igreja-em-adoracao",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 367560,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 28,
+    "id": 366203,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino - N.º4 - Culto a Trindade",
+    "slug": "hino-no4-culto-a-trindade",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 367563,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 5,
+    "id": 366206,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 023 - Adoração ao Criador",
+    "slug": "hino-023-adoracao-ao-criador",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "Bm",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1389751,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 4,
+    "id": 3225115,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 063 - As Muitas Bençãos (Versão Instrumental do Pc Baruk)",
+    "slug": "hino-063-as-muitas-bencaos-versao-instrumental-do-pc-baruk",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C#m",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1272600,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 14,
+    "id": 3120918,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 072 - Purificação",
+    "slug": "hino-072-purificacao",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1389739,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 8,
+    "id": 3225103,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 074 - Sinceridade",
+    "slug": "hino-074-sinceridade",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1378052,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 83,
+    "id": 3215012,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 105 - A Certeza do Crente",
+    "slug": "hino-105-a-certeza-do-crente",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 483192,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 78,
+    "id": 479786,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 112 - Rica Promessa (Comigo Estar)",
+    "slug": "hino-112-rica-promessa-comigo-estar",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 494118,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 11,
+    "id": 490370,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 113 - Achei Um Bom Amigo",
+    "slug": "hino-113-achei-um-bom-amigo",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1563711,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 195,
+    "id": 3344577,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 120 - Dependência",
+    "slug": "hino-120-dependencia",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 698042,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 44,
+    "id": 724042,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 14 - Louvor",
+    "slug": "hino-14-louvor",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1356904,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 8,
+    "id": 3196581,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 2,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 156 - Confiança Em Deus",
+    "slug": "hino-156-confianca-em-deus",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 431603,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 16,
+    "id": 428953,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 167 - Cristo, Esperança Nossa",
+    "slug": "hino-167-cristo-esperanca-nossa",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 493669,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 12,
+    "id": 489951,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 2,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 18 - Deus Dos Antigos",
+    "slug": "hino-18-deus-dos-antigos",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 418305,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 4,
+    "id": 416074,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 223 - Oração do Arrependido",
+    "slug": "hino-223-oracao-do-arrependido",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1385612,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 16,
+    "id": 3221516,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 264 - Fronte Ensanguentada",
+    "slug": "hino-264-fronte-ensanguentada",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 485231,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 15,
+    "id": 481770,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 270 - Desafio",
+    "slug": "hino-270-desafio",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1506999,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 13,
+    "id": 3325821,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 272 - Aleluia Ao Cristo Redivivo",
+    "slug": "hino-272-aleluia-ao-cristo-redivivo",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 431095,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 17,
+    "id": 428448,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 274-Morto e ressurreto",
+    "slug": "hino-274-morto-e-ressurreto",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1677519,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 8,
+    "id": 3372843,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 287 - Igreja, Alerta",
+    "slug": "hino-287-igreja-alerta",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1247738,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 34,
+    "id": 3097370,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 325 - Aspiração Feminina",
+    "slug": "hino-325-aspiracao-feminina",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 640342,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 14,
+    "id": 670806,
+    "lyricId": 3267475,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 326 - Homens Presbiterianos",
+    "slug": "hino-326-homens-presbiterianos",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "E",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 684441,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 28,
+    "id": 711419,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 332 - Batismo Infantil",
+    "slug": "hino-332-batismo-infantil",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "E",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1270207,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 13,
+    "id": 3118640,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 334 - Conversão",
+    "slug": "hino-334-conversao",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "E",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 374081,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 155,
+    "id": 372562,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 2,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 350 - A Palavra da Vida",
+    "slug": "hino-350-a-palavra-da-vida",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 681194,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 9,
+    "id": 708402,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 354-A - Escola Dominical",
+    "slug": "hino-354-a-escola-dominical",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "E",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1247484,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 7,
+    "id": 3097133,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 38 - Louvores Sem Fim",
+    "slug": "hino-38-louvores-sem-fim",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "E",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1245443,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 5,
+    "id": 3095258,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 382 - Mocidade Presbiteriana",
+    "slug": "hino-382-mocidade-presbiteriana",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1255767,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 8,
+    "id": 3105049,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 2,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 39 - Exaltação e Louvor",
+    "slug": "hino-39-exaltacao-e-louvor",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1356932,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 4,
+    "id": 3196609,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 400 - Oração Por Proteção",
+    "slug": "hino-400-oracao-por-protecao",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "F",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 517918,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 39,
+    "id": 513317,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 49 - Sempre Vencendo",
+    "slug": "hino-49-sempre-vencendo",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1247734,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 52,
+    "id": 3097366,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 49 - Sempre Vencendo",
+    "slug": "hino-49-sempre-vencendo-2",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1247741,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 3,
+    "id": 3097373,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 62 - Hino de Gratidão (Graças Te Dou Por Tudo Que Me Deste)",
+    "slug": "hino-62-hino-de-gratidao-gracas-te-dou-por-tudo-que-me-deste",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 492065,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 21,
+    "id": 488430,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 81 Súplica Ao Espírito Santo",
+    "slug": "hino-81-suplica-ao-espirito-santo",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1689451,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 5,
+    "id": 3382309,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino 97 - Súplica do Redimido",
+    "slug": "hino-97-suplica-do-redimido",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 493802,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 27,
+    "id": 490077,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 2,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino N.º11 - Trindade Santíssima",
+    "slug": "hino-no11-trindade-santissima",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 367565,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 8,
+    "id": 366208,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 2,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino N.º13 - Contemplação",
+    "slug": "hino-no13-contemplacao",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 367566,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 7,
+    "id": 366209,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino N.º14 - Louvor",
+    "slug": "hino-no14-louvor",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 367567,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 36,
+    "id": 366210,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino N.º16 - Louvor a Deus",
+    "slug": "hino-no16-louvor-a-deus",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "F",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 367564,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 7,
+    "id": 366207,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino N.º17 - Deus Seja Louvado",
+    "slug": "hino-no17-deus-seja-louvado",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 367569,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 8,
+    "id": 366212,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino N.º18 - Deus Dos Antigos",
+    "slug": "hino-no18-deus-dos-antigos",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "Eb",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 367570,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 3,
+    "id": 366213,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino N.º22 - Os Céus Proclamam",
+    "slug": "hino-no22-os-ceus-proclamam",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 367568,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 14,
+    "id": 366211,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino N.º26 - Ao Deus Grandioso",
+    "slug": "hino-no26-ao-deus-grandioso",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 367573,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 15,
+    "id": 366216,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 2,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino N.º32 - o Deus Fiel",
+    "slug": "hino-no32-o-deus-fiel",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 367631,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 6,
+    "id": 366277,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino N.º42 - o Grande Amor de Deus",
+    "slug": "hino-no42-o-grande-amor-de-deus",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 367571,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 20,
+    "id": 366214,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino N.º54 - a Chegada do Messias",
+    "slug": "hino-no54-a-chegada-do-messias",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "E",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 367633,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 3,
+    "id": 366279,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Hino N.º6 - Doxologia",
+    "slug": "hino-no6-doxologia",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "E",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 367562,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 12,
+    "id": 366205,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "HNC",
+    "slug": "hnc",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "",
+      "label": {
+        "slug": "original",
+        "name": "Original"
+      },
+      "instrument": {
+        "slug": "lyrics",
+        "name": "Letra",
+        "kind": 11
+      },
+      "id": 3302978,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 7,
+    "id": 331598,
+    "lyricId": 3302978,
+    "instrumentsCount": {
+      "guitar": 0,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 1
+    }
+  },
+  {
+    "name": "HNC 395 Amor No Lar",
+    "slug": "hnc-395-amor-no-lar",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1349834,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 36,
+    "id": 3190330,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Louvor Ao Deus Grandioso",
+    "slug": "louvor-ao-deus-grandioso",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 368332,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 10,
+    "id": 366980,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Louvor e Glória",
+    "slug": "louvor-e-gloria",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "E",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 301946,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 4,
+    "id": 301535,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Mocidade Presbiteriana (hino 382)",
+    "slug": "mocidade-presbiteriana-hino-382",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "E",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 196885,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 57,
+    "id": 198268,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 2,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Necessidade",
+    "slug": "necessidade",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "Dm",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1259888,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 164,
+    "id": 3108888,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Noite de Paz - 243",
+    "slug": "noite-de-paz-243",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 492760,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 8,
+    "id": 489090,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "O Primeiro Natal",
+    "slug": "o-primeiro-natal",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 491951,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 7,
+    "id": 488313,
+    "lyricId": 3694643,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Oração Noturna",
+    "slug": "oracao-noturna",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 699083,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 48,
+    "id": 725009,
+    "lyricId": 1527281,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Pão Celestial",
+    "slug": "pao-celestial",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 700947,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 2,
+    "id": 726726,
+    "lyricId": 1527280,
+    "instrumentsCount": {
+      "guitar": 2,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Pendão Real",
+    "slug": "pendao-real",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1401989,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 5,
+    "id": 3235737,
+    "lyricId": 1631252,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Perdão (hino 071)",
+    "slug": "perdao-hino-071",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 229317,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 156,
+    "id": 229204,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Providência de Deus Na Criação",
+    "slug": "providencia-de-deus-na-criacao",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "C",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 485301,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 6,
+    "id": 481839,
+    "lyricId": 1899776,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Purificação",
+    "slug": "purificacao",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1252649,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 5,
+    "id": 3102075,
+    "lyricId": 2725447,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Quão Bondoso Amigo é Cristo - 159",
+    "slug": "quao-bondoso-amigo-e-cristo-159",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "E",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 640317,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 65,
+    "id": 670780,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Quão Grande Es Tú",
+    "slug": "quao-grande-es-tu",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "sheet",
+        "name": "Partitura",
+        "kind": 4
+      },
+      "id": 9675,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 6,
+    "id": 332142,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 0,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 1
+    }
+  },
+  {
+    "name": "Rei Sublime",
+    "slug": "rei-sublime",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "",
+      "label": {
+        "slug": "original",
+        "name": "Original"
+      },
+      "instrument": {
+        "slug": "lyrics",
+        "name": "Letra",
+        "kind": 11
+      },
+      "id": 1899756,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 5,
+    "id": 331603,
+    "lyricId": 1899756,
+    "instrumentsCount": {
+      "guitar": 0,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 1
+    }
+  },
+  {
+    "name": "Renovação",
+    "slug": "renovacao",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "F",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 495215,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 35,
+    "id": 491435,
+    "lyricId": 1527690,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Rio da Vida (Hino 191)",
+    "slug": "rio-da-vida-hino-191",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1288352,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 7,
+    "id": 3135393,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Rude Cruz",
+    "slug": "rude-cruz-266",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "Bb",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 687759,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 205,
+    "id": 714560,
+    "lyricId": 4466852,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Santo Santo Santo Deus Onipotente",
+    "slug": "santo-santo-santo-deus-onipotente",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "E",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 705657,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 63,
+    "id": 331600,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 1
+    }
+  },
+  {
+    "name": "Se Nos Cega o Sol Ardente",
+    "slug": "se-nos-cega-o-sol-ardente",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 353593,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 7,
+    "id": 331601,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 1
+    }
+  },
+  {
+    "name": "Segurança e Alegria",
+    "slug": "seguranca-e-alegria",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 445282,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 12,
+    "id": 442513,
+    "lyricId": 1630989,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Um Hino Ao Senhor",
+    "slug": "um-hino-ao-senhor",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "",
+      "label": {
+        "slug": "original",
+        "name": "Original"
+      },
+      "instrument": {
+        "slug": "lyrics",
+        "name": "Letra",
+        "kind": 11
+      },
+      "id": 1899772,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 4,
+    "id": 332143,
+    "lyricId": 1899772,
+    "instrumentsCount": {
+      "guitar": 0,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 1
+    }
+  },
+  {
+    "name": "Vencendo Vem Jesus",
+    "slug": "vencendo-vem-jesus",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "G",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 705719,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 16,
+    "id": 731208,
+    "lyricId": 0,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 0,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Vinde Meninos Vinde a Jesus",
+    "slug": "vinde-meninos-vinde-a-jesus",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1494392,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 17,
+    "id": 3315122,
+    "lyricId": 3962547,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Vinde Meninos Vinde a Jesus",
+    "slug": "vinde-meninos-vinde-a-jesus-2",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "A",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 1494410,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 5,
+    "id": 3315140,
+    "lyricId": 3962547,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  },
+  {
+    "name": "Vós, Criaturas de Deus Pai",
+    "slug": "vos-criaturas-de-deus-pai",
+    "thumbs": {
+      "x1": ""
+    },
+    "videoLessonsInstruments": null,
+    "version": {
+      "tone": "D",
+      "label": {
+        "slug": "principal",
+        "name": "Principal"
+      },
+      "instrument": {
+        "slug": "cifra-group",
+        "name": "Violão e guitarra",
+        "kind": 1
+      },
+      "id": 442759,
+      "verified": false
+    },
+    "videoLessonsCount": 0,
+    "hits": 25,
+    "id": 440152,
+    "lyricId": 1899063,
+    "instrumentsCount": {
+      "guitar": 1,
+      "bass": 0,
+      "harmonica": 0,
+      "drums": 0,
+      "lyrics": 1,
+      "guitarpro": 0,
+      "sheet": 0
+    }
+  }
+]

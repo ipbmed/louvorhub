@@ -1,0 +1,19 @@
+project_id = "louvorhub"
+
+[api]
+enabled = true
+
+[db]
+major_version = 15
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/login", "https://*.github.io/*"]
+
+[auth.email]
+enable_signup = true
+enable_confirmations = false
+
+[functions.create-member]
+verify_jwt = true

@@ -1,0 +1,6 @@
+{
+  "name": "LouvorHub",
+  "description": "Plataforma e caderno de cânticos, hinos e louvores com busca por números e categorias, cifras e transposição, modo projeção/telão, repertórios, e gestão de equipe de louvor.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

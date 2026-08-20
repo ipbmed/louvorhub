@@ -1,0 +1,1827 @@
+{
+  "updated": [
+    {
+      "number": 1,
+      "title": "Doxologia",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/1-doxologia/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 3,
+      "title": "A Igreja em adoração",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-no3-a-igreja-em-adoracao/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 4,
+      "title": "Culto à Trindade",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/culto-trindade/",
+      "tone": "D",
+      "keyChanged": false
+    },
+    {
+      "number": 5,
+      "title": "Trindade adorada",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/5-trindade-adorada/",
+      "tone": "G",
+      "keyChanged": false
+    },
+    {
+      "number": 6,
+      "title": "Doxologia",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-no6-doxologia/",
+      "tone": "E",
+      "keyChanged": false
+    },
+    {
+      "number": 10,
+      "title": "A criação e seu Criador",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-no10-a-criacao-e-seu-criador/",
+      "tone": "D",
+      "keyChanged": false
+    },
+    {
+      "number": 11,
+      "title": "Trindade santíssima",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-no11-trindade-santissima/",
+      "tone": "D",
+      "keyChanged": false
+    },
+    {
+      "number": 13,
+      "title": "Contemplação",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-no13-contemplacao/",
+      "tone": "D",
+      "keyChanged": false
+    },
+    {
+      "number": 14,
+      "title": "Louvor",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-no14-louvor/",
+      "tone": "G",
+      "keyChanged": false
+    },
+    {
+      "number": 16,
+      "title": "Louvor a Deus",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-no16-louvor-a-deus/",
+      "tone": "F",
+      "keyChanged": false
+    },
+    {
+      "number": 17,
+      "title": "Deus seja louvado",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-no17-deus-seja-louvado/",
+      "tone": "A",
+      "keyChanged": false
+    },
+    {
+      "number": 18,
+      "title": "Deus dos antigos",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-18-deus-dos-antigos/",
+      "tone": "D",
+      "keyChanged": false
+    },
+    {
+      "number": 22,
+      "title": "Os céus proclamam",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-no22-os-ceus-proclamam/",
+      "tone": "D",
+      "keyChanged": false
+    },
+    {
+      "number": 23,
+      "title": "Adoração ao Criador",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-023-adoracao-ao-criador/",
+      "tone": "Bm",
+      "keyChanged": false
+    },
+    {
+      "number": 26,
+      "title": "Ao Deus grandioso",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-no26-ao-deus-grandioso/",
+      "tone": "A",
+      "keyChanged": false
+    },
+    {
+      "number": 32,
+      "title": "O Deus fiel",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-no32-o-deus-fiel/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 38,
+      "title": "Louvores sem fim",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-38-louvores-sem-fim/",
+      "tone": "E",
+      "keyChanged": false
+    },
+    {
+      "number": 39,
+      "title": "Exaltação e louvor",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-39-exaltacao-e-louvor/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 42,
+      "title": "O grande amor de Deus",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-no42-o-grande-amor-de-deus/",
+      "tone": "G",
+      "keyChanged": false
+    },
+    {
+      "number": 49,
+      "title": "Sempre vencendo",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-49-sempre-vencendo/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 54,
+      "title": "A chegada do Messias",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-no54-a-chegada-do-messias/",
+      "tone": "E",
+      "keyChanged": false
+    },
+    {
+      "number": 55,
+      "title": "Alegria e gratidão",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/alegria-e-gratidao-55/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 57,
+      "title": "Fonte de todo bem",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/57-fonte-de-todo-o-bem/",
+      "tone": "G",
+      "keyChanged": false
+    },
+    {
+      "number": 58,
+      "title": "Ofertas",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/58-ofertas/",
+      "tone": "E",
+      "keyChanged": false
+    },
+    {
+      "number": 62,
+      "title": "Hino de gratidão",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-62-hino-de-gratidao-gracas-te-dou-por-tudo-que-me-deste/",
+      "tone": "G",
+      "keyChanged": false
+    },
+    {
+      "number": 63,
+      "title": "As muitas bênçãos",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-063-as-muitas-bencaos-versao-instrumental-do-pc-baruk/",
+      "tone": "C#m",
+      "keyChanged": false
+    },
+    {
+      "number": 71,
+      "title": "Perdão",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/perdao-hino-071/",
+      "tone": "G",
+      "keyChanged": false
+    },
+    {
+      "number": 72,
+      "title": "Purificação",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-072-purificacao/",
+      "tone": "G",
+      "keyChanged": false
+    },
+    {
+      "number": 74,
+      "title": "Sinceridade",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-074-sinceridade/",
+      "tone": "D",
+      "keyChanged": false
+    },
+    {
+      "number": 81,
+      "title": "Súplica ao Espírito Santo",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-81-suplica-ao-espirito-santo/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 97,
+      "title": "Súplica do redimido",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-97-suplica-do-redimido/",
+      "tone": "D",
+      "keyChanged": false
+    },
+    {
+      "number": 105,
+      "title": "A certeza do crente",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-105-a-certeza-do-crente/",
+      "tone": "D",
+      "keyChanged": false
+    },
+    {
+      "number": 108,
+      "title": "Aflição e paz",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/aflicao-e-paz-108/",
+      "tone": "G",
+      "keyChanged": false
+    },
+    {
+      "number": 112,
+      "title": "Rica promessa",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-112-rica-promessa-comigo-estar/",
+      "tone": "A",
+      "keyChanged": false
+    },
+    {
+      "number": 113,
+      "title": "Achei um bom amigo",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-113-achei-um-bom-amigo/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 116,
+      "title": "União com Deus",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/116-mais-perto-quero-estar/",
+      "tone": "G",
+      "keyChanged": false
+    },
+    {
+      "number": 120,
+      "title": "Dependência",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-120-dependencia/",
+      "tone": "G",
+      "keyChanged": false
+    },
+    {
+      "number": 128,
+      "title": "Comunhão preciosa",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/128-comunhao-preciosa/",
+      "tone": "G",
+      "keyChanged": false
+    },
+    {
+      "number": 136,
+      "title": "Rocha eterna",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/136-rocha-eterna/",
+      "tone": "A",
+      "keyChanged": false
+    },
+    {
+      "number": 144,
+      "title": "Segurança e alegria",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/144-seguranca-e-alegria/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 151,
+      "title": "O bom Pastor",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/151-o-bom-pastor/",
+      "tone": "D",
+      "keyChanged": false
+    },
+    {
+      "number": 156,
+      "title": "Confiança em Deus",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-156-confianca-em-deus/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 159,
+      "title": "Bondoso amigo",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/quao-bondoso-amigo-e-cristo-159/",
+      "tone": "E",
+      "keyChanged": false
+    },
+    {
+      "number": 162,
+      "title": "A voz de Deus",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/162/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 167,
+      "title": "Cristo, esperança nossa",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-167-cristo-esperanca-nossa/",
+      "tone": "G",
+      "keyChanged": false
+    },
+    {
+      "number": 191,
+      "title": "Rio da vida",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/rio-da-vida-hino-191/",
+      "tone": "A",
+      "keyChanged": false
+    },
+    {
+      "number": 221,
+      "title": "Um vaso de benção",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/221-um-vaso-de-bencao/",
+      "tone": "A",
+      "keyChanged": false
+    },
+    {
+      "number": 223,
+      "title": "Oração do arrependido",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-223-oracao-do-arrependido/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 230,
+      "title": "Adoração",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/adoracao-n-230/",
+      "tone": "A",
+      "keyChanged": false
+    },
+    {
+      "number": 237,
+      "title": "Jesus nasceu",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/237-jesus-nasceu/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 243,
+      "title": "Noite de paz",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/noite-de-paz-243/",
+      "tone": "A",
+      "keyChanged": false
+    },
+    {
+      "number": 252,
+      "title": "Pão celestial",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/252-pao-celestial/",
+      "tone": "G",
+      "keyChanged": false
+    },
+    {
+      "number": 254,
+      "title": "Sossegai",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/254-sossegai/",
+      "tone": "Db",
+      "keyChanged": false
+    },
+    {
+      "number": 264,
+      "title": "Fronte ensangüentada",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-264-fronte-ensanguentada/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 270,
+      "title": "Desafio",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-270-desafio/",
+      "tone": "A",
+      "keyChanged": false
+    },
+    {
+      "number": 272,
+      "title": "Aleluia ao Cristo redivivo",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-272-aleluia-ao-cristo-redivivo/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 274,
+      "title": "Morto e ressurreto",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-274-morto-e-ressurreto/",
+      "tone": "A",
+      "keyChanged": false
+    },
+    {
+      "number": 287,
+      "title": "Igreja, alerta!",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-287-igreja-alerta/",
+      "tone": "A",
+      "keyChanged": false
+    },
+    {
+      "number": 312,
+      "title": "Há trabalho certo",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/312-ha-trabalho-certo/",
+      "tone": "E",
+      "keyChanged": false
+    },
+    {
+      "number": 320,
+      "title": "Brilha no viver",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/320-brilha-no-viver/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 325,
+      "title": "Aspiração feminina",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-325-aspiracao-feminina/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 326,
+      "title": "Homens presbiterianos",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-326-homens-presbiterianos/",
+      "tone": "E",
+      "keyChanged": false
+    },
+    {
+      "number": 332,
+      "title": "Batismo infantil",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-332-batismo-infantil/",
+      "tone": "E",
+      "keyChanged": false
+    },
+    {
+      "number": 334,
+      "title": "A conversão",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-334-conversao/",
+      "tone": "E",
+      "keyChanged": false
+    },
+    {
+      "number": 350,
+      "title": "A palavra da vida",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-350-a-palavra-da-vida/",
+      "tone": "G",
+      "keyChanged": false
+    },
+    {
+      "number": 351,
+      "title": "Belas palavras de vida",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/351-belas-palavras-de-vida/",
+      "tone": "E",
+      "keyChanged": false
+    },
+    {
+      "number": 352,
+      "title": "Leitura bendita",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/352-leitura-bendita/",
+      "tone": "Eb",
+      "keyChanged": false
+    },
+    {
+      "number": 354,
+      "title": "A escola dominical",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-354-a-escola-dominical/",
+      "tone": "E",
+      "keyChanged": false
+    },
+    {
+      "number": 368,
+      "title": "Despedida",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/368-despedida/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 373,
+      "title": "Ano novo",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/373-ano-novo/",
+      "tone": "G",
+      "keyChanged": false
+    },
+    {
+      "number": 382,
+      "title": "Mocidade presbiteriana",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/mocidade-presbiteriana-hino-382/",
+      "tone": "E",
+      "keyChanged": false
+    },
+    {
+      "number": 395,
+      "title": "Amor no lar",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hnc-395-amor-no-lar/",
+      "tone": "C",
+      "keyChanged": false
+    },
+    {
+      "number": 396,
+      "title": "Graças pelo aniversário",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/gracas-pelo-aniversario-hino-396/",
+      "tone": "E",
+      "keyChanged": false
+    },
+    {
+      "number": 400,
+      "title": "Oração por proteção",
+      "url": "https://www.cifraclub.com.br/hinario-presbiteriano-novo-cantico/hino-400-oracao-por-protecao/",
+      "tone": "F",
+      "keyChanged": false
+    }
+  ],
+  "skipped": [],
+  "missingOnCifra": [
+    {
+      "number": 2,
+      "title": "Reverência"
+    },
+    {
+      "number": 7,
+      "title": "Glória à Trindade"
+    },
+    {
+      "number": 8,
+      "title": "Adoração à Trindade"
+    },
+    {
+      "number": 9,
+      "title": "Aleluia ao Deus trino"
+    },
+    {
+      "number": 12,
+      "title": "Glória a Deus"
+    },
+    {
+      "number": 15,
+      "title": "Doxologia"
+    },
+    {
+      "number": 19,
+      "title": "Rei sublime"
+    },
+    {
+      "number": 20,
+      "title": "Glorificação à Trindade"
+    },
+    {
+      "number": 21,
+      "title": "Deus de Abraão"
+    },
+    {
+      "number": 24,
+      "title": "Convite ao louvor"
+    },
+    {
+      "number": 25,
+      "title": "O Criador de tudo"
+    },
+    {
+      "number": 27,
+      "title": "Um hino ao Senhor"
+    },
+    {
+      "number": 28,
+      "title": "Coroação"
+    },
+    {
+      "number": 29,
+      "title": "Louvor"
+    },
+    {
+      "number": 30,
+      "title": "Providência de Deus (na criação)"
+    },
+    {
+      "number": 31,
+      "title": "Providência de Deus (na redenção)"
+    },
+    {
+      "number": 33,
+      "title": "Maravilhas Divinas"
+    },
+    {
+      "number": 34,
+      "title": "Convite ao louvor"
+    },
+    {
+      "number": 35,
+      "title": "Adoração e súplica"
+    },
+    {
+      "number": 36,
+      "title": "Exaltação"
+    },
+    {
+      "number": 37,
+      "title": "O Santo Nome"
+    },
+    {
+      "number": 40,
+      "title": "Cântico ao salvador"
+    },
+    {
+      "number": 41,
+      "title": "Louvor pela graça divina"
+    },
+    {
+      "number": 43,
+      "title": "O Deus de amor"
+    },
+    {
+      "number": 44,
+      "title": "Louvores ao Senhor"
+    },
+    {
+      "number": 45,
+      "title": "Grande redenção"
+    },
+    {
+      "number": 46,
+      "title": "Altos louvores"
+    },
+    {
+      "number": 47,
+      "title": "Louvor e glória"
+    },
+    {
+      "number": 48,
+      "title": "Amor e gratidão"
+    },
+    {
+      "number": 50,
+      "title": "Sangue precioso"
+    },
+    {
+      "number": 51,
+      "title": "Cristo coroado"
+    },
+    {
+      "number": 52,
+      "title": "Glória e coroação"
+    },
+    {
+      "number": 53,
+      "title": "Honra, poder, majestade"
+    },
+    {
+      "number": 56,
+      "title": "Ações de graça e súplica"
+    },
+    {
+      "number": 59,
+      "title": "Gratidão"
+    },
+    {
+      "number": 60,
+      "title": "Ofertório"
+    },
+    {
+      "number": 61,
+      "title": "Ações de graça"
+    },
+    {
+      "number": 64,
+      "title": "Grata memória"
+    },
+    {
+      "number": 65,
+      "title": "Louvor"
+    },
+    {
+      "number": 66,
+      "title": "Coração quebrantado"
+    },
+    {
+      "number": 67,
+      "title": "Coração quebrantado"
+    },
+    {
+      "number": 68,
+      "title": "Necessidade"
+    },
+    {
+      "number": 69,
+      "title": "Súplica"
+    },
+    {
+      "number": 70,
+      "title": "Descanso em Jesus"
+    },
+    {
+      "number": 73,
+      "title": "Compaixão"
+    },
+    {
+      "number": 75,
+      "title": "Arrependimento e súplica"
+    },
+    {
+      "number": 76,
+      "title": "Compaixão"
+    },
+    {
+      "number": 77,
+      "title": "Divino Perdão"
+    },
+    {
+      "number": 78,
+      "title": "Perfeita expiação"
+    },
+    {
+      "number": 79,
+      "title": "Glória ao salvador"
+    },
+    {
+      "number": 80,
+      "title": "O amor de Jesus"
+    },
+    {
+      "number": 82,
+      "title": "Divino preceptor"
+    },
+    {
+      "number": 83,
+      "title": "Divino instruidor"
+    },
+    {
+      "number": 84,
+      "title": "Santo Espírito"
+    },
+    {
+      "number": 85,
+      "title": "Espírito consolador"
+    },
+    {
+      "number": 86,
+      "title": "Espírito do Eterno Deus"
+    },
+    {
+      "number": 87,
+      "title": "Alegria perene"
+    },
+    {
+      "number": 88,
+      "title": "Amor perene"
+    },
+    {
+      "number": 89,
+      "title": "Amor sacrificial"
+    },
+    {
+      "number": 90,
+      "title": "Amor insondável"
+    },
+    {
+      "number": 91,
+      "title": "A fé dos antigos"
+    },
+    {
+      "number": 92,
+      "title": "A fé contemplada"
+    },
+    {
+      "number": 93,
+      "title": "Firmeza na fé"
+    },
+    {
+      "number": 94,
+      "title": "A porta da salvação"
+    },
+    {
+      "number": 95,
+      "title": "Somente Cristo"
+    },
+    {
+      "number": 96,
+      "title": "Redenção suprema"
+    },
+    {
+      "number": 98,
+      "title": "Não há condenação"
+    },
+    {
+      "number": 99,
+      "title": "Louvor ao Redentor"
+    },
+    {
+      "number": 100,
+      "title": "Louvores a Cristo"
+    },
+    {
+      "number": 101,
+      "title": "A voz da salvação"
+    },
+    {
+      "number": 102,
+      "title": "O céu com Cristo"
+    },
+    {
+      "number": 103,
+      "title": "Salvação em Cristo"
+    },
+    {
+      "number": 104,
+      "title": "Linda melodia"
+    },
+    {
+      "number": 106,
+      "title": "Fonte carmesim"
+    },
+    {
+      "number": 107,
+      "title": "Ao pé da cruz"
+    },
+    {
+      "number": 109,
+      "title": "O bom Pastor"
+    },
+    {
+      "number": 110,
+      "title": "A vida com Jesus"
+    },
+    {
+      "number": 111,
+      "title": "Comunhão Divina"
+    },
+    {
+      "number": 114,
+      "title": "Brilho celeste"
+    },
+    {
+      "number": 115,
+      "title": "Unido com Cristo"
+    },
+    {
+      "number": 117,
+      "title": "Pastor divino"
+    },
+    {
+      "number": 118,
+      "title": "Esperando em Deus"
+    },
+    {
+      "number": 119,
+      "title": "Súplica pelo culto"
+    },
+    {
+      "number": 121,
+      "title": "Perfeição"
+    },
+    {
+      "number": 122,
+      "title": "Necessitado"
+    },
+    {
+      "number": 123,
+      "title": "Grande amor"
+    },
+    {
+      "number": 124,
+      "title": "Benigna luz"
+    },
+    {
+      "number": 125,
+      "title": "Sempre veraz"
+    },
+    {
+      "number": 126,
+      "title": "Dependência"
+    },
+    {
+      "number": 127,
+      "title": "Hora bendita"
+    },
+    {
+      "number": 129,
+      "title": "Vigilância e oração"
+    },
+    {
+      "number": 130,
+      "title": "Oração ao Senhor"
+    },
+    {
+      "number": 131,
+      "title": "Vida santificada"
+    },
+    {
+      "number": 132,
+      "title": "Vivificação"
+    },
+    {
+      "number": 133,
+      "title": "Aspiração à santidade"
+    },
+    {
+      "number": 134,
+      "title": "Riquezas do céu"
+    },
+    {
+      "number": 135,
+      "title": "Mais de Cristo"
+    },
+    {
+      "number": 137,
+      "title": "Abrigo no temporal"
+    },
+    {
+      "number": 138,
+      "title": "Refúgio"
+    },
+    {
+      "number": 139,
+      "title": "O socorro do crente"
+    },
+    {
+      "number": 140,
+      "title": "Jornada do crente"
+    },
+    {
+      "number": 141,
+      "title": "Guia divino"
+    },
+    {
+      "number": 142,
+      "title": "O fiel pastor"
+    },
+    {
+      "number": 143,
+      "title": "Salmo 23"
+    },
+    {
+      "number": 145,
+      "title": "Refúgio verdadeiro"
+    },
+    {
+      "number": 146,
+      "title": "Segurança do crente"
+    },
+    {
+      "number": 147,
+      "title": "Vencendo vem Jesus"
+    },
+    {
+      "number": 148,
+      "title": "Oração noturna"
+    },
+    {
+      "number": 149,
+      "title": "Verdadeira redenção"
+    },
+    {
+      "number": 150,
+      "title": "Salvação perfeita"
+    },
+    {
+      "number": 152,
+      "title": "Onisciência divina"
+    },
+    {
+      "number": 153,
+      "title": "Amparo divino"
+    },
+    {
+      "number": 154,
+      "title": "Segurança e paz"
+    },
+    {
+      "number": 155,
+      "title": "Castelo forte"
+    },
+    {
+      "number": 157,
+      "title": "Segurança em Cristo"
+    },
+    {
+      "number": 158,
+      "title": "Conforto e luz"
+    },
+    {
+      "number": 160,
+      "title": "Cristo é tudo"
+    },
+    {
+      "number": 161,
+      "title": "O melhor amigo"
+    },
+    {
+      "number": 163,
+      "title": "Direção divina"
+    },
+    {
+      "number": 164,
+      "title": "Nome precioso"
+    },
+    {
+      "number": 165,
+      "title": "Cuidado divino"
+    },
+    {
+      "number": 166,
+      "title": "Luz e vida"
+    },
+    {
+      "number": 168,
+      "title": "Jesus amado"
+    },
+    {
+      "number": 169,
+      "title": "Grata confiança"
+    },
+    {
+      "number": 170,
+      "title": "Redentor onipotente"
+    },
+    {
+      "number": 171,
+      "title": "Deus proverá"
+    },
+    {
+      "number": 172,
+      "title": "Chuvas de bençãos"
+    },
+    {
+      "number": 173,
+      "title": "Oração vespertina"
+    },
+    {
+      "number": 174,
+      "title": "Poderoso salvador"
+    },
+    {
+      "number": 175,
+      "title": "O servo do Senhor"
+    },
+    {
+      "number": 176,
+      "title": "Fidelidade do cristão"
+    },
+    {
+      "number": 177,
+      "title": "Firme nas promessas"
+    },
+    {
+      "number": 178,
+      "title": "A excelência do amor"
+    },
+    {
+      "number": 179,
+      "title": "Saudação"
+    },
+    {
+      "number": 180,
+      "title": "Amor fraternal"
+    },
+    {
+      "number": 181,
+      "title": "Irmãos em Jesus"
+    },
+    {
+      "number": 182,
+      "title": "União fraterna"
+    },
+    {
+      "number": 183,
+      "title": "Benditos laços"
+    },
+    {
+      "number": 184,
+      "title": "Face a face"
+    },
+    {
+      "number": 185,
+      "title": "Glória vindoura"
+    },
+    {
+      "number": 186,
+      "title": "O lar do céu"
+    },
+    {
+      "number": 187,
+      "title": "Cidade celestial"
+    },
+    {
+      "number": 188,
+      "title": "Clara luz"
+    },
+    {
+      "number": 189,
+      "title": "Jerusalém celeste"
+    },
+    {
+      "number": 190,
+      "title": "Maior que a dor"
+    },
+    {
+      "number": 192,
+      "title": "No céu com Jesus"
+    },
+    {
+      "number": 193,
+      "title": "Aspiração do céu"
+    },
+    {
+      "number": 194,
+      "title": "Morada feliz"
+    },
+    {
+      "number": 195,
+      "title": "Dormindo no Senhor"
+    },
+    {
+      "number": 196,
+      "title": "Gozo, esplendores, venturas"
+    },
+    {
+      "number": 197,
+      "title": "O salvador espera"
+    },
+    {
+      "number": 198,
+      "title": "Salvação graciosa"
+    },
+    {
+      "number": 199,
+      "title": "Cristo salva"
+    },
+    {
+      "number": 200,
+      "title": "Palavra abençoada"
+    },
+    {
+      "number": 201,
+      "title": "Manso e suave"
+    },
+    {
+      "number": 202,
+      "title": "Palavras preciosas"
+    },
+    {
+      "number": 203,
+      "title": "Convite para a salvação"
+    },
+    {
+      "number": 204,
+      "title": "Cristo à porta"
+    },
+    {
+      "number": 205,
+      "title": "O amor que chama"
+    },
+    {
+      "number": 206,
+      "title": "Convite de jesus"
+    },
+    {
+      "number": 207,
+      "title": "Convite ao pecador"
+    },
+    {
+      "number": 208,
+      "title": "Aproximação"
+    },
+    {
+      "number": 209,
+      "title": "Encorajamento"
+    },
+    {
+      "number": 210,
+      "title": "O filho perdido"
+    },
+    {
+      "number": 211,
+      "title": "Quase induzido"
+    },
+    {
+      "number": 212,
+      "title": "Apelo"
+    },
+    {
+      "number": 213,
+      "title": "A última hora"
+    },
+    {
+      "number": 214,
+      "title": "Convite e aceitação"
+    },
+    {
+      "number": 215,
+      "title": "Apelo"
+    },
+    {
+      "number": 216,
+      "title": "Perdão"
+    },
+    {
+      "number": 217,
+      "title": "Desprendimento"
+    },
+    {
+      "number": 218,
+      "title": "Vontade soberana"
+    },
+    {
+      "number": 219,
+      "title": "Dedicação"
+    },
+    {
+      "number": 220,
+      "title": "Plena dedicação"
+    },
+    {
+      "number": 222,
+      "title": "Mais perto da cruz"
+    },
+    {
+      "number": 224,
+      "title": "Consagração"
+    },
+    {
+      "number": 225,
+      "title": "Dedicação pessoal"
+    },
+    {
+      "number": 226,
+      "title": "A história de Cristo"
+    },
+    {
+      "number": 227,
+      "title": "A velha história"
+    },
+    {
+      "number": 228,
+      "title": "De deus, o ungido"
+    },
+    {
+      "number": 229,
+      "title": "Boas-novas"
+    },
+    {
+      "number": 231,
+      "title": "O Primeiro natal"
+    },
+    {
+      "number": 232,
+      "title": "Pequena vila de Belém"
+    },
+    {
+      "number": 233,
+      "title": "Os pastores no campo"
+    },
+    {
+      "number": 234,
+      "title": "Um pequeno a repousar"
+    },
+    {
+      "number": 235,
+      "title": "O anjo da paz"
+    },
+    {
+      "number": 236,
+      "title": "Em linda noite"
+    },
+    {
+      "number": 238,
+      "title": "Novas de amor"
+    },
+    {
+      "number": 239,
+      "title": "Nasce Jesus"
+    },
+    {
+      "number": 240,
+      "title": "Louvor angelical"
+    },
+    {
+      "number": 241,
+      "title": "O nascimento de Jesus"
+    },
+    {
+      "number": 242,
+      "title": "Os anjos e o natal"
+    },
+    {
+      "number": 244,
+      "title": "Mensagem aos pastores"
+    },
+    {
+      "number": 245,
+      "title": "Homens sábios e de bem"
+    },
+    {
+      "number": 246,
+      "title": "Jesus, o Messias"
+    },
+    {
+      "number": 247,
+      "title": "Estrela cintilante"
+    },
+    {
+      "number": 248,
+      "title": "No humilde presépio"
+    },
+    {
+      "number": 249,
+      "title": "Na manjedoura"
+    },
+    {
+      "number": 250,
+      "title": "A voz de Jesus"
+    },
+    {
+      "number": 251,
+      "title": "O pão da vida"
+    },
+    {
+      "number": 253,
+      "title": "Cristo, a luz do mundo"
+    },
+    {
+      "number": 255,
+      "title": "A ovelha perdida"
+    },
+    {
+      "number": 256,
+      "title": "Glória singular"
+    },
+    {
+      "number": 257,
+      "title": "Hosana ao grande Rei"
+    },
+    {
+      "number": 258,
+      "title": "Majestade"
+    },
+    {
+      "number": 259,
+      "title": "Hosana e glória"
+    },
+    {
+      "number": 260,
+      "title": "Amor que vence"
+    },
+    {
+      "number": 261,
+      "title": "O gólgota"
+    },
+    {
+      "number": 262,
+      "title": "Contemplação da cruz"
+    },
+    {
+      "number": 263,
+      "title": "Junto à cruz de Cristo"
+    },
+    {
+      "number": 265,
+      "title": "Cristo redentor"
+    },
+    {
+      "number": 266,
+      "title": "Rude cruz"
+    },
+    {
+      "number": 267,
+      "title": "Precioso sangue"
+    },
+    {
+      "number": 268,
+      "title": "Redenção"
+    },
+    {
+      "number": 269,
+      "title": "Pureza no sangue de Cristo"
+    },
+    {
+      "number": 271,
+      "title": "Ressurreição"
+    },
+    {
+      "number": 273,
+      "title": "Memórias da ressurreição"
+    },
+    {
+      "number": 275,
+      "title": "Cristo venceu"
+    },
+    {
+      "number": 276,
+      "title": "Amorável convite"
+    },
+    {
+      "number": 277,
+      "title": "Cristo vive! Ressurgiu!"
+    },
+    {
+      "number": 278,
+      "title": "A vitória de Jesus"
+    },
+    {
+      "number": 279,
+      "title": "O dia triunfal raiou"
+    },
+    {
+      "number": 280,
+      "title": "Ascensão"
+    },
+    {
+      "number": 281,
+      "title": "Jesus triunfante"
+    },
+    {
+      "number": 282,
+      "title": "A grande comissão"
+    },
+    {
+      "number": 283,
+      "title": "Desafio"
+    },
+    {
+      "number": 284,
+      "title": "Obediência"
+    },
+    {
+      "number": 285,
+      "title": "A salvação do Brasil"
+    },
+    {
+      "number": 286,
+      "title": "Colheita bendita"
+    },
+    {
+      "number": 288,
+      "title": "A mensagem real"
+    },
+    {
+      "number": 289,
+      "title": "Quem irá?"
+    },
+    {
+      "number": 290,
+      "title": "Jesus já vem"
+    },
+    {
+      "number": 291,
+      "title": "Triunfante"
+    },
+    {
+      "number": 292,
+      "title": "A vinda do Senhor"
+    },
+    {
+      "number": 293,
+      "title": "O dia glorioso"
+    },
+    {
+      "number": 294,
+      "title": "O senhor voltará"
+    },
+    {
+      "number": 295,
+      "title": "A volta de Jesus"
+    },
+    {
+      "number": 296,
+      "title": "Cristo não tarda"
+    },
+    {
+      "number": 297,
+      "title": "A chamada final"
+    },
+    {
+      "number": 298,
+      "title": "A pedra fundamental"
+    },
+    {
+      "number": 299,
+      "title": "Renovação"
+    },
+    {
+      "number": 300,
+      "title": "Igreja militante"
+    },
+    {
+      "number": 301,
+      "title": "O único salvador"
+    },
+    {
+      "number": 302,
+      "title": "Povoam as cidades"
+    },
+    {
+      "number": 303,
+      "title": "Pendão Real"
+    },
+    {
+      "number": 304,
+      "title": "A voz do evangelho"
+    },
+    {
+      "number": 305,
+      "title": "Quem quiser"
+    },
+    {
+      "number": 306,
+      "title": "Fidelidade na luta"
+    },
+    {
+      "number": 307,
+      "title": "A santa peleja"
+    },
+    {
+      "number": 308,
+      "title": "Escuridão e luz"
+    },
+    {
+      "number": 309,
+      "title": "Proclamação"
+    },
+    {
+      "number": 310,
+      "title": "Quem salva é só Jesus"
+    },
+    {
+      "number": 311,
+      "title": "Avanta, ó crentes"
+    },
+    {
+      "number": 313,
+      "title": "Prontidão"
+    },
+    {
+      "number": 314,
+      "title": "Diligência"
+    },
+    {
+      "number": 315,
+      "title": "Serviço do crente"
+    },
+    {
+      "number": 316,
+      "title": "Os intentos de Deus"
+    },
+    {
+      "number": 317,
+      "title": "Chamada"
+    },
+    {
+      "number": 318,
+      "title": "Ceifeiros do Senhor"
+    },
+    {
+      "number": 319,
+      "title": "Obreiros em marcha"
+    },
+    {
+      "number": 321,
+      "title": "Mãos ao trabalho"
+    },
+    {
+      "number": 322,
+      "title": "Heroínas da fé"
+    },
+    {
+      "number": 323,
+      "title": "Santa peleja"
+    },
+    {
+      "number": 324,
+      "title": "Unidas e firmes"
+    },
+    {
+      "number": 327,
+      "title": "Obreiros cristãos"
+    },
+    {
+      "number": 328,
+      "title": "Deus do universo"
+    },
+    {
+      "number": 329,
+      "title": "Instalação de pastor"
+    },
+    {
+      "number": 330,
+      "title": "A Bênção do batismo"
+    },
+    {
+      "number": 331,
+      "title": "Oração"
+    },
+    {
+      "number": 333,
+      "title": "O batismo"
+    },
+    {
+      "number": 335,
+      "title": "Júbilo no céu"
+    },
+    {
+      "number": 336,
+      "title": "Transformação"
+    },
+    {
+      "number": 337,
+      "title": "Profissão de fé"
+    },
+    {
+      "number": 338,
+      "title": "Dia da profissão de fé"
+    },
+    {
+      "number": 339,
+      "title": "Dia feliz"
+    },
+    {
+      "number": 340,
+      "title": "Santa comunhão"
+    },
+    {
+      "number": 341,
+      "title": "Vera páscoa"
+    },
+    {
+      "number": 342,
+      "title": "Comunhão"
+    },
+    {
+      "number": 343,
+      "title": "Em memória"
+    },
+    {
+      "number": 344,
+      "title": "A ceia do senhor"
+    },
+    {
+      "number": 345,
+      "title": "O pão do mundo"
+    },
+    {
+      "number": 346,
+      "title": "A ceia do Senhor"
+    },
+    {
+      "number": 347,
+      "title": "O justo pelos injustos"
+    },
+    {
+      "number": 348,
+      "title": "É este o dia"
+    },
+    {
+      "number": 349,
+      "title": "Dia do Senhor"
+    },
+    {
+      "number": 353,
+      "title": "Ao fim dos estudos"
+    },
+    {
+      "number": 355,
+      "title": "Oração infantil"
+    },
+    {
+      "number": 356,
+      "title": "Jesus menino"
+    },
+    {
+      "number": 357,
+      "title": "Louvor infantil"
+    },
+    {
+      "number": 358,
+      "title": "Jesus e as crianças"
+    },
+    {
+      "number": 359,
+      "title": "Jesus me quer bem"
+    },
+    {
+      "number": 360,
+      "title": "Pequena luz"
+    },
+    {
+      "number": 361,
+      "title": "Brilhando com Jesus"
+    },
+    {
+      "number": 362,
+      "title": "Brilhando por Jesus"
+    },
+    {
+      "number": 363,
+      "title": "Venham as crianças"
+    },
+    {
+      "number": 364,
+      "title": "Graças a Deus"
+    },
+    {
+      "number": 365,
+      "title": "Convite às crianças"
+    },
+    {
+      "number": 366,
+      "title": "Jóias preciosas"
+    },
+    {
+      "number": 367,
+      "title": "Convite aos meninos"
+    },
+    {
+      "number": 369,
+      "title": "A bíblia para todos"
+    },
+    {
+      "number": 370,
+      "title": "Proclamação"
+    },
+    {
+      "number": 371,
+      "title": "A bíblia"
+    },
+    {
+      "number": 372,
+      "title": "O crente e a bíblia"
+    },
+    {
+      "number": 374,
+      "title": "Saudando o ano novo"
+    },
+    {
+      "number": 375,
+      "title": "Ano velho"
+    },
+    {
+      "number": 376,
+      "title": "Intercessão pela pátria"
+    },
+    {
+      "number": 377,
+      "title": "A nação para Cristo"
+    },
+    {
+      "number": 379,
+      "title": "Petição pela pátria"
+    },
+    {
+      "number": 380,
+      "title": "Jesus proteja a pátria"
+    },
+    {
+      "number": 381,
+      "title": "Intercessão pela cidade"
+    },
+    {
+      "number": 383,
+      "title": "Um novo mundo"
+    },
+    {
+      "number": 384,
+      "title": "Vamos com Jesus"
+    },
+    {
+      "number": 385,
+      "title": "O estudante e a Bíblia"
+    },
+    {
+      "number": 386,
+      "title": "Testemunho"
+    },
+    {
+      "number": 387,
+      "title": "Combate"
+    },
+    {
+      "number": 388,
+      "title": "Mocidade, avante"
+    },
+    {
+      "number": 389,
+      "title": "Avante, mocidade!"
+    },
+    {
+      "number": 390,
+      "title": "Fiéis soldados"
+    },
+    {
+      "number": 391,
+      "title": "Mocidade fiel"
+    },
+    {
+      "number": 392,
+      "title": "Vida vitoriosa"
+    },
+    {
+      "number": 393,
+      "title": "União vital"
+    },
+    {
+      "number": 394,
+      "title": "Perfeito amor"
+    },
+    {
+      "number": 397,
+      "title": "Por minha boa mãe"
+    },
+    {
+      "number": 398,
+      "title": "Outra vez cantamos"
+    },
+    {
+      "number": 399,
+      "title": "Término do culto"
+    }
+  ],
+  "errors": [],
+  "keyMismatch": []
+}

@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/*
+  Design tokens
+  --radius-button: botões, CTAs, controles clicáveis
+  --font-display: títulos de UI (páginas, dialogs) — sans distinta do texto
+*/
+@theme {
+  --radius-button: 0.5rem; /* 8px — menos arredondado que o antigo 2xl */
+  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+@utility rounded-button {
+  border-radius: var(--radius-button);
+}
+
+@utility rounded-t-button {
+  border-top-left-radius: var(--radius-button);
+  border-top-right-radius: var(--radius-button);
+}
+
+/* Garante o raio padrão mesmo sem utility explícita. */
+@layer base {
+  button:not(.rounded-full):not(.rounded-none),
+  input[type="button"]:not(.rounded-full):not(.rounded-none),
+  input[type="submit"]:not(.rounded-full):not(.rounded-none),
+  input[type="reset"]:not(.rounded-full):not(.rounded-none) {
+    border-radius: var(--radius-button);
+  }
+}
