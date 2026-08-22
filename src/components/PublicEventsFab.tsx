@@ -129,10 +129,10 @@ export const PublicEventsFab: React.FC<PublicEventsFabProps> = ({ enabled = true
             <div className="min-w-0">
               {showEventsStep && selectedOrg ? (
                 <>
-                  <h3 className="text-sm font-bold text-stone-100 truncate">
+                  <h3 className="text-sm font-bold text-stone-100 light:text-stone-900 truncate">
                     {selectedOrg.sigla || selectedOrg.name}
                   </h3>
-                  <p className="text-[11px] text-stone-500">
+                  <p className="text-[11px] text-stone-500 light:text-stone-600">
                     {loadingEvents
                       ? 'Carregando…'
                       : `${events.length} evento${events.length === 1 ? '' : 's'}`}
@@ -140,8 +140,8 @@ export const PublicEventsFab: React.FC<PublicEventsFabProps> = ({ enabled = true
                 </>
               ) : (
                 <>
-                  <h3 className="text-sm font-bold text-stone-100">Eventos públicos</h3>
-                  <p className="text-[11px] text-stone-500">
+                  <h3 className="text-sm font-bold text-stone-100 light:text-stone-900">Eventos públicos</h3>
+                  <p className="text-[11px] text-stone-500 light:text-stone-600">
                     Escolha a igreja para ver os cultos compartilhados
                   </p>
                 </>
@@ -150,7 +150,7 @@ export const PublicEventsFab: React.FC<PublicEventsFabProps> = ({ enabled = true
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="p-1.5 rounded-button text-stone-400 hover:text-stone-100 hover:bg-stone-800 shrink-0"
+              className="p-1.5 rounded-button text-stone-400 hover:text-stone-100 light:hover:text-emerald-800 hover:bg-stone-800 light:hover:bg-emerald-100 shrink-0"
               aria-label="Fechar"
             >
               <X className="w-4 h-4" />
@@ -177,17 +177,17 @@ export const PublicEventsFab: React.FC<PublicEventsFabProps> = ({ enabled = true
                   <button
                     type="button"
                     onClick={() => pickOrg(org.id)}
-                    className="w-full text-left px-4 py-3 hover:bg-stone-800/70 transition-colors flex items-start gap-3"
+                    className="w-full text-left px-4 py-3 hover:bg-stone-800/70 light:hover:bg-emerald-50 transition-colors flex items-start gap-3 group"
                   >
-                    <span className="mt-0.5 w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-700/40 text-emerald-300 flex items-center justify-center shrink-0">
+                    <span className="mt-0.5 w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-700/40 text-emerald-300 light:text-emerald-700 light:bg-emerald-100 light:border-emerald-200 flex items-center justify-center shrink-0">
                       <Building2 className="w-4 h-4" />
                     </span>
                     <span className="min-w-0">
-                      <span className="block text-sm font-display font-bold text-stone-100 truncate">
+                      <span className="block text-sm font-display font-bold text-stone-100 light:text-stone-900 group-hover:text-emerald-900 truncate">
                         {org.name}
                       </span>
                       {(org.sigla || org.city) && (
-                        <span className="block text-[11px] text-stone-500 mt-0.5 truncate">
+                        <span className="block text-[11px] text-stone-500 light:text-stone-600 group-hover:text-emerald-700 mt-0.5 truncate">
                           {[org.sigla, org.city].filter(Boolean).join(' · ')}
                         </span>
                       )}
@@ -218,9 +218,9 @@ export const PublicEventsFab: React.FC<PublicEventsFabProps> = ({ enabled = true
                           setOpen(false);
                           navigate(`/evento/${ev.shareCode}`);
                         }}
-                        className="w-full text-left px-4 py-3 hover:bg-stone-800/70 transition-colors"
+                        className="w-full text-left px-4 py-3 hover:bg-stone-800/70 light:hover:bg-emerald-50 transition-colors group"
                       >
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 light:text-emerald-700 group-hover:text-emerald-800">
                           {new Date(ev.date + 'T00:00:00').toLocaleDateString('pt-BR', {
                             weekday: 'short',
                             day: '2-digit',
@@ -228,11 +228,11 @@ export const PublicEventsFab: React.FC<PublicEventsFabProps> = ({ enabled = true
                           })}
                           {ev.time ? ` · ${ev.time.slice(0, 5)}` : ''}
                         </p>
-                        <p className="text-sm font-display font-bold text-stone-100 mt-0.5">
+                        <p className="text-sm font-display font-bold text-stone-100 light:text-stone-900 group-hover:text-emerald-900 mt-0.5">
                           {ev.title}
                         </p>
                         {ev.theme && (
-                          <p className="text-[11px] text-stone-500 mt-0.5 truncate">
+                          <p className="text-[11px] text-stone-500 light:text-stone-600 group-hover:text-emerald-700 mt-0.5 truncate">
                             Tema: {ev.theme}
                           </p>
                         )}

@@ -21,6 +21,8 @@ import {
   CalendarDays,
   Sparkles,
   AlertTriangle,
+  Maximize2,
+  Radio,
 } from 'lucide-react';
 import { transposeLyrics, parseLyricSections, filterSectionsForView, stripChords } from '../utils/chordTransposer';
 import { isManualSlideBreak } from '../utils/projectionSlides';
@@ -29,6 +31,8 @@ import { MetronomeTool } from './MetronomeTool';
 import { SongMediaPlayer } from './SongMediaPlayer';
 import { ChordLyricLine } from './ChordLyricLine';
 import { LyricSectionHeading } from './LyricSectionHeading';
+import { SongMetaBadge } from './SongMetaBadge';
+import { getCombinedMediaLinks } from '../utils/mediaUtils';
 
 export interface SongEventVersionInfo {
   title: string;
@@ -71,6 +75,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
   const [showEventVersionBanner, setShowEventVersionBanner] = useState(true);
   const [showUnreviewedDialog, setShowUnreviewedDialog] = useState(false);
   const [unreviewedAckSongId, setUnreviewedAckSongId] = useState<string | null>(null);
+  const [showMedia, setShowMedia] = useState(false);
 
   useEffect(() => {
     setSemitones(0);
@@ -80,6 +85,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
     setLinkCopied(false);
     setShowEventVersionBanner(true);
     setUnreviewedAckSongId(null);
+    setShowMedia(false);
   }, [song?.id, song?.updatedAt, song?.lyrics, eventVersion?.title, eventVersion?.date]);
 
   useEffect(() => {
@@ -163,77 +169,67 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
   };
 
   const isHino = (song.songType || (song.number ? 'hino' : 'cantico')) === 'hino';
+  const mediaCount = getCombinedMediaLinks(song).length;
 
   return (
     <div className="fixed inset-0 z-50 bg-stone-900 flex flex-col overflow-hidden animate-in fade-in duration-200 text-stone-100">
         
         {/* Header Bar */}
         <div className="p-4 sm:p-6 bg-stone-900 border-b border-stone-800 flex items-start justify-between gap-4 shrink-0 z-10">
-          <div className="flex items-center gap-3 min-w-0">
-            {isHino && song.number != null && (
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-900/40 border border-emerald-500/30 flex items-center justify-center font-mono font-black text-emerald-300 text-xl shadow-inner shrink-0">
-                #{song.number}
-              </div>
-            )}
-
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                {eventVersion && (
-                  <span className="px-2.5 py-0.5 bg-amber-500/15 border border-amber-500/40 text-amber-200 rounded-full text-xs font-semibold inline-flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" />
-                    Versão do evento
-                  </span>
-                )}
-                {!song.reviewed && (
-                  <span className="px-2.5 py-0.5 bg-amber-500/15 border border-amber-500/40 text-amber-200 rounded-full text-xs font-semibold inline-flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3" />
-                    Não revisada
-                  </span>
-                )}
-                {song.category && (
-                  <span className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 rounded-full text-xs font-semibold">
-                    {song.category}
-                  </span>
-                )}
-                {isHino ? (
-                  <span className="px-2.5 py-0.5 bg-emerald-950/80 border border-emerald-800/60 text-emerald-300 rounded-full text-xs font-semibold">
-                    {song.hymnal || 'Novo Cântico'}
-                  </span>
-                ) : (
-                  <span className="px-2.5 py-0.5 bg-teal-950/80 border border-teal-800/60 text-teal-300 rounded-full text-xs font-semibold">
-                    Cântico
-                  </span>
-                )}
-                {song.originalKey && (
-                  <span className="px-2 py-0.5 bg-stone-800 border border-stone-700 text-stone-300 rounded-md text-xs font-mono">
-                    Tom: <strong>{song.originalKey}</strong>
-                  </span>
-                )}
-                {song.timeSignature && (
-                  <span className="px-2 py-0.5 bg-stone-800 border border-stone-700 text-stone-400 rounded-md text-xs font-mono">
-                    {song.timeSignature}
-                  </span>
-                )}
-              </div>
-              <h2 className="text-xl sm:text-2xl font-serif font-bold text-emerald-100 mt-1">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {isHino && song.number != null ? (
+                <SongMetaBadge variant="number">#{song.number}</SongMetaBadge>
+              ) : (
+                <SongMetaBadge variant="cantico">Cântico</SongMetaBadge>
+              )}
+              {eventVersion && (
+                <SongMetaBadge variant="eventVersion" icon={<Sparkles aria-hidden />}>
+                  Versão do evento
+                </SongMetaBadge>
+              )}
+              {!song.reviewed && (
+                <SongMetaBadge variant="unreviewed" icon={<AlertTriangle aria-hidden />}>
+                  Não revisada
+                </SongMetaBadge>
+              )}
+              {song.category && (
+                <SongMetaBadge variant="category">{song.category}</SongMetaBadge>
+              )}
+              {isHino && (
+                <SongMetaBadge variant="hymnal">
+                  {song.hymnal || 'Novo Cântico'}
+                </SongMetaBadge>
+              )}
+              {song.originalKey && (
+                <SongMetaBadge variant="meta">
+                  Tom: <strong>{song.originalKey}</strong>
+                </SongMetaBadge>
+              )}
+              {song.timeSignature && (
+                <SongMetaBadge variant="meta">{song.timeSignature}</SongMetaBadge>
+              )}
+            </div>
+              <h2 className="text-xl sm:text-2xl font-serif font-bold text-emerald-100 light:text-stone-900 mt-1">
                 {song.title}
               </h2>
               {song.subtitle && (
-                <p className="text-xs sm:text-sm text-stone-400 font-serif italic">
+                <p className="text-xs sm:text-sm text-stone-400 light:text-stone-500 font-serif italic">
                   {song.subtitle}
                 </p>
               )}
-            </div>
           </div>
 
           <div className="flex items-center gap-1">
             {/* Projection Mode */}
             <button
+              type="button"
               onClick={() => onOpenProjection(song)}
-              className="px-3 py-2 bg-emerald-500 text-stone-950 font-bold rounded-button text-xs flex items-center gap-1.5 shadow-md hover:bg-emerald-400 transition-colors"
+              className="group/tv px-3 py-2 bg-emerald-500 text-stone-950 font-bold rounded-button text-xs flex items-center gap-1.5 shadow-md hover:bg-emerald-400 focus-visible:bg-emerald-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
               title="Abrir no Telão / Projeção"
             >
-              <Tv className="w-4 h-4" />
+              <Tv className="w-4 h-4 group-hover/tv:hidden group-focus-visible/tv:hidden" aria-hidden />
+              <Maximize2 className="w-4 h-4 hidden group-hover/tv:block group-focus-visible/tv:block" aria-hidden />
               <span className="hidden sm:inline">Telão</span>
             </button>
 
@@ -350,13 +346,34 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
             
             {/* Tone Pitch Sound */}
             <button
-              onClick={() => playReferenceTone(song.originalKey || 'C')}
+              onClick={() => void playReferenceTone(song.originalKey || 'C')}
               className="px-2.5 py-1.5 bg-stone-900 hover:bg-emerald-900/40 text-stone-300 hover:text-emerald-300 border border-stone-800 rounded-button flex items-center gap-1 font-mono transition-colors"
               title="Ouvir Nota de Afinação para o Tom"
             >
               <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
               <span>Som ({song.originalKey || 'C'})</span>
             </button>
+
+            {mediaCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowMedia((v) => !v)}
+                aria-pressed={showMedia}
+                aria-label={`Links (${mediaCount})`}
+                className={`relative p-1.5 sm:px-2.5 sm:py-1.5 rounded-button border flex items-center justify-center gap-1.5 font-medium transition-colors ${
+                  showMedia
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+                    : 'bg-stone-900 text-stone-300 border-stone-800 hover:text-emerald-300 hover:bg-emerald-900/40'
+                }`}
+                title="Links"
+              >
+                <Radio className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-emerald-400 shrink-0" aria-hidden />
+                <span className="hidden sm:inline">Links</span>
+                <span className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-emerald-500 text-stone-950 text-[9px] font-black flex items-center justify-center border border-stone-900 light:border-white shadow-sm">
+                  {mediaCount}
+                </span>
+              </button>
+            )}
 
             {/* Metronome Tool Toggle */}
             <button
@@ -449,10 +466,15 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
         <div className="p-6 sm:p-8 overflow-y-auto flex-1 space-y-6">
           
           {/* Song Media Player (YouTube, YouTube Music, Spotify & Audio) */}
-          <SongMediaPlayer 
-            song={song} 
-            title={song.title} 
-          />
+          {showMedia && mediaCount > 0 && (
+            <SongMediaPlayer
+              key={song.id}
+              song={song}
+              title={song.title}
+              expanded
+              onExpandedChange={setShowMedia}
+            />
+          )}
 
           {sections.map((section, idx) => {
             const isChorus = section.type === 'chorus';
@@ -476,10 +498,10 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
                     annotation={section.annotation}
                     className={`text-xs font-mono font-bold ${
                       isComment
-                        ? 'text-amber-300/90'
+                        ? 'text-amber-300/90 light:text-amber-800'
                         : isChorus
-                          ? 'text-emerald-400'
-                          : 'text-stone-400'
+                          ? 'text-emerald-400 light:text-emerald-700'
+                          : 'text-stone-400 light:text-stone-600'
                     }`}
                   />
                 </div>
@@ -533,17 +555,17 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
               role="dialog"
               aria-modal="true"
               aria-labelledby="unreviewed-title"
-              className="w-full max-w-md bg-stone-900 border border-amber-500/40 rounded-2xl shadow-2xl p-5 sm:p-6"
+              className="w-full max-w-md bg-stone-900 border border-amber-500/40 light:border-amber-300 rounded-2xl shadow-2xl p-5 sm:p-6"
             >
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-300 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/15 light:bg-amber-100 border border-amber-500/40 light:border-amber-300 text-amber-300 light:text-amber-700 flex items-center justify-center shrink-0">
                   <AlertTriangle className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
-                  <h3 id="unreviewed-title" className="text-base font-display font-bold text-amber-100">
+                  <h3 id="unreviewed-title" className="text-base font-display font-bold text-amber-100 light:text-amber-900">
                     Cifra não revisada
                   </h3>
-                  <p className="mt-2 text-sm text-stone-300 leading-relaxed">
+                  <p className="mt-2 text-sm text-stone-300 light:text-stone-700 leading-relaxed">
                     Esta música ainda não foi revisada. Confira a cifra disponibilizada antes de usar
                     no ensaio ou no culto.
                   </p>
@@ -553,7 +575,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
                 <button
                   type="button"
                   onClick={dismissUnreviewedDialog}
-                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold rounded-button"
+                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold rounded-button shadow-sm"
                 >
                   Entendi
                 </button>

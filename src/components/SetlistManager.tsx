@@ -14,7 +14,6 @@ import {
   Tv,
   ArrowUp,
   ArrowDown,
-  Calendar,
   Check,
   Music,
   Link2,
@@ -27,6 +26,8 @@ import {
   Archive,
   ArchiveRestore,
   QrCode,
+  Share2,
+  Pencil,
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton } from './PageHeader';
 import { isGroupSetlist, setlistShareUrl } from '@/services/playlists';
@@ -65,15 +66,17 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
   const [selectedSetlistId, setSelectedSetlistId] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const [newDate, setNewDate] = useState(new Date().toISOString().slice(0, 10));
   const [newVisibility, setNewVisibility] = useState<SetlistVisibility>('private');
   const [copiedHint, setCopiedHint] = useState<'text' | 'link' | null>(null);
   const [showSharePeople, setShowSharePeople] = useState(false);
   const [showQr, setShowQr] = useState(false);
+  const [showShareOptions, setShowShareOptions] = useState(false);
   const [shareDraft, setShareDraft] = useState<PlaylistShare[]>([]);
   const [pickUserId, setPickUserId] = useState('');
   const [pickPermission, setPickPermission] = useState<'view' | 'edit'>('view');
   const [createError, setCreateError] = useState<string | null>(null);
+  const [editingDetails, setEditingDetails] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
 
   const mySetlists = useMemo(
     () =>
@@ -140,6 +143,8 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
 
   useEffect(() => {
     setShowQr(false);
+    setShowShareOptions(false);
+    setEditingDetails(false);
   }, [activeSetlist?.id, activeSetlist?.visibility]);
 
   const flashCopied = (kind: 'text' | 'link') => {
@@ -162,7 +167,6 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
     const newSetlistObj: Setlist = {
       id: `temp-setlist-${Date.now()}`,
       title: newTitle.trim(),
-      date: newDate,
       items: [],
       createdAt: new Date().toISOString(),
       kind: 'individual',
@@ -212,9 +216,30 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
     onSaveSetlist({ ...activeSetlist, visibility: next });
   };
 
+  const startEditingDetails = () => {
+    if (!activeSetlist || !canEdit) return;
+    setEditTitle(activeSetlist.title);
+    setEditingDetails(true);
+  };
+
+  const cancelEditingDetails = () => {
+    setEditingDetails(false);
+  };
+
+  const saveEditingDetails = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeSetlist || !canEdit || !editTitle.trim()) return;
+    void Promise.resolve(
+      onSaveSetlist({
+        ...activeSetlist,
+        title: editTitle.trim(),
+      }),
+    ).then(() => setEditingDetails(false));
+  };
+
   const buildShareText = (includeLink: boolean) => {
     if (!activeSetlist) return '';
-    let text = `📋 *${activeSetlist.title}*\n📅 Data: ${activeSetlist.date}\n\n`;
+    let text = `📋 *${activeSetlist.title}*\n\n`;
     activeSongsInOrder.forEach((s, idx) => {
       text += `${idx + 1}. ${s.number ? `#${s.number} - ` : ''}${s.title}`;
       if (s.originalKey) text += ` (Tom: ${s.originalKey})`;
@@ -244,6 +269,30 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
     const text = buildShareText(true);
     if (!text) return;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleShare = async () => {
+    if (!activeSetlist) return;
+
+    const text = buildShareText(false);
+    const payload: ShareData = { title: activeSetlist.title, text };
+    if (shareUrl && activeSetlist.visibility === 'public_link') {
+      payload.url = shareUrl;
+    }
+
+    if (typeof navigator.share === 'function') {
+      try {
+        if (navigator.canShare && !navigator.canShare(payload)) {
+          delete payload.url;
+        }
+        await navigator.share(payload);
+        return;
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
+      }
+    }
+
+    setShowShareOptions(true);
   };
 
   const openSharePeople = () => {
@@ -281,7 +330,7 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
       <PageHeader
         icon={ListMusic}
         title="Playlists"
-        description="Suas listas pessoais. O repertório do culto fica dentro de cada Evento."
+        description="Suas listas pessoais. Você pode criar até 5 playlists pessoais e compartilhar com outras pessoas."
         actions={
           <PageHeaderButton
             icon={Plus}
@@ -320,7 +369,6 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                   : 'bg-stone-900 text-stone-400 border-stone-800 hover:text-stone-200'
               }`}
             >
-              <Calendar className="w-3.5 h-3.5" />
               <span>{s.title}</span>
               {isGroupSetlist(s) && (
                 <span className="text-[10px] text-teal-300">Grupo</span>
@@ -348,46 +396,96 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
 
       {activeSetlist && (
         <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 shadow-xl space-y-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-stone-800 gap-4">
-            <div>
-              <div className="flex flex-wrap items-center gap-2 text-xs mb-1">
-                <span className="inline-flex items-center gap-1 text-emerald-400 font-mono">
-                  <Calendar className="w-3.5 h-3.5" />
-                  {activeSetlist.date}
-                </span>
-                <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-button border text-[10px] font-bold ${
-                    activeSetlist.visibility === 'public_link'
-                      ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800'
-                      : 'bg-stone-950 text-stone-400 border-stone-700'
-                  }`}
-                >
-                  {activeSetlist.visibility === 'public_link' ? (
-                    <>
-                      <Globe className="w-3 h-3" /> Público
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="w-3 h-3" /> Privado
-                    </>
-                  )}
-                </span>
-                {isGroupSetlist(activeSetlist) && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-button border text-[10px] font-bold bg-teal-950/50 text-teal-300 border-teal-800">
-                    {activeSetlist.kind === 'group_schedule' ? 'Da escala' : 'Grupo'}
-                  </span>
-                )}
-                {activeSetlist.archived && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-button border text-[10px] font-bold bg-amber-950/50 text-amber-300 border-amber-800">
-                    <Archive className="w-3 h-3" />
-                    Arquivado
-                  </span>
-                )}
-              </div>
-              <h3 className="text-xl font-display font-bold text-stone-100">{activeSetlist.title}</h3>
+          <div
+            className={
+              editingDetails
+                ? 'pb-4 border-b border-stone-800'
+                : 'flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-stone-800 gap-4'
+            }
+          >
+            {editingDetails ? (
+              <form onSubmit={saveEditingDetails} className="w-full space-y-3">
+                <div>
+                  <label className="block text-[11px] text-stone-500 font-semibold mb-1">
+                    Nome
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2.5 text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                    autoFocus
+                  />
+                </div>
+                <div className="flex flex-row gap-2">
+                  <button
+                    type="submit"
+                    className="flex-1 sm:flex-none px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs"
+                  >
+                    Salvar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cancelEditingDetails}
+                    className="flex-1 sm:flex-none px-4 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
+            <div className="min-w-0 flex-1 w-full sm:w-auto">
+                  <div className="flex flex-wrap items-center gap-2 text-xs mb-1">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-button border text-[10px] font-bold ${
+                        activeSetlist.visibility === 'public_link'
+                          ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800'
+                          : 'bg-stone-950 text-stone-400 border-stone-700'
+                      }`}
+                    >
+                      {activeSetlist.visibility === 'public_link' ? (
+                        <>
+                          <Globe className="w-3 h-3" /> Público
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="w-3 h-3" /> Privado
+                        </>
+                      )}
+                    </span>
+                    {isGroupSetlist(activeSetlist) && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-button border text-[10px] font-bold bg-teal-950/50 text-teal-300 border-teal-800">
+                        {activeSetlist.kind === 'group_schedule' ? 'Da escala' : 'Grupo'}
+                      </span>
+                    )}
+                    {activeSetlist.archived && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-button border text-[10px] font-bold bg-amber-950/50 text-amber-300 border-amber-800">
+                        <Archive className="w-3 h-3" />
+                        Arquivado
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <h3 className="text-xl font-display font-bold text-stone-100">
+                      {activeSetlist.title}
+                    </h3>
+                    {canEdit && (
+                      <button
+                        type="button"
+                        onClick={startEditingDetails}
+                        className="p-1.5 text-stone-500 hover:text-emerald-400 rounded-button shrink-0"
+                        title="Editar nome"
+                        aria-label="Editar nome"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto sm:justify-end">
               {activeSongsInOrder.length > 0 && (
                 <button
                   type="button"
@@ -430,44 +528,25 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
 
               <button
                 type="button"
-                onClick={handleCopyLink}
-                disabled={!shareUrl}
-                className="p-2 bg-stone-800 hover:bg-stone-700 disabled:opacity-40 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
-                title="Copiar link"
+                onClick={() => void handleShare()}
+                className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
+                title="Compartilhar"
               >
-                {copiedHint === 'link' ? (
-                  <Check className="w-4 h-4 text-emerald-400" />
-                ) : (
-                  <Link2 className="w-4 h-4" />
-                )}
-                <span className="hidden sm:inline">Link</span>
+                <Share2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Compartilhar</span>
               </button>
 
               {activeSetlist.visibility === 'public_link' && shareUrl && (
                 <button
                   type="button"
-                  onClick={() => setShowQr((v) => !v)}
-                  className={`p-2 rounded-button border text-xs font-semibold inline-flex items-center gap-1.5 ${
-                    showQr
-                      ? 'bg-emerald-500 text-stone-950 border-emerald-400'
-                      : 'bg-stone-800 hover:bg-stone-700 text-stone-300 border-stone-700'
-                  }`}
+                  onClick={() => setShowQr(true)}
+                  className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
                   title="Mostrar QR Code"
                 >
                   <QrCode className="w-4 h-4" />
                   <span className="hidden sm:inline">QR</span>
                 </button>
               )}
-
-              <button
-                type="button"
-                onClick={handleWhatsApp}
-                className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
-                title="Compartilhar no WhatsApp"
-              >
-                <MessageCircle className="w-4 h-4 text-emerald-400" />
-                <span className="hidden sm:inline">WhatsApp</span>
-              </button>
 
               <button
                 type="button"
@@ -513,19 +592,14 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                 </button>
               )}
             </div>
+              </>
+            )}
           </div>
 
           {activeSetlist.visibility === 'public_link' && shareUrl && (
-            <div className="space-y-3">
-              <p className="text-[11px] text-stone-500 break-all">
-                Link público: <span className="text-emerald-300/90 font-mono">{shareUrl}</span>
-              </p>
-              {showQr && (
-                <div className="flex justify-center sm:justify-start">
-                  <ShareQrCode url={shareUrl} size={168} />
-                </div>
-              )}
-            </div>
+            <p className="text-[11px] text-stone-500 break-all">
+              Link público: <span className="text-emerald-300/90 font-mono">{shareUrl}</span>
+            </p>
           )}
           {activeSetlist.visibility !== 'public_link' && (
             <p className="text-[11px] text-stone-500">
@@ -539,23 +613,23 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
               {activeSongsInOrder.map((song, idx) => (
                 <div
                   key={song.id}
-                  className="bg-stone-950 border border-stone-800/80 hover:border-emerald-500/40 rounded-2xl p-4 flex items-center justify-between gap-3"
+                  className="bg-stone-950 light:bg-stone-50 border border-stone-800/80 light:border-stone-200 hover:border-emerald-500/40 rounded-2xl p-4 flex items-center justify-between gap-3"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="w-7 h-7 rounded-lg bg-stone-800 text-emerald-300 font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                    <span className="w-7 h-7 rounded-lg bg-stone-800 light:bg-stone-100 text-emerald-300 light:text-emerald-700 font-mono font-bold text-xs flex items-center justify-center shrink-0">
                       {idx + 1}
                     </span>
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 font-mono font-bold text-emerald-300 text-sm flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 light:bg-emerald-50 border border-emerald-500/20 light:border-emerald-200 font-mono font-bold text-emerald-300 light:text-emerald-800 text-sm flex items-center justify-center shrink-0">
                       {song.number ? `#${song.number}` : '·'}
                     </div>
                     <div className="min-w-0">
                       <h4
                         onClick={() => onSelectSong(song)}
-                        className="text-base font-display font-bold text-stone-100 hover:text-emerald-200 cursor-pointer truncate"
+                        className="text-base font-display font-bold text-stone-100 light:text-stone-900 hover:text-emerald-200 light:hover:text-emerald-700 cursor-pointer truncate"
                       >
                         {song.title}
                       </h4>
-                      <div className="flex items-center gap-2 text-xs text-stone-400 mt-0.5">
+                      <div className="flex items-center gap-2 text-xs text-stone-400 light:text-stone-500 mt-0.5 font-medium">
                         <span>
                           Tom: <strong>{song.originalKey || 'C'}</strong>
                         </span>
@@ -571,7 +645,7 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                         type="button"
                         onClick={() => handleMoveItem(idx, 'up')}
                         disabled={idx === 0}
-                        className="p-1.5 bg-stone-900 text-stone-400 hover:text-stone-100 disabled:opacity-20 rounded-button"
+                        className="p-1.5 bg-stone-900 light:bg-stone-100 text-stone-400 light:text-stone-700 hover:text-stone-100 light:hover:text-stone-900 border border-transparent light:border-stone-200 disabled:opacity-20 rounded-button"
                       >
                         <ArrowUp className="w-4 h-4" />
                       </button>
@@ -579,14 +653,14 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                         type="button"
                         onClick={() => handleMoveItem(idx, 'down')}
                         disabled={idx === activeSongsInOrder.length - 1}
-                        className="p-1.5 bg-stone-900 text-stone-400 hover:text-stone-100 disabled:opacity-20 rounded-button"
+                        className="p-1.5 bg-stone-900 light:bg-stone-100 text-stone-400 light:text-stone-700 hover:text-stone-100 light:hover:text-stone-900 border border-transparent light:border-stone-200 disabled:opacity-20 rounded-button"
                       >
                         <ArrowDown className="w-4 h-4" />
                       </button>
                       <button
                         type="button"
                         onClick={() => handleRemoveItem(song.id)}
-                        className="p-1.5 bg-stone-900 text-rose-400 hover:bg-rose-950/60 rounded-button ml-1"
+                        className="p-1.5 bg-stone-900 light:bg-stone-100 text-rose-400 light:text-rose-600 hover:bg-rose-950/60 light:hover:bg-rose-50 border border-transparent light:border-stone-200 rounded-button ml-1"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -634,15 +708,6 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                 />
               </div>
               <div>
-                <label className="block text-stone-400 font-semibold mb-1">Data</label>
-                <input
-                  type="date"
-                  value={newDate}
-                  onChange={(e) => setNewDate(e.target.value)}
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
-              <div>
                 <label className="block text-stone-400 font-semibold mb-2">Visibilidade</label>
                 <div className="flex gap-2">
                   <button
@@ -685,6 +750,141 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showShareOptions && activeSetlist && (
+        <div
+          className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setShowShareOptions(false)}
+        >
+          <div
+            className="bg-stone-900 border border-stone-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl text-stone-100 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="share-dialog-title"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <h3
+                id="share-dialog-title"
+                className="text-lg font-display font-bold text-emerald-100 light:text-stone-900 flex items-center gap-2"
+              >
+                <Share2 className="w-5 h-5 text-emerald-400 light:text-emerald-600" />
+                Compartilhar
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowShareOptions(false)}
+                className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
+                aria-label="Fechar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-stone-400 light:text-stone-500">
+              Escolha como compartilhar{' '}
+              <strong className="text-stone-200 light:text-stone-800">{activeSetlist.title}</strong>
+            </p>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  handleCopyLink();
+                  setShowShareOptions(false);
+                }}
+                disabled={!shareUrl}
+                className="w-full flex items-center gap-3 px-4 py-3 bg-stone-950 hover:bg-stone-800 disabled:opacity-40 border border-stone-800 rounded-xl text-sm font-semibold text-stone-200 transition-colors"
+              >
+                {copiedHint === 'link' ? (
+                  <Check className="w-5 h-5 text-emerald-400 shrink-0" />
+                ) : (
+                  <Link2 className="w-5 h-5 text-stone-400 shrink-0" />
+                )}
+                Copiar link
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  handleWhatsApp();
+                  setShowShareOptions(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 bg-stone-950 hover:bg-stone-800 border border-stone-800 rounded-xl text-sm font-semibold text-stone-200 transition-colors"
+              >
+                <MessageCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+                WhatsApp
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showQr && shareUrl && activeSetlist && (
+        <div
+          className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setShowQr(false)}
+        >
+          <div
+            className="bg-stone-900 border border-stone-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl text-stone-100 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="qr-dialog-title"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <h3
+                id="qr-dialog-title"
+                className="text-lg font-display font-bold text-emerald-100 light:text-stone-900 flex items-center gap-2"
+              >
+                <QrCode className="w-5 h-5 text-emerald-400 light:text-emerald-600" />
+                QR Code
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowQr(false)}
+                className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
+                aria-label="Fechar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-stone-400 light:text-stone-500">
+              Escaneie para abrir a playlist{' '}
+              <strong className="text-stone-200 light:text-stone-800">{activeSetlist.title}</strong>
+            </p>
+
+            <div className="flex justify-center py-2">
+              <ShareQrCode url={shareUrl} size={200} label="Aponte a câmera para abrir a playlist" />
+            </div>
+
+            <p className="text-[11px] text-stone-500 break-all text-center font-mono">{shareUrl}</p>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-stone-800">
+              <button
+                type="button"
+                onClick={() => void handleCopyLink()}
+                className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold inline-flex items-center gap-1.5"
+              >
+                {copiedHint === 'link' ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                ) : (
+                  <Link2 className="w-3.5 h-3.5" />
+                )}
+                Copiar link
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowQr(false)}
+                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs"
+              >
+                Fechar
+              </button>
+            </div>
           </div>
         </div>
       )}

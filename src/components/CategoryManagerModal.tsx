@@ -49,8 +49,8 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-stone-800 mb-5">
           <div className="flex items-center gap-2">
-            <Tag className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-xl font-display font-bold text-emerald-100 tracking-tight">
+            <Tag className="w-5 h-5 text-emerald-400 light:text-emerald-600" />
+            <h3 className="text-xl font-display font-bold text-emerald-100 light:text-stone-900 tracking-tight">
               Gerenciar Categorias de Hinos
             </h3>
           </div>
@@ -63,8 +63,8 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
         </div>
 
         {/* Form to add new category */}
-        <form onSubmit={handleAddCategory} className="space-y-3 mb-6 bg-stone-950 p-4 rounded-2xl border border-stone-800">
-          <h4 className="text-xs font-mono font-bold uppercase text-emerald-400">
+        <form onSubmit={handleAddCategory} className="space-y-3 mb-6 bg-stone-950 light:bg-stone-50 p-4 rounded-2xl border border-stone-800 light:border-stone-200">
+          <h4 className="text-xs font-mono font-bold uppercase text-emerald-400 light:text-emerald-700">
             Nova Categoria
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

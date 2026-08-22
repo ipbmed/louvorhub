@@ -17,6 +17,7 @@ import {
 import { useAuth } from '@/contexts/AuthProvider';
 import { useToast } from '@/contexts/ToastProvider';
 import { supabase } from '@/lib/supabase';
+import { getAvatarPublicUrl } from '@/utils/avatarUrl';
 import { updateProfileDetails } from '@/services/members';
 import { listAllVisibleOrganizations } from '@/services/organizations';
 import type { Church } from '@/types';
@@ -102,9 +103,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = () => {
     [churches, churchId],
   );
 
-  const avatarUrl = profile?.avatar_path
-    ? `${supabase.storage.from('avatars').getPublicUrl(profile.avatar_path).data.publicUrl}?t=${profile.updated_at || ''}`
-    : null;
+  const avatarUrl = getAvatarPublicUrl(profile?.avatar_path, profile?.updated_at);
 
   const email = user?.email || '';
   const canLoginWithEmail = Boolean(email);

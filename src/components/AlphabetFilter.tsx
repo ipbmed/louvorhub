@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { Song } from '../types';
-import { ChevronDown, X } from 'lucide-react';
+import { BookA, X } from 'lucide-react';
 
 interface AlphabetFilterProps {
   selectedLetter: string; // 'TODAS' | 'A' | 'B' | ... | '#'
   onSelectLetter: (letter: string) => void;
-  songs: Song[]; // Passed to count available titles per letter
+  songs: Song[];
+  expanded: boolean;
+  onExpandedChange: (expanded: boolean) => void;
 }
 
 const LETTERS = [
@@ -14,35 +16,90 @@ const LETTERS = [
   '#',
 ] as const;
 
+function getNormalizedFirstChar(title: string): string {
+  if (!title) return '#';
+  const trimmed = title.trim();
+  if (!trimmed) return '#';
+  const first = trimmed[0].normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  if (/[A-Z]/.test(first)) return first;
+  return '#';
+}
+
+function useLetterCounts(songs: Song[]) {
+  return useMemo(() => {
+    const counts: Record<string, number> = { TODAS: songs.length };
+    LETTERS.forEach((letter) => {
+      counts[letter] = 0;
+    });
+    songs.forEach((song) => {
+      const char = getNormalizedFirstChar(song.title);
+      if (counts[char] !== undefined) {
+        counts[char]++;
+      } else {
+        counts['#']++;
+      }
+    });
+    return counts;
+  }, [songs]);
+}
+
+const letterButtonClass = (hasSongs: boolean, isSelected: boolean) =>
+  `min-h-10 sm:min-h-9 rounded-button text-xs font-bold transition-all flex items-center justify-center border touch-manipulation ${
+    isSelected
+      ? 'bg-emerald-500 text-stone-950 border-emerald-400 font-extrabold shadow-md shadow-emerald-500/20'
+      : hasSongs
+        ? 'bg-stone-800/90 light:bg-stone-100 text-stone-200 light:text-stone-800 border-stone-700/80 light:border-stone-200 active:bg-stone-700 hover:bg-stone-700 light:hover:bg-emerald-50 hover:text-white light:hover:text-emerald-800 hover:border-emerald-500/50 light:hover:border-emerald-300'
+        : 'bg-stone-950/40 light:bg-stone-50 text-stone-600 light:text-stone-300 border-stone-900/60 light:border-stone-200/60 opacity-40 cursor-not-allowed'
+  }`;
+
+/** Botão para abrir/fechar o índice alfabético (ao lado de Cards / Lista). */
+export const AlphabetFilterToggle: React.FC<{
+  expanded: boolean;
+  onToggle: () => void;
+  selectedLetter: string;
+}> = ({ expanded, onToggle, selectedLetter }) => {
+  const hasFilter = selectedLetter !== 'TODAS';
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={expanded}
+      aria-label="Índice alfabético"
+      title="Índice alfabético"
+      className={`relative flex items-center justify-center gap-1.5 min-h-9 min-w-9 sm:min-w-0 px-2 sm:px-2.5 py-1.5 rounded-button font-semibold transition-all touch-manipulation border ${
+        expanded || hasFilter
+          ? 'bg-emerald-500 text-stone-950 border-emerald-400 shadow-sm'
+          : 'bg-stone-800/80 light:bg-stone-100 text-stone-300 light:text-stone-700 border-stone-700 light:border-stone-200 hover:bg-stone-700/80 light:hover:bg-stone-200'
+      }`}
+    >
+      <BookA className="w-3.5 h-3.5 shrink-0" />
+      <span className="hidden sm:inline">Índice</span>
+      {hasFilter && !expanded && (
+        <span className="sm:ml-0.5 absolute -top-1 -right-1 sm:static min-w-[1.1rem] h-[1.1rem] px-0.5 rounded-full bg-stone-950/25 sm:bg-stone-950/20 text-[9px] sm:text-[10px] font-extrabold flex items-center justify-center">
+          {selectedLetter}
+        </span>
+      )}
+    </button>
+  );
+};
+
+/** Painel expandível com o grid de letras. */
 export const AlphabetFilter: React.FC<AlphabetFilterProps> = ({
   selectedLetter,
   onSelectLetter,
   songs,
+  expanded,
+  onExpandedChange,
 }) => {
-  const [expanded, setExpanded] = useState(false);
+  const letterCounts = useLetterCounts(songs);
 
-  const getNormalizedFirstChar = (title: string): string => {
-    if (!title) return '#';
-    const trimmed = title.trim();
-    if (!trimmed) return '#';
-    const first = trimmed[0].normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
-    if (/[A-Z]/.test(first)) return first;
-    return '#';
+  if (!expanded) return null;
+
+  const selectLetter = (letter: string) => {
+    onSelectLetter(letter);
+    onExpandedChange(false);
   };
-
-  const letterCounts: Record<string, number> = { TODAS: songs.length };
-  LETTERS.forEach((letter) => {
-    letterCounts[letter] = 0;
-  });
-
-  songs.forEach((song) => {
-    const char = getNormalizedFirstChar(song.title);
-    if (letterCounts[char] !== undefined) {
-      letterCounts[char]++;
-    } else {
-      letterCounts['#']++;
-    }
-  });
 
   const summaryLabel =
     selectedLetter === 'TODAS'
@@ -54,129 +111,91 @@ export const AlphabetFilter: React.FC<AlphabetFilterProps> = ({
       ? letterCounts.TODAS
       : letterCounts[selectedLetter] || 0;
 
-  const selectLetter = (letter: string) => {
-    onSelectLetter(letter);
-    setExpanded(false);
-  };
-
-  const letterButtonClass = (letter: string, hasSongs: boolean, isSelected: boolean) =>
-    `min-h-10 sm:min-h-9 rounded-button text-xs font-bold transition-all flex items-center justify-center border touch-manipulation ${
-      isSelected
-        ? 'bg-emerald-500 text-stone-950 border-emerald-400 font-extrabold shadow-md shadow-emerald-500/20'
-        : hasSongs
-          ? 'bg-stone-800/90 text-stone-200 border-stone-700/80 active:bg-stone-700 hover:bg-stone-700 hover:text-white hover:border-emerald-500/50'
-          : 'bg-stone-950/40 text-stone-600 border-stone-900/60 opacity-40 cursor-not-allowed'
-    }`;
-
   return (
-    <div className="bg-stone-900/90 border border-stone-800 rounded-2xl sm:rounded-3xl shadow-lg overflow-hidden">
-      {/* Linha compacta — clica para expandir; limpar quando filtrado */}
-      <div className="flex items-center gap-1 px-2 sm:px-3">
+    <div className="pt-3 mt-3 border-t border-stone-800/80 light:border-stone-200 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+      <div className="flex items-start justify-between gap-3 pb-3 border-b border-stone-800 light:border-stone-200">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-9 h-9 shrink-0 rounded-xl bg-emerald-500/20 light:bg-emerald-100 text-emerald-300 light:text-emerald-800 flex items-center justify-center border border-emerald-500/30 light:border-emerald-200">
+            <BookA className="w-5 h-5" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-lg font-display font-bold text-emerald-100 light:text-stone-900 tracking-tight">
+              Índice Alfabético
+            </h3>
+            <p className="text-xs text-stone-400 light:text-stone-500 mt-0.5">
+              {summaryLabel}
+              <span className="font-mono ml-1 opacity-80">({summaryCount})</span>
+            </p>
+          </div>
+        </div>
         <button
           type="button"
-          onClick={() => setExpanded((v) => !v)}
-          aria-expanded={expanded}
-          className="flex-1 flex items-center justify-between gap-3 px-1.5 py-3 text-left touch-manipulation hover:bg-stone-800/40 rounded-button transition-colors min-w-0"
+          onClick={() => onExpandedChange(false)}
+          className="shrink-0 p-1.5 text-stone-400 hover:text-stone-100 light:hover:text-stone-800 rounded-button"
+          title="Fechar índice"
+          aria-label="Fechar índice alfabético"
         >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-            <div className="min-w-0">
-              <p className="text-xs font-serif font-semibold text-stone-200">
-                Índice Alfabético
-              </p>
-              <p className="text-[11px] text-stone-400 truncate mt-0.5">
-                {summaryLabel}
-                <span className="font-mono ml-1 opacity-70">({summaryCount})</span>
-              </p>
-            </div>
-            {selectedLetter !== 'TODAS' && (
-              <span className="w-7 h-7 shrink-0 rounded-button bg-emerald-500 text-stone-950 font-extrabold text-xs flex items-center justify-center">
-                {selectedLetter}
-              </span>
-            )}
-          </div>
+          <X className="w-5 h-5" />
+        </button>
+      </div>
 
-          <ChevronDown
-            className={`w-4 h-4 text-stone-400 shrink-0 transition-transform ${
-              expanded ? 'rotate-180' : ''
-            }`}
-          />
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => selectLetter('TODAS')}
+          className={`flex-1 min-h-10 sm:min-h-9 px-3 rounded-button text-xs font-bold border touch-manipulation ${
+            selectedLetter === 'TODAS'
+              ? 'bg-emerald-500 text-stone-950 border-emerald-400 shadow-md shadow-emerald-500/20'
+              : 'bg-stone-800/90 light:bg-stone-100 text-stone-200 light:text-stone-800 border-stone-700/80 light:border-stone-200 active:bg-stone-700 light:hover:bg-stone-200'
+          }`}
+        >
+          Todas as músicas
+          <span className="ml-1.5 font-mono text-[10px] opacity-70">
+            ({letterCounts.TODAS})
+          </span>
         </button>
 
-        {!expanded && selectedLetter !== 'TODAS' && (
+        {selectedLetter !== 'TODAS' && (
           <button
             type="button"
-            onClick={() => onSelectLetter('TODAS')}
-            className="shrink-0 min-h-9 px-2.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-[11px] font-bold border border-stone-700 touch-manipulation flex items-center gap-1"
-            title="Limpar filtro alfabético"
+            onClick={() => selectLetter('TODAS')}
+            className="min-h-10 sm:min-h-9 px-2.5 bg-stone-800 light:bg-stone-100 hover:bg-stone-700 light:hover:bg-stone-200 text-stone-300 light:text-stone-700 rounded-button text-[11px] font-bold border border-stone-700 light:border-stone-200 shrink-0 touch-manipulation flex items-center gap-1"
+            title="Limpar filtro"
           >
             <X className="w-3.5 h-3.5" />
-            <span>Limpar</span>
           </button>
         )}
       </div>
 
-      {expanded && (
-        <div className="px-3 pb-3 sm:px-4 sm:pb-4 space-y-3 border-t border-stone-800 pt-3">
-          <div className="flex items-center justify-between gap-2">
+      <div
+        className="grid grid-cols-7 sm:grid-cols-10 md:grid-cols-[repeat(14,minmax(0,1fr))] gap-1.5"
+        role="group"
+        aria-label="Filtrar por letra inicial"
+      >
+        {LETTERS.map((letter) => {
+          const count = letterCounts[letter] || 0;
+          const isSelected = selectedLetter === letter;
+          const hasSongs = count > 0;
+
+          return (
             <button
+              key={letter}
               type="button"
-              onClick={() => selectLetter('TODAS')}
-              className={`flex-1 min-h-10 sm:min-h-9 px-3 rounded-button text-xs font-bold border touch-manipulation ${
-                selectedLetter === 'TODAS'
-                  ? 'bg-emerald-500 text-stone-950 border-emerald-400 shadow-md shadow-emerald-500/20'
-                  : 'bg-stone-800/90 text-stone-200 border-stone-700/80 active:bg-stone-700'
-              }`}
+              disabled={!hasSongs}
+              onClick={() => selectLetter(letter)}
+              className={letterButtonClass(hasSongs, isSelected)}
+              title={
+                hasSongs
+                  ? `Títulos iniciados com "${letter}" (${count})`
+                  : `Nenhum título com "${letter}"`
+              }
+              aria-pressed={isSelected}
             >
-              Todas as músicas
-              <span className="ml-1.5 font-mono text-[10px] opacity-70">
-                ({letterCounts.TODAS})
-              </span>
+              {letter}
             </button>
-
-            {selectedLetter !== 'TODAS' && (
-              <button
-                type="button"
-                onClick={() => selectLetter('TODAS')}
-                className="min-h-10 sm:min-h-9 px-2.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-[11px] font-bold border border-stone-700 shrink-0 touch-manipulation flex items-center gap-1"
-                title="Limpar filtro"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          <div
-            className="grid grid-cols-7 sm:grid-cols-10 md:grid-cols-[repeat(14,minmax(0,1fr))] gap-1.5"
-            role="group"
-            aria-label="Filtrar por letra inicial"
-          >
-            {LETTERS.map((letter) => {
-              const count = letterCounts[letter] || 0;
-              const isSelected = selectedLetter === letter;
-              const hasSongs = count > 0;
-
-              return (
-                <button
-                  key={letter}
-                  type="button"
-                  disabled={!hasSongs}
-                  onClick={() => selectLetter(letter)}
-                  className={letterButtonClass(letter, hasSongs, isSelected)}
-                  title={
-                    hasSongs
-                      ? `Títulos iniciados com "${letter}" (${count})`
-                      : `Nenhum título com "${letter}"`
-                  }
-                  aria-pressed={isSelected}
-                >
-                  {letter}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+          );
+        })}
+      </div>
     </div>
   );
 };

@@ -31,17 +31,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {children}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-[100] px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 font-medium text-xs border animate-in fade-in slide-in-from-bottom-2 duration-200 ${
+          className={`fixed bottom-6 right-6 z-[100] px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2 font-semibold text-xs border animate-in fade-in slide-in-from-bottom-2 duration-200 ${
             toast.kind === 'error'
-              ? 'bg-stone-900 border-rose-500/50 text-rose-200'
-              : 'bg-stone-900 border-emerald-500/50 text-emerald-200'
+              ? 'bg-stone-900 light:bg-white border-rose-500/50 light:border-rose-300 text-rose-200 light:text-rose-800'
+              : 'bg-stone-900 light:bg-white border-emerald-500/50 light:border-emerald-300 text-emerald-200 light:text-emerald-800'
           }`}
           role="status"
         >
           {toast.kind === 'error' ? (
-            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            <AlertCircle className="w-4 h-4 text-rose-400 light:text-rose-600 shrink-0" />
           ) : (
-            <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+            <Check className="w-4 h-4 text-emerald-400 light:text-emerald-600 shrink-0" />
           )}
           <span>{toast.message}</span>
         </div>

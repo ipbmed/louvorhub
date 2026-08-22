@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { ViewMode } from '../types';
 import { PublicEventsFab } from './PublicEventsFab';
+import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
   currentView: ViewMode;
@@ -23,6 +24,7 @@ interface HeaderProps {
   isAdmin: boolean;
   isAuthenticated: boolean;
   onAdminAuthClick: () => void;
+  onRegisterClick?: () => void;
   onSignOut?: () => void;
   favoritesCount: number;
   showFavoritesOnly: boolean;
@@ -44,6 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
   isAdmin,
   isAuthenticated,
   onAdminAuthClick,
+  onRegisterClick,
   onSignOut,
   favoritesCount,
   showFavoritesOnly,
@@ -87,11 +90,11 @@ export const Header: React.FC<HeaderProps> = ({
                 <BookOpen className="w-6 h-6" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-2xl font-display font-bold tracking-tight bg-gradient-to-r from-emerald-200 via-emerald-100 to-emerald-400 bg-clip-text text-transparent truncate">
+                <h1 className="text-lg sm:text-2xl font-display font-bold tracking-tight bg-gradient-to-r from-emerald-200 via-emerald-100 to-emerald-400 light:from-emerald-700 light:via-emerald-600 light:to-emerald-800 bg-clip-text text-transparent truncate">
                   LouvorHub
                 </h1>
-                <p className="hidden sm:block text-[10px] sm:text-xs text-emerald-200/70 font-medium tracking-wider uppercase truncate">
-                  Plataforma & Caderno de Louvor
+                <p className="hidden sm:block text-[10px] sm:text-xs text-emerald-200/70 light:text-emerald-700/80 font-medium tracking-wider uppercase truncate">
+                  IPB MEDIANEIRA
                 </p>
               </div>
             </div>
@@ -115,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({
                 type="button"
                 onClick={onOpenKeypad}
                 title="Teclado numérico rápido"
-                className="absolute right-1.5 top-1.5 px-2 py-1 bg-stone-700/80 hover:bg-stone-700 text-emerald-300 rounded-button text-xs font-mono font-semibold flex items-center gap-1 border border-stone-600 transition-colors"
+                className="absolute right-1.5 top-1.5 px-2 py-1 bg-stone-700/80 hover:bg-stone-700 text-emerald-300 rounded-button text-xs font-mono font-semibold flex items-center gap-1 border border-stone-600 transition-colors light:bg-emerald-100 light:hover:bg-emerald-200 light:text-emerald-900 light:border-emerald-300"
               >
                 <Grid className="w-3 h-3" />
                 Nº
@@ -133,6 +136,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Direita — ações */}
           <div className="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0 ml-auto">
+            <ThemeToggle />
             <PublicEventsFab enabled={showPublicEvents} />
 
             {isAuthenticated && (
@@ -164,6 +168,18 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">Nova Música</span>
+              </button>
+            )}
+
+            {!isAuthenticated && onRegisterClick && (
+              <button
+                type="button"
+                onClick={onRegisterClick}
+                className="p-2 sm:px-3 sm:py-2 rounded-button text-xs font-medium flex items-center gap-1.5 transition-all border bg-stone-800/80 text-stone-300 border-stone-700 hover:bg-stone-700/80 hover:text-stone-100"
+                title="Criar conta"
+              >
+                <span className="hidden sm:inline">Cadastrar</span>
+                <span className="sm:hidden">+</span>
               </button>
             )}
 
@@ -208,7 +224,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onOpenKeypad}
-              className="absolute right-1 top-1 px-2 py-1 bg-stone-700 text-emerald-300 rounded-button text-[10px] font-mono font-bold flex items-center gap-1"
+              className="absolute right-1 top-1 px-2 py-1 bg-stone-700 text-emerald-300 rounded-button text-[10px] font-mono font-bold flex items-center gap-1 border border-stone-600 light:bg-emerald-100 light:hover:bg-emerald-200 light:text-emerald-900 light:border-emerald-300 transition-colors"
             >
               <Grid className="w-3 h-3" />
               Nº

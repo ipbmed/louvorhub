@@ -23,7 +23,6 @@ function toSetlist(p: DbPlaylist, opts?: { canEdit?: boolean; shares?: PlaylistS
   return {
     id: p.id,
     title: p.title,
-    date: p.purpose || p.created_at.slice(0, 10),
     createdAt: p.created_at,
     orgId: null,
     groupId: null,
@@ -139,7 +138,6 @@ export async function upsertSetlist(
     org_id: null,
     created_by: userId,
     title: setlist.title,
-    purpose: setlist.date || null,
     visibility,
     kind,
     group_id: null,

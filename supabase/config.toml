@@ -17,3 +17,6 @@ enable_confirmations = false
 
 [functions.create-member]
 verify_jwt = true
+
+[functions.register-account]
+verify_jwt = false

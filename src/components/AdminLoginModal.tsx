@@ -1,22 +1,37 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Mail, ShieldCheck, AlertCircle, Info, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthProvider';
 
 interface AdminLoginModalProps {
   onClose: () => void;
   onSent?: () => void;
+  onGoToRegister?: () => void;
 }
 
-export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSent }) => {
-  const { signInWithEmail, configured } = useAuth();
+export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
+  onClose,
+  onSent,
+  onGoToRegister,
+}) => {
+  const { signInWithEmail, configured, authNotice, clearAuthNotice } = useAuth();
   const [email, setEmail] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (authNotice) setErrorMsg(authNotice);
+  }, [authNotice]);
+
+  const handleClose = () => {
+    clearAuthNotice();
+    onClose();
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
+    clearAuthNotice();
     if (!configured) {
       setErrorMsg('Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.');
       return;
@@ -37,24 +52,24 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSen
       <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl text-stone-100 relative">
         <div className="flex items-center justify-between pb-4 border-b border-stone-800 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-bold border border-emerald-500/30 shadow-inner">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 light:bg-emerald-100 text-emerald-300 light:text-emerald-800 flex items-center justify-center font-bold border border-emerald-500/30 light:border-emerald-300 shadow-inner">
               <Mail className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-xl font-display font-bold text-emerald-100 tracking-tight">Entrar no LouvorHub</h3>
-              <p className="text-xs text-stone-400">Magic link por e-mail (Supabase Auth)</p>
+              <h3 className="text-xl font-display font-bold text-emerald-100 light:text-stone-900 tracking-tight">Entrar no LouvorHub</h3>
+              <p className="text-xs text-stone-400 light:text-stone-500">Magic link por e-mail</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button">
+          <button onClick={handleClose} className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="bg-emerald-950/40 border border-emerald-800/40 rounded-2xl p-3.5 mb-6 text-xs text-emerald-200/90 flex items-start gap-2.5">
-          <Info className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+        <div className="bg-emerald-950/40 light:bg-emerald-50 border border-emerald-800/40 light:border-emerald-200 rounded-2xl p-3.5 mb-6 text-xs text-emerald-200/90 light:text-emerald-800 flex items-start gap-2.5">
+          <Info className="w-4 h-4 text-emerald-400 light:text-emerald-600 shrink-0 mt-0.5" />
           <p>
-            Enviaremos um link de acesso para o seu e-mail. Após clicar no link, você volta ao app
-            autenticado e com permissões da(s) sua(s) igreja(s).
+            Só contas já cadastradas e aprovadas recebem magic link. Se ainda não tem cadastro, crie
+            sua conta e aguarde a aprovação do administrador.
           </p>
         </div>
 
@@ -73,7 +88,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSen
               Verifique sua caixa de entrada ({email}) e abra o magic link para entrar.
             </p>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="mt-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 rounded-button text-xs font-semibold"
             >
               Fechar
@@ -100,6 +115,21 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ onClose, onSen
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
               <span>Enviar magic link</span>
             </button>
+            {onGoToRegister && (
+              <p className="text-xs text-stone-500 text-center pt-1">
+                Ainda não tem cadastro?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleClose();
+                    onGoToRegister();
+                  }}
+                  className="text-emerald-400 hover:text-emerald-300 font-semibold"
+                >
+                  Criar conta
+                </button>
+              </p>
+            )}
           </form>
         )}
       </div>

@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Square, Volume2 } from 'lucide-react';
-import { playMetronomeClick } from '../utils/audioTone';
+import { Play, Square } from 'lucide-react';
+import {
+  getAudioContext,
+  scheduleMetronomeClick,
+  unlockAudio,
+} from '../utils/audioTone';
 
 interface MetronomeToolProps {
   initialBpm?: number;
@@ -13,39 +17,95 @@ function clampBpm(value: number | null | undefined, fallback = 90): number {
 
 export const MetronomeTool: React.FC<MetronomeToolProps> = ({ initialBpm = 90 }) => {
   const [bpm, setBpm] = useState<number>(() => clampBpm(initialBpm));
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [beat, setBeat] = useState<number>(1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [beat, setBeat] = useState(1);
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const bpmRef = useRef(bpm);
+  const nextNoteTimeRef = useRef(0);
+  const beatRef = useRef(1);
+  const timerIdRef = useRef<number | null>(null);
+  const playingRef = useRef(false);
 
   useEffect(() => {
     setBpm(clampBpm(initialBpm));
   }, [initialBpm]);
 
   useEffect(() => {
-    if (isPlaying) {
-      const intervalMs = (60 / bpm) * 1000;
-      timerRef.current = setInterval(() => {
-        setBeat(prev => {
-          const next = prev === 4 ? 1 : prev + 1;
-          playMetronomeClick(next === 1);
-          return next;
-        });
-      }, intervalMs);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
+    bpmRef.current = bpm;
+  }, [bpm]);
+
+  useEffect(() => {
+    return () => {
+      playingRef.current = false;
+      if (timerIdRef.current != null) {
+        window.clearTimeout(timerIdRef.current);
+        timerIdRef.current = null;
+      }
+    };
+  }, []);
+
+  const stopScheduler = () => {
+    playingRef.current = false;
+    if (timerIdRef.current != null) {
+      window.clearTimeout(timerIdRef.current);
+      timerIdRef.current = null;
+    }
+  };
+
+  const schedulerTick = () => {
+    if (!playingRef.current) return;
+
+    const ctx = getAudioContext();
+    const scheduleAhead = 0.12;
+
+    while (nextNoteTimeRef.current < ctx.currentTime + scheduleAhead) {
+      const accent = beatRef.current === 1;
+      scheduleMetronomeClick(nextNoteTimeRef.current, accent);
+
+      const visualBeat = beatRef.current;
+      const delayMs = Math.max(0, (nextNoteTimeRef.current - ctx.currentTime) * 1000);
+      window.setTimeout(() => {
+        if (playingRef.current) setBeat(visualBeat);
+      }, delayMs);
+
+      const secondsPerBeat = 60 / bpmRef.current;
+      nextNoteTimeRef.current += secondsPerBeat;
+      beatRef.current = beatRef.current === 4 ? 1 : beatRef.current + 1;
     }
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isPlaying, bpm]);
+    timerIdRef.current = window.setTimeout(schedulerTick, 25);
+  };
+
+  const handleToggle = async () => {
+    if (isPlaying) {
+      stopScheduler();
+      setIsPlaying(false);
+      setBeat(1);
+      beatRef.current = 1;
+      return;
+    }
+
+    try {
+      const ctx = await unlockAudio();
+      beatRef.current = 1;
+      setBeat(1);
+      nextNoteTimeRef.current = ctx.currentTime + 0.05;
+      playingRef.current = true;
+      setIsPlaying(true);
+      schedulerTick();
+    } catch (err) {
+      console.warn('Não foi possível iniciar o metrônomo:', err);
+      stopScheduler();
+      setIsPlaying(false);
+    }
+  };
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-stone-200">
       <div className="flex items-center gap-3">
         <button
-          onClick={() => setIsPlaying(!isPlaying)}
+          type="button"
+          onClick={() => void handleToggle()}
           className={`p-2.5 rounded-button font-bold flex items-center gap-2 shadow-md transition-all ${
             isPlaying ? 'bg-rose-600 text-white' : 'bg-emerald-500 text-stone-950 hover:bg-emerald-400'
           }`}
@@ -63,7 +123,6 @@ export const MetronomeTool: React.FC<MetronomeToolProps> = ({ initialBpm = 90 })
           )}
         </button>
 
-        {/* Beats Visualizer */}
         <div className="flex items-center gap-1">
           {[1, 2, 3, 4].map((b) => (
             <div
@@ -80,7 +139,6 @@ export const MetronomeTool: React.FC<MetronomeToolProps> = ({ initialBpm = 90 })
         </div>
       </div>
 
-      {/* BPM Slider & Display */}
       <div className="flex items-center gap-3 flex-1 max-w-xs">
         <span className="font-mono font-bold text-emerald-300 min-w-[60px]">{bpm} BPM</span>
         <input

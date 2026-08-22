@@ -7,12 +7,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-type GrantInput = {
-  role: string;
-  orgId?: string;
-  groupId?: string;
-};
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -51,10 +45,10 @@ Deno.serve(async (req) => {
     const skills = Array.isArray(body.skills)
       ? body.skills.map((s: unknown) => String(s).trim()).filter(Boolean)
       : [];
-    const grants = Array.isArray(body.grants) ? (body.grants as GrantInput[]) : [];
+    const grants = Array.isArray(body.grants) ? body.grants : [];
 
-    if (!orgId || !name) {
-      return json({ error: "Nome e organização são obrigatórios." }, 400);
+    if (!orgId || !name || !emailRaw) {
+      return json({ error: "Nome, e-mail e organização são obrigatórios." }, 400);
     }
 
     const admin = createClient(supabaseUrl, serviceKey);
@@ -82,89 +76,30 @@ Deno.serve(async (req) => {
       }
     }
 
-    const authEmail =
-      emailRaw || `member-${crypto.randomUUID()}@no-login.louvorhub.local`;
-
-    let userId: string | null = null;
-
-    const { data: created, error: createError } = await admin.auth.admin.createUser({
-      email: authEmail,
-      email_confirm: true,
-      password: `${crypto.randomUUID()}Aa1!`,
-      user_metadata: { display_name: name },
+    const { data: userId, error: rpcError } = await admin.rpc("create_org_member", {
+      p_org_id: orgId,
+      p_name: name,
+      p_email: emailRaw,
+      p_phone: phone || null,
+      p_birth_date: birthDate || null,
+      p_skills: skills,
+      p_church_id: churchId || null,
+      p_status: status,
+      p_is_admin: wantAdmin && isSystemAdmin,
     });
 
-    if (createError) {
-      const msg = createError.message || "";
-      const already =
-        /already|registered|exists|duplicate/i.test(msg) && Boolean(emailRaw);
-      if (!already) {
-        return json({ error: msg || "Falha ao criar usuário no Auth." }, 400);
-      }
-
-      // Usuário já existe: vincula à org
-      const { data: listed, error: listError } = await admin.auth.admin.listUsers({
-        page: 1,
-        perPage: 200,
-      });
-      if (listError) {
-        return json({ error: listError.message }, 400);
-      }
-      const found = (listed.users || []).find(
-        (u) => (u.email || "").toLowerCase() === emailRaw,
-      );
-      if (!found) {
-        return json(
-          {
-            error:
-              "Este e-mail já está cadastrado, mas não foi possível localizar o usuário. Peça para ele entrar com magic link e usar o código da igreja.",
-          },
-          400,
-        );
-      }
-      userId = found.id;
-    } else {
-      userId = created.user?.id ?? null;
+    if (rpcError) {
+      return json({ error: rpcError.message }, 400);
     }
 
     if (!userId) {
       return json({ error: "Não foi possível obter o id do usuário." }, 400);
     }
 
-    const { error: profileError } = await admin
-      .from("profiles")
-      .update({
-        display_name: name,
-        phone: phone || null,
-        birth_date: birthDate || null,
-        skills,
-        main_role: skills[0] || null,
-        church_id: churchId || null,
-        is_admin: wantAdmin && isSystemAdmin,
-      })
-      .eq("id", userId);
-
-    if (profileError) {
-      return json({ error: profileError.message }, 400);
-    }
-
-    const { error: memError } = await admin.from("memberships").upsert(
-      {
-        org_id: orgId,
-        user_id: userId,
-        role: "member",
-        status,
-      },
-      { onConflict: "org_id,user_id" },
-    );
-    if (memError) {
-      return json({ error: memError.message }, 400);
-    }
-
     if (!(wantAdmin && isSystemAdmin) && grants.length) {
       await admin.from("resource_grants").delete().eq("user_id", userId);
       const rows = grants
-        .map((g) => {
+        .map((g: { role?: string; orgId?: string; groupId?: string }) => {
           if (g.role === "group_editor") {
             if (!g.groupId) return null;
             return {

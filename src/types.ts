@@ -94,7 +94,8 @@ export interface PlaylistShare {
 export interface Setlist {
   id: string;
   title: string;
-  date: string;
+  /** Data do evento (repertórios virtuais); playlists pessoais não usam. */
+  date?: string;
   items: SetlistItem[];
   createdAt: string;
   orgId?: string | null;
@@ -154,6 +155,21 @@ export interface ResourceGrant {
   role: GrantRole;
   orgId?: string;
   groupId?: string;
+}
+
+export type AccountStatus = 'pending' | 'approved' | 'rejected';
+
+export interface RegisteredUser {
+  id: string;
+  email: string;
+  display_name: string;
+  name?: string;
+  phone?: string | null;
+  account_status: AccountStatus;
+  status?: AccountStatus;
+  is_admin?: boolean;
+  approved_at?: string | null;
+  created_at?: string;
 }
 
 export interface SystemUser {
@@ -301,12 +317,14 @@ export interface Liturgy {
 
 export type ViewMode =
   | 'public'
+  | 'register'
   | 'setlist'
   | 'churches'
   | 'events'
   | 'schedules'
   | 'liturgies'
   | 'users'
+  | 'accounts'
   | 'admin'
   | 'profile';
 export type ThemeMode = 'light' | 'dark' | 'navy';

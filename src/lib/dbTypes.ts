@@ -7,6 +7,7 @@ export type PlaylistSharePermission = 'view' | 'edit';
 export type ScheduleStatus = 'pending' | 'confirmed' | 'completed';
 export type AvailabilityStatus = 'pending' | 'confirmed' | 'declined';
 export type MemberStatus = 'active' | 'inactive';
+export type AccountStatus = 'pending' | 'approved' | 'rejected';
 
 export interface DbProfile {
   id: string;
@@ -20,6 +21,9 @@ export interface DbProfile {
   church_id?: string | null;
   /** Admin global do sistema */
   is_admin?: boolean;
+  account_status?: AccountStatus;
+  approved_at?: string | null;
+  approved_by?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -157,7 +161,6 @@ export interface DbPlaylist {
   group_id: string | null;
   created_by: string | null;
   title: string;
-  purpose: string | null;
   visibility: PlaylistVisibility;
   kind?: PlaylistKind;
   share_code: string;

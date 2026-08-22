@@ -8,9 +8,10 @@ import {
   Radio, 
   Music, 
   Volume2, 
-  Link as LinkIcon 
+  Link as LinkIcon,
+  ChevronDown,
 } from 'lucide-react';
-import { Song, MediaLink, MediaLinkType } from '../types';
+import { Song, MediaLink } from '../types';
 import { 
   getCombinedMediaLinks, 
   getYouTubeVideoId, 
@@ -26,6 +27,9 @@ interface SongMediaPlayerProps {
   otherMediaUrl?: string;
   title?: string;
   compact?: boolean;
+  /** Quando definido, o painel é controlado pelo pai (toolbar da letra). */
+  expanded?: boolean;
+  onExpandedChange?: (open: boolean) => void;
 }
 
 export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
@@ -36,14 +40,20 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
   otherMediaUrl,
   title,
   compact = false,
+  expanded,
+  onExpandedChange,
 }) => {
-  // Combine all media links from song or props
   const allLinks = getCombinedMediaLinks(
     song || { mediaLinks: explicitLinks, youtubeUrl, spotifyUrl, otherMediaUrl }
   );
 
-  // Active embedded media item ID being played
   const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const mediaExpanded = expanded ?? internalExpanded;
+  const setMediaExpanded = (open: boolean) => {
+    if (onExpandedChange) onExpandedChange(open);
+    else setInternalExpanded(open);
+  };
 
   if (allLinks.length === 0) {
     return null;
@@ -56,27 +66,30 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
     switch (link.type) {
       case 'youtube':
         return {
-          icon: <Youtube className="w-3.5 h-3.5 text-red-500 shrink-0" />,
+          icon: <Youtube className="w-3.5 h-3.5 text-red-400 light:text-red-600 shrink-0" />,
           label: link.title || 'YouTube',
-          bgColor: 'bg-red-950/40 hover:bg-red-900/50 text-red-300 border-red-900/60',
+          bgColor:
+            'bg-red-950/40 hover:bg-red-900/50 text-red-300 border-red-900/60 light:bg-red-50 light:hover:bg-red-100 light:text-red-800 light:border-red-300',
           btnBg: 'bg-red-600 text-white hover:bg-red-500',
           canEmbed: !!getYouTubeVideoId(link.url),
           typeTitle: 'YouTube',
         };
       case 'ytmusic':
         return {
-          icon: <Music className="w-3.5 h-3.5 text-rose-400 shrink-0" />,
+          icon: <Music className="w-3.5 h-3.5 text-rose-400 light:text-rose-600 shrink-0" />,
           label: link.title || 'YouTube Music',
-          bgColor: 'bg-rose-950/40 hover:bg-rose-900/50 text-rose-300 border-rose-900/60',
+          bgColor:
+            'bg-rose-950/40 hover:bg-rose-900/50 text-rose-300 border-rose-900/60 light:bg-rose-50 light:hover:bg-rose-100 light:text-rose-800 light:border-rose-300',
           btnBg: 'bg-rose-600 text-white hover:bg-rose-500',
           canEmbed: !!getYouTubeVideoId(link.url),
           typeTitle: 'YouTube Music',
         };
       case 'spotify':
         return {
-          icon: <Disc className="w-3.5 h-3.5 text-emerald-400 shrink-0" />,
+          icon: <Disc className="w-3.5 h-3.5 text-emerald-400 light:text-emerald-600 shrink-0" />,
           label: link.title || 'Spotify',
-          bgColor: 'bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 border-emerald-900/60',
+          bgColor:
+            'bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 border-emerald-900/60 light:bg-emerald-50 light:hover:bg-emerald-100 light:text-emerald-800 light:border-emerald-300',
           btnBg: 'bg-emerald-600 text-stone-950 hover:bg-emerald-500 font-bold',
           canEmbed: !!getSpotifyEmbedUrl(link.url),
           typeTitle: 'Spotify',
@@ -85,12 +98,13 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
       default:
         return {
           icon: isDirectAudioUrl(link.url) ? (
-            <Volume2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <Volume2 className="w-3.5 h-3.5 text-emerald-400 light:text-emerald-600 shrink-0" />
           ) : (
-            <LinkIcon className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+            <LinkIcon className="w-3.5 h-3.5 text-stone-400 light:text-stone-600 shrink-0" />
           ),
           label: link.title || (isDirectAudioUrl(link.url) ? 'Áudio MP3' : 'Link de Mídia'),
-          bgColor: 'bg-stone-900/90 hover:bg-stone-800 text-stone-200 border-stone-750',
+          bgColor:
+            'bg-stone-900/90 hover:bg-stone-800 text-stone-200 border-stone-700 light:bg-stone-50 light:hover:bg-stone-100 light:text-stone-800 light:border-stone-300',
           btnBg: 'bg-emerald-600 text-stone-950 hover:bg-emerald-500 font-bold',
           canEmbed: isDirectAudioUrl(link.url),
           typeTitle: 'Áudio / Link',
@@ -216,23 +230,51 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
     );
   }
 
-  // Expanded layout (used on SongDetailModal)
+  // Expanded layout (used on SongDetailModal) — collapsed by default
+  if (!mediaExpanded) {
+    if (expanded !== undefined) return null;
+    return (
+      <div className="my-2">
+        <button
+          type="button"
+          onClick={() => setMediaExpanded(true)}
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-button text-xs font-semibold border transition-colors bg-stone-800 light:bg-white border-stone-700 light:border-stone-300 text-stone-200 light:text-stone-800 hover:border-emerald-500/50 light:hover:border-emerald-400 hover:text-emerald-300 light:hover:text-emerald-700"
+        >
+          <Radio className="w-3.5 h-3.5 text-emerald-400 light:text-emerald-600 shrink-0" aria-hidden />
+          <span>Links</span>
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 light:bg-emerald-50 border border-emerald-500/30 light:border-emerald-200 text-emerald-300 light:text-emerald-800">
+            {allLinks.length}
+          </span>
+          <ChevronDown className="w-3.5 h-3.5 text-stone-400 light:text-stone-500" aria-hidden />
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-stone-950/90 border border-stone-800/90 rounded-2xl p-4 my-4 shadow-inner space-y-3">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-stone-800/80 pb-2.5">
-        <div className="flex items-center gap-2">
-          <Radio className="w-4 h-4 text-emerald-400" />
-          <h4 className="text-xs font-bold text-stone-200 uppercase tracking-wider">
-            Links & Gravações do Louvor
+    <div className="bg-stone-900 light:bg-white border border-stone-800 light:border-stone-200 rounded-2xl p-4 my-2 shadow-sm space-y-3">
+      <div className="flex items-center justify-between gap-2 border-b border-stone-800 light:border-stone-200 pb-2.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <Radio className="w-4 h-4 text-emerald-400 light:text-emerald-600 shrink-0" aria-hidden />
+          <h4 className="text-xs font-bold text-stone-100 light:text-stone-900 uppercase tracking-wider truncate">
+            Links
           </h4>
         </div>
-        <span className="text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-2 py-0.5 rounded-full font-mono font-bold">
-          {allLinks.length} link(s) disponível(is)
-        </span>
+        <button
+          type="button"
+          onClick={() => {
+            setMediaExpanded(false);
+            setActiveEmbedId(null);
+          }}
+          className="inline-flex items-center gap-1 px-2 py-1 rounded-button text-[10px] font-semibold text-stone-400 light:text-stone-600 hover:text-stone-100 light:hover:text-stone-900 hover:bg-stone-800 light:hover:bg-stone-100 transition-colors shrink-0"
+          title="Fechar links"
+          aria-label="Fechar links"
+        >
+          <X className="w-3.5 h-3.5" aria-hidden />
+          <span className="hidden sm:inline">Fechar</span>
+        </button>
       </div>
 
-      {/* Media Links Grid / List */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         {allLinks.map((link) => {
           const meta = getLinkMeta(link);
@@ -243,26 +285,26 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
               key={link.id}
               className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-3 ${
                 isPlaying
-                  ? 'bg-stone-900 border-emerald-500 shadow-md shadow-emerald-500/10'
-                  : 'bg-stone-900/60 border-stone-800 hover:border-stone-700'
+                  ? 'bg-stone-950 light:bg-emerald-50 border-emerald-500 light:border-emerald-400 shadow-md shadow-emerald-500/10'
+                  : 'bg-stone-950/60 light:bg-stone-50 border-stone-800 light:border-stone-200 hover:border-stone-700 light:hover:border-stone-300'
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="p-2 rounded-lg bg-stone-950 border border-stone-800 shrink-0">
+                <div className="p-2 rounded-lg bg-stone-900 light:bg-white border border-stone-800 light:border-stone-200 shrink-0">
                   {meta.icon}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-stone-200 truncate">
+                    <span className="text-xs font-bold text-stone-100 light:text-stone-900 truncate">
                       {link.title || meta.typeTitle}
                     </span>
                     {link.title && (
-                      <span className="text-[9px] font-mono text-stone-400 bg-stone-950 px-1.5 py-0.2 rounded border border-stone-800 shrink-0">
+                      <span className="text-[9px] font-mono text-stone-400 light:text-stone-600 bg-stone-900 light:bg-stone-100 px-1.5 py-0.5 rounded border border-stone-800 light:border-stone-200 shrink-0">
                         {meta.typeTitle}
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-stone-500 font-mono truncate max-w-[160px] sm:max-w-[200px]">
+                  <p className="text-[10px] text-stone-500 light:text-stone-500 font-mono truncate max-w-[160px] sm:max-w-[200px]">
                     {link.url}
                   </p>
                 </div>
@@ -276,7 +318,7 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
                     className={`px-2.5 py-1.5 rounded-button text-xs font-semibold flex items-center gap-1 transition-all ${
                       isPlaying
                         ? 'bg-emerald-500 text-stone-950 font-bold shadow-sm'
-                        : 'bg-stone-800 text-emerald-400 hover:bg-stone-750 border border-stone-700'
+                        : 'bg-stone-800 light:bg-white text-emerald-400 light:text-emerald-700 border border-stone-700 light:border-stone-300 hover:bg-stone-700 light:hover:bg-emerald-50'
                     }`}
                   >
                     <Play className="w-3 h-3 fill-current" />
@@ -288,7 +330,7 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="p-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-lg border border-stone-700 transition-colors"
+                  className="p-1.5 bg-stone-800 light:bg-white hover:bg-stone-700 light:hover:bg-stone-100 text-stone-300 light:text-stone-700 rounded-lg border border-stone-700 light:border-stone-300 transition-colors"
                   title="Abrir no aplicativo / site externo"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -299,18 +341,17 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
         })}
       </div>
 
-      {/* Embedded Player Box */}
       {activeEmbedId && activeLink && (
-        <div className="mt-3 rounded-xl overflow-hidden border border-emerald-800/60 bg-stone-950 p-3 space-y-2 animate-in fade-in duration-200">
+        <div className="mt-1 rounded-xl overflow-hidden border border-emerald-800/60 light:border-emerald-300 bg-stone-950 light:bg-stone-50 p-3 space-y-2 animate-in fade-in duration-200">
           <div className="flex items-center justify-between text-xs px-1">
-            <span className="text-emerald-300 font-bold flex items-center gap-2">
+            <span className="text-emerald-300 light:text-emerald-800 font-bold flex items-center gap-2">
               {getLinkMeta(activeLink).icon}
               Reproduzindo: {activeLink.title || getLinkMeta(activeLink).typeTitle}
             </span>
             <button
               type="button"
               onClick={() => setActiveEmbedId(null)}
-              className="text-stone-400 hover:text-stone-100 p-1 rounded bg-stone-900 border border-stone-800 rounded-button"
+              className="text-stone-400 light:text-stone-600 hover:text-stone-100 light:hover:text-stone-900 p-1 rounded bg-stone-900 light:bg-white border border-stone-800 light:border-stone-200 rounded-button"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -329,7 +370,7 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
           )}
 
           {activeLink.type === 'spotify' && getSpotifyEmbedUrl(activeLink.url) && (
-            <div className="rounded-xl overflow-hidden bg-stone-900 border border-stone-800 shadow-xl">
+            <div className="rounded-xl overflow-hidden bg-stone-900 light:bg-white border border-stone-800 light:border-stone-200 shadow-xl">
               <iframe
                 src={getSpotifyEmbedUrl(activeLink.url)!}
                 width="100%"
@@ -343,7 +384,7 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
           )}
 
           {activeLink.type === 'other' && isDirectAudioUrl(activeLink.url) && (
-            <div className="p-3 bg-stone-900 rounded-xl border border-stone-800">
+            <div className="p-3 bg-stone-900 light:bg-white rounded-xl border border-stone-800 light:border-stone-200">
               <audio controls autoPlay src={activeLink.url} className="w-full" />
             </div>
           )}

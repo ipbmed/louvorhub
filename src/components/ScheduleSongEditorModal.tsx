@@ -146,27 +146,27 @@ export const ScheduleSongEditorModal: React.FC<ScheduleSongEditorModalProps> = (
       <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-4xl overflow-hidden shadow-2xl max-h-[92vh] flex flex-col">
         
         {/* Modal Header */}
-        <div className="p-4 sm:p-5 bg-stone-950 border-b border-stone-800 flex items-start justify-between gap-3">
+        <div className="p-4 sm:p-5 bg-stone-950 light:bg-stone-50 border-b border-stone-800 light:border-stone-200 flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
+            <div className="p-2.5 bg-emerald-500/10 light:bg-emerald-100 border border-emerald-500/20 light:border-emerald-300 text-emerald-400 light:text-emerald-700 rounded-xl">
               <Edit3 className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800/60 uppercase">
+                <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-emerald-950 light:bg-emerald-50 text-emerald-300 light:text-emerald-800 border border-emerald-800/60 light:border-emerald-200 uppercase">
                   Versão da Escala ({dateFormatted})
                 </span>
                 {isCustomized && (
-                  <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800/60">
+                  <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-emerald-950 light:bg-emerald-50 text-emerald-300 light:text-emerald-800 border border-emerald-800/60 light:border-emerald-200">
                     Cópia Customizada Ativa
                   </span>
                 )}
               </div>
-              <h3 className="text-base sm:text-lg font-display font-bold text-stone-100 mt-1 flex items-center gap-2">
+              <h3 className="text-base sm:text-lg font-display font-bold text-stone-100 light:text-stone-900 mt-1 flex items-center gap-2">
                 <span>{song.songType === 'hino' ? `Hino nº ${song.number} -` : ''} {song.title}</span>
               </h3>
-              <p className="text-xs text-stone-400 mt-0.5">
-                Edite a cifra, letra, tom e arranjo exclusivamente para a escala de <span className="text-emerald-300 font-semibold">{schedule.serviceType}</span>. O hino principal do catálogo não será alterado.
+              <p className="text-xs text-stone-400 light:text-stone-500 mt-0.5">
+                Edite a cifra, letra, tom e arranjo exclusivamente para a escala de <span className="text-emerald-300 light:text-emerald-700 font-semibold">{schedule.serviceType}</span>. O hino principal do catálogo não será alterado.
               </p>
             </div>
           </div>

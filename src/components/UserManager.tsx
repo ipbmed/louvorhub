@@ -22,6 +22,8 @@ import {
 import { PageHeader, PageHeaderButton } from './PageHeader';
 import { KNOWN_SKILLS } from '@/constants/skills';
 import { listAllVisibleOrganizations } from '@/services/organizations';
+import { lookupRegisteredUser } from '@/services/accounts';
+import type { RegisteredUser } from '@/types';
 
 interface UserManagerProps {
   systemUsers: SystemUser[];
@@ -65,6 +67,8 @@ export const UserManager: React.FC<UserManagerProps> = ({
   const [customSkill, setCustomSkill] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [allChurches, setAllChurches] = useState<Church[]>(churches);
+  const [lookedUpUser, setLookedUpUser] = useState<RegisteredUser | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
 
   useEffect(() => {
     if (!isModalOpen) return;
@@ -115,6 +119,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
     setUserForm({ ...EMPTY_FORM });
     setCustomSkill('');
     setFieldErrors({});
+    setLookedUpUser(null);
     setIsModalOpen(true);
   };
 
@@ -138,7 +143,28 @@ export const UserManager: React.FC<UserManagerProps> = ({
     });
     setCustomSkill('');
     setFieldErrors({});
+    setLookedUpUser(null);
     setIsModalOpen(true);
+  };
+
+  const lookupUserByEmail = async (email: string) => {
+    const trimmed = email.trim();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setLookedUpUser(null);
+      return;
+    }
+    setLookupLoading(true);
+    try {
+      const found = await lookupRegisteredUser(trimmed);
+      setLookedUpUser(found);
+      if (found && !userForm.name.trim()) {
+        setUserForm((prev) => ({ ...prev, name: found.display_name }));
+      }
+    } catch {
+      setLookedUpUser(null);
+    } finally {
+      setLookupLoading(false);
+    }
   };
 
   const toggleChurchGrant = (role: 'church_editor' | 'liturgo', orgId: string) => {
@@ -185,8 +211,16 @@ export const UserManager: React.FC<UserManagerProps> = ({
   const validate = () => {
     const next: Record<string, string> = {};
     if (!userForm.name.trim()) next.name = 'Nome é obrigatório.';
-    if (userForm.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userForm.email.trim())) {
+    if (!userForm.email.trim()) {
+      next.email = 'Informe o e-mail de um usuário já cadastrado.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userForm.email.trim())) {
       next.email = 'Informe um e-mail válido.';
+    } else if (!editingUser) {
+      if (!lookedUpUser) {
+        next.email = 'Usuário não encontrado. Cadastre a conta antes de associar à igreja.';
+      } else if (lookedUpUser.account_status !== 'approved') {
+        next.email = 'Este usuário ainda não foi aprovado pelo administrador.';
+      }
     }
     setFieldErrors(next);
     return Object.keys(next).length === 0;
@@ -198,7 +232,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
 
     const skills = userForm.skills.map(normalizeSkill).filter(Boolean);
     const userToSave: SystemUser = {
-      id: editingUser?.id || '',
+      id: editingUser?.id || lookedUpUser?.id || '',
       name: userForm.name.trim(),
       email: userForm.email.trim() || undefined,
       phone: userForm.phone.trim() || undefined,
@@ -228,10 +262,10 @@ export const UserManager: React.FC<UserManagerProps> = ({
       <PageHeader
         icon={Users}
         title="Usuários e Integrantes"
-        description="Gerencie integrantes dos grupos de louvor, vocais, instrumentistas e operadores."
+        description="Associe integrantes já cadastrados no sistema à igreja selecionada."
         actions={
           <PageHeaderButton icon={UserPlus} onClick={handleOpenNewModal}>
-            Adicionar
+            Associar
           </PageHeaderButton>
         }
       />
@@ -486,17 +520,19 @@ export const UserManager: React.FC<UserManagerProps> = ({
                 <label className="block text-xs font-semibold text-stone-300 mb-1">
                   E-mail{' '}
                   <span className="text-stone-500 font-normal">
-                    {editingUser ? '(login)' : '(recomendado para login)'}
+                    {editingUser ? '(login)' : '(obrigatório · usuário cadastrado)'}
                   </span>
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-stone-500 absolute left-3 top-2.5" />
                   <input
                     type="email"
+                    required
                     placeholder="usuario@email.com"
                     value={userForm.email}
                     onChange={(e) => {
                       setUserForm({ ...userForm, email: e.target.value });
+                      setLookedUpUser(null);
                       if (fieldErrors.email) {
                         setFieldErrors((prev) => {
                           const next = { ...prev };
@@ -505,16 +541,27 @@ export const UserManager: React.FC<UserManagerProps> = ({
                         });
                       }
                     }}
-                    className={`w-full bg-stone-950 border rounded-xl p-2.5 pl-9 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
+                    onBlur={() => {
+                      if (!editingUser) void lookupUserByEmail(userForm.email);
+                    }}
+                    disabled={Boolean(editingUser)}
+                    className={`w-full bg-stone-950 border rounded-xl p-2.5 pl-9 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-70 ${
                       fieldErrors.email ? 'border-rose-600' : 'border-stone-800'
                     }`}
                   />
                 </div>
                 {fieldErrors.email ? (
                   <p className="text-[11px] text-rose-300 mt-1">{fieldErrors.email}</p>
+                ) : lookupLoading ? (
+                  <p className="text-[11px] text-stone-500 mt-1">Verificando cadastro...</p>
+                ) : lookedUpUser ? (
+                  <p className="text-[11px] text-emerald-300 mt-1">
+                    Cadastro encontrado: {lookedUpUser.display_name} (
+                    {lookedUpUser.account_status === 'approved' ? 'aprovado' : lookedUpUser.account_status})
+                  </p>
                 ) : (
                   <p className="text-[11px] text-stone-500 mt-1">
-                    Sem e-mail o usuário não consegue fazer login.
+                    A pessoa precisa criar conta em Cadastro geral e ser aprovada antes de entrar na igreja.
                   </p>
                 )}
               </div>

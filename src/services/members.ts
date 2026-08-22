@@ -97,6 +97,10 @@ async function createSystemUser(orgId: string, user: SystemUser): Promise<System
   const sb = requireSupabase();
   const skills = (user.skills || []).map((s) => s.trim()).filter(Boolean);
 
+  if (!user.email?.trim()) {
+    throw new Error('Informe o e-mail de um usuário já cadastrado no sistema.');
+  }
+
   const { data: userId, error } = await sb.rpc('create_org_member', {
     p_org_id: orgId,
     p_name: user.name.trim(),

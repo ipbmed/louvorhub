@@ -39,11 +39,14 @@ import { SongDetailModal } from './components/SongDetailModal';
 import { SongProjectionModal } from './components/SongProjectionModal';
 import { NumericKeypadModal } from './components/NumericKeypadModal';
 import { AdvancedSearchModal, SearchFilters } from './components/AdvancedSearchModal';
+import { AppliedAdvancedFiltersBar } from './components/AppliedAdvancedFiltersBar';
 import { SetlistManager } from './components/SetlistManager';
 import { AddToSetlistModal } from './components/AddToSetlistModal';
 import { PublicSetlistPage } from './components/PublicSetlistPage';
 import { PublicEventPage } from './components/PublicEventPage';
 import { AdminLoginModal } from './components/AdminLoginModal';
+import { RegisterPage } from './components/RegisterPage';
+import { AccountManager } from './components/AccountManager';
 import { AdminDashboard } from './components/AdminDashboard';
 import { SongFormModal } from './components/SongFormModal';
 import { CategoryManagerModal } from './components/CategoryManagerModal';
@@ -52,7 +55,8 @@ import { ChurchManager } from './components/ChurchManager';
 import { EventManager } from './components/EventManager';
 import { EventDetail } from './components/EventDetail';
 import { UserManager } from './components/UserManager';
-import { AlphabetFilter } from './components/AlphabetFilter';
+import { AlphabetFilter, AlphabetFilterToggle } from './components/AlphabetFilter';
+import { SongTypeFilter, matchesSongTypeFilter } from './components/SongTypeFilter';
 import { AppSidebar } from './components/AppSidebar';
 import { ProfilePage } from './components/ProfilePage';
 import { Music, ArrowUpDown, AlertCircle, LayoutGrid, List, Loader2 } from 'lucide-react';
@@ -112,6 +116,9 @@ export default function App() {
   const [currentView, setCurrentView] = useState<ViewMode>('public');
   const [activeCategoryPill, setActiveCategoryPill] = useState('Todos');
   const [selectedLetter, setSelectedLetter] = useState('TODAS');
+  const [alphabetExpanded, setAlphabetExpanded] = useState(false);
+  const [showHinos, setShowHinos] = useState(true);
+  const [showCanticos, setShowCanticos] = useState(true);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [quickQuery, setQuickQuery] = useState('');
   const [sortBy, setSortBy] = useState<'number' | 'title' | 'recent'>('number');
@@ -168,6 +175,7 @@ export default function App() {
     'setlist',
     'churches',
     'users',
+    'accounts',
     'events',
     'schedules',
     'liturgies',
@@ -188,6 +196,10 @@ export default function App() {
       }
       if (view === 'users' && !canManageUsers) {
         showToast('Somente administradores gerenciam usuários.');
+        return;
+      }
+      if (view === 'accounts' && !canManageUsers) {
+        showToast('Somente administradores gerenciam contas.');
         return;
       }
       if (view === 'churches' && !canManageChurches) {
@@ -680,7 +692,7 @@ export default function App() {
       await queryClient.invalidateQueries({ queryKey: ['members'] });
       showToast(
         isNew
-          ? `Usuário "${member.name}" cadastrado!`
+          ? `Integrante "${member.name}" associado à igreja!`
           : `Usuário "${member.name}" atualizado!`,
       );
     } catch (err) {
@@ -731,14 +743,14 @@ export default function App() {
     if (!songToAddToSetlist || !user) return;
     const song = songToAddToSetlist;
     const name = song.number ? `Hino #${song.number}` : `Cântico "${song.title}"`;
-    if (setlist.items.some((i) => i.songId === song.id)) {
+    if ((setlist.items ?? []).some((i) => i.songId === song.id)) {
       throw new Error(`${name} já está nesta playlist.`);
     }
     await playlistsService.upsertSetlist(user.id, {
       ...setlist,
       orgId: null,
       groupId: null,
-      items: [...setlist.items, { id: `item-${Date.now()}`, songId: song.id }],
+      items: [...(setlist.items ?? []), { id: `item-${Date.now()}`, songId: song.id }],
     });
     await queryClient.invalidateQueries({ queryKey: ['setlists'] });
     showToast(`${name} adicionado a "${setlist.title}"!`);
@@ -779,7 +791,52 @@ export default function App() {
     }
   };
 
+  const handleToggleHinos = () => {
+    let nextHinos: boolean;
+    let nextCanticos: boolean;
+
+    if (showHinos && !showCanticos) {
+      nextHinos = false;
+      nextCanticos = true;
+    } else {
+      nextHinos = !showHinos;
+      nextCanticos = showCanticos;
+    }
+
+    setShowHinos(nextHinos);
+    setShowCanticos(nextCanticos);
+
+    if (nextHinos && !nextCanticos) {
+      showToast('Exibindo apenas hinos');
+    } else if (!nextHinos && nextCanticos) {
+      showToast('Exibindo apenas cânticos');
+    }
+  };
+
+  const handleToggleCanticos = () => {
+    let nextHinos: boolean;
+    let nextCanticos: boolean;
+
+    if (showCanticos && !showHinos) {
+      nextCanticos = false;
+      nextHinos = true;
+    } else {
+      nextCanticos = !showCanticos;
+      nextHinos = showHinos;
+    }
+
+    setShowHinos(nextHinos);
+    setShowCanticos(nextCanticos);
+
+    if (nextHinos && !nextCanticos) {
+      showToast('Exibindo apenas hinos');
+    } else if (!nextHinos && nextCanticos) {
+      showToast('Exibindo apenas cânticos');
+    }
+  };
+
   const filteredSongs = songs.filter((h) => {
+    if (!matchesSongTypeFilter(h, showHinos, showCanticos)) return false;
     if (showFavoritesOnly && !favorites.includes(h.id)) return false;
     if (activeCategoryPill !== 'Todos' && h.category !== activeCategoryPill) return false;
     if (selectedLetter !== 'TODAS') {
@@ -861,6 +918,7 @@ export default function App() {
             else if (canAccessAdminPanel) setCurrentView(currentView === 'admin' ? 'public' : 'admin');
             else showToast('Somente administradores acessam o Painel Geral.');
           }}
+          onRegisterClick={() => setCurrentView('register')}
           onSignOut={async () => {
             await signOut();
             setSidebarDrawerOpen(false);
@@ -905,6 +963,7 @@ export default function App() {
             userEmail={user.email}
             userDisplayName={profile?.display_name}
             userAvatarPath={profile?.avatar_path}
+            userAvatarUpdatedAt={profile?.updated_at}
             permissions={{
               canAccessAdminPanel,
               canManageUsers,
@@ -964,7 +1023,15 @@ export default function App() {
           </div>
         )}
 
-        {user && currentView === 'profile' ? (
+        {currentView === 'register' ? (
+          <RegisterPage
+            onBack={() => setCurrentView('public')}
+            onGoToLogin={() => {
+              setCurrentView('public');
+              setShowLogin(true);
+            }}
+          />
+        ) : user && currentView === 'profile' ? (
           <ProfilePage onBack={() => setCurrentView('public')} />
         ) : user && currentView === 'admin' && canAccessAdminPanel ? (
           <AdminDashboard
@@ -1023,6 +1090,8 @@ export default function App() {
             canEditChurch={canEditChurch}
             canEditGroup={canEditGroup}
           />
+        ) : user && currentView === 'accounts' && canManageUsers ? (
+          <AccountManager />
         ) : user && currentView === 'users' && canManageUsers ? (
           <UserManager
             systemUsers={systemUsers}
@@ -1080,17 +1149,6 @@ export default function App() {
           )
         ) : (
           <div className="w-full space-y-4 sm:space-y-6">
-            <AlphabetFilter
-              selectedLetter={selectedLetter}
-              onSelectLetter={(letter) => {
-                setSelectedLetter(letter);
-                if (letter !== 'TODAS' && sortBy === 'number') setSortBy('title');
-              }}
-              songs={songs.filter(
-                (h) => activeCategoryPill === 'Todos' || h.category === activeCategoryPill,
-              )}
-            />
-
             <div className="flex flex-col gap-3 bg-stone-900/60 p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-stone-800/80">
               <div className="flex flex-wrap items-center gap-1.5">
                 {categories.map((cat) => {
@@ -1104,8 +1162,8 @@ export default function App() {
                       }
                       className={`min-h-9 px-3 py-1.5 rounded-button text-xs font-semibold transition-all border touch-manipulation ${
                         isSelected
-                          ? 'bg-emerald-500 text-stone-950 border-emerald-400 font-bold'
-                          : 'bg-stone-800/80 text-stone-300 border-stone-700/80'
+                          ? 'bg-emerald-500 text-stone-950 border-emerald-400 font-bold shadow-sm'
+                          : 'bg-stone-800/80 light:bg-stone-100 text-stone-300 light:text-stone-700 border-stone-700/80 light:border-stone-200 hover:bg-stone-700/80 light:hover:bg-stone-200'
                       }`}
                     >
                       {cat.name} ({count})
@@ -1113,47 +1171,63 @@ export default function App() {
                   );
                 })}
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-stone-400">
-                <div
-                  className="flex items-center bg-stone-800 border border-stone-700 rounded-xl p-0.5"
-                  role="group"
-                  aria-label="Modo de visualização"
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleSongsLayoutChange('cards')}
-                    className={`flex items-center gap-1.5 min-h-9 px-2.5 py-1.5 rounded-button font-semibold transition-all touch-manipulation ${
-                      songsLayout === 'cards'
-                        ? 'bg-emerald-500 text-stone-950'
-                        : 'text-stone-400 hover:text-stone-200'
-                    }`}
-                    title="Visualização em cards"
+              <div className="flex items-center gap-1.5 min-w-0 text-xs text-stone-400 light:text-stone-500">
+                <div className="flex items-center gap-1 flex-1 min-w-0 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                  <div
+                    className="flex items-center shrink-0 bg-stone-800 light:bg-stone-100 border border-stone-700 light:border-stone-200 rounded-xl p-0.5"
+                    role="group"
+                    aria-label="Modo de visualização"
                   >
-                    <LayoutGrid className="w-3.5 h-3.5" />
-                    <span>Cards</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleSongsLayoutChange('list')}
-                    className={`flex items-center gap-1.5 min-h-9 px-2.5 py-1.5 rounded-button font-semibold transition-all touch-manipulation ${
-                      songsLayout === 'list'
-                        ? 'bg-emerald-500 text-stone-950'
-                        : 'text-stone-400 hover:text-stone-200'
-                    }`}
-                    title="Listagem simples"
-                  >
-                    <List className="w-3.5 h-3.5" />
-                    <span>Lista</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSongsLayoutChange('cards')}
+                      aria-label="Visualização em cards"
+                      className={`flex items-center justify-center gap-1.5 min-h-9 min-w-9 sm:min-w-0 px-2 sm:px-2.5 py-1.5 rounded-button font-semibold transition-all touch-manipulation ${
+                        songsLayout === 'cards'
+                          ? 'bg-emerald-500 text-stone-950 shadow-sm'
+                          : 'text-stone-400 light:text-stone-600 hover:text-stone-200 light:hover:text-stone-900'
+                      }`}
+                      title="Visualização em cards"
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
+                      <span className="hidden sm:inline">Cards</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSongsLayoutChange('list')}
+                      aria-label="Listagem simples"
+                      className={`flex items-center justify-center gap-1.5 min-h-9 min-w-9 sm:min-w-0 px-2 sm:px-2.5 py-1.5 rounded-button font-semibold transition-all touch-manipulation ${
+                        songsLayout === 'list'
+                          ? 'bg-emerald-500 text-stone-950 shadow-sm'
+                          : 'text-stone-400 light:text-stone-600 hover:text-stone-200 light:hover:text-stone-900'
+                      }`}
+                      title="Listagem simples"
+                    >
+                      <List className="w-3.5 h-3.5 shrink-0" />
+                      <span className="hidden sm:inline">Lista</span>
+                    </button>
+                  </div>
+                  <SongTypeFilter
+                    showHinos={showHinos}
+                    showCanticos={showCanticos}
+                    onToggleHinos={handleToggleHinos}
+                    onToggleCanticos={handleToggleCanticos}
+                  />
+                  <AlphabetFilterToggle
+                    expanded={alphabetExpanded}
+                    onToggle={() => setAlphabetExpanded((v) => !v)}
+                    selectedLetter={selectedLetter}
+                  />
                 </div>
 
-                <label className="flex items-center gap-2 min-w-0">
-                  <ArrowUpDown className="w-3.5 h-3.5 shrink-0" />
-                  <span className="shrink-0">Ordem</span>
+                <label className="flex items-center gap-1 shrink-0 pl-1.5 sm:pl-0 border-l border-stone-800/80 light:border-stone-200 sm:border-0">
+                  <ArrowUpDown className="w-3.5 h-3.5 shrink-0" aria-hidden />
+                  <span className="hidden md:inline shrink-0 font-medium">Ordem</span>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as 'number' | 'title' | 'recent')}
-                    className="min-h-9 bg-stone-800 border border-stone-700 text-stone-200 rounded-button px-2.5 py-1.5 font-medium focus:outline-none touch-manipulation"
+                    aria-label="Ordenação"
+                    className="min-h-9 max-w-[6.25rem] sm:max-w-none bg-stone-800 light:bg-white border border-stone-700 light:border-stone-300 text-stone-200 light:text-stone-900 rounded-button px-1.5 sm:px-2.5 py-1.5 text-[11px] sm:text-xs font-medium focus:outline-none touch-manipulation"
                   >
                     <option value="number">Por Número</option>
                     <option value="title">Por Título</option>
@@ -1161,6 +1235,29 @@ export default function App() {
                   </select>
                 </label>
               </div>
+
+              <AlphabetFilter
+                expanded={alphabetExpanded}
+                onExpandedChange={setAlphabetExpanded}
+                selectedLetter={selectedLetter}
+                onSelectLetter={(letter) => {
+                  setSelectedLetter(letter);
+                  if (letter !== 'TODAS' && sortBy === 'number') setSortBy('title');
+                }}
+                songs={songs.filter(
+                  (h) =>
+                    (activeCategoryPill === 'Todos' || h.category === activeCategoryPill) &&
+                    matchesSongTypeFilter(h, showHinos, showCanticos),
+                )}
+              />
+
+              <AppliedAdvancedFiltersBar
+                filters={advancedFilters}
+                resultCount={sortedSongs.length}
+                onUpdateFilters={setAdvancedFilters}
+                onClearAll={() => setAdvancedFilters(INITIAL_FILTERS)}
+                onEdit={() => setShowAdvancedSearch(true)}
+              />
             </div>
 
             {songsQuery.isLoading ? (
@@ -1322,7 +1419,15 @@ export default function App() {
         />
       )}
 
-      {showLogin && <AdminLoginModal onClose={() => setShowLogin(false)} />}
+      {showLogin && (
+        <AdminLoginModal
+          onClose={() => setShowLogin(false)}
+          onGoToRegister={() => {
+            setShowLogin(false);
+            setCurrentView('register');
+          }}
+        />
+      )}
 
       {songToAddToSetlist && (
         <AddToSetlistModal

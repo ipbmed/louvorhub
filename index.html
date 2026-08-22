@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,6 +12,18 @@
     />
   </head>
   <body>
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem('louvorhub_theme');
+          document.documentElement.classList.remove('light', 'dark');
+          document.documentElement.classList.add(theme === 'light' ? 'light' : 'dark');
+          document.documentElement.style.colorScheme = theme === 'light' ? 'light' : 'dark';
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

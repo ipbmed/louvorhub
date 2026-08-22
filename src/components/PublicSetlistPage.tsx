@@ -6,6 +6,7 @@ import {
   ChevronUp,
   Copy,
   Guitar,
+  Link2,
   ListMusic,
   Loader2,
   Lock,
@@ -13,6 +14,8 @@ import {
   MessageCircle,
   Music,
   QrCode,
+  Share2,
+  X,
 } from 'lucide-react';
 import { getSetlistByShareCode, setlistShareUrl } from '@/services/playlists';
 import * as songsService from '@/services/songs';
@@ -23,6 +26,7 @@ import { ShareQrCode } from './ShareQrCode';
 import { ChordLyricLine } from './ChordLyricLine';
 import { SongDetailModal } from './SongDetailModal';
 import { SongProjectionModal } from './SongProjectionModal';
+import { ThemeToggle } from './ThemeToggle';
 
 interface PublicSetlistPageProps {
   shareCode?: string;
@@ -45,6 +49,7 @@ export const PublicSetlistPage: React.FC<PublicSetlistPageProps> = ({ shareCode:
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
+  const [showShareOptions, setShowShareOptions] = useState(false);
   const [expandedSongId, setExpandedSongId] = useState<string | null>(null);
   const [showChords, setShowChords] = useState(false);
   const [detailSong, setDetailSong] = useState<Song | null>(null);
@@ -131,7 +136,7 @@ export const PublicSetlistPage: React.FC<PublicSetlistPageProps> = ({ shareCode:
 
   const shareUrl = shareCode ? setlistShareUrl(shareCode) : '';
 
-  const buildText = () => {
+  const buildShareText = (includeLink: boolean) => {
     if (!setlist) return '';
     let text = `📋 *${setlist.title}*\n\n`;
     songs.forEach((s, idx) => {
@@ -139,7 +144,10 @@ export const PublicSetlistPage: React.FC<PublicSetlistPageProps> = ({ shareCode:
       if (s.originalKey) text += ` (${s.originalKey})`;
       text += `\n`;
     });
-    text += `\n🔗 ${shareUrl}\n\n✨ LouvorHub`;
+    if (includeLink && shareUrl) {
+      text += `\n🔗 ${shareUrl}\n`;
+    }
+    text += `\n✨ LouvorHub`;
     return text;
   };
 
@@ -152,10 +160,34 @@ export const PublicSetlistPage: React.FC<PublicSetlistPageProps> = ({ shareCode:
 
   const shareWhatsApp = () => {
     window.open(
-      `https://wa.me/?text=${encodeURIComponent(buildText())}`,
+      `https://wa.me/?text=${encodeURIComponent(buildShareText(true))}`,
       '_blank',
       'noopener,noreferrer',
     );
+  };
+
+  const handleShare = async () => {
+    if (!setlist) return;
+
+    const payload: ShareData = {
+      title: setlist.title,
+      text: buildShareText(false),
+      url: shareUrl || undefined,
+    };
+
+    if (typeof navigator.share === 'function') {
+      try {
+        if (navigator.canShare && !navigator.canShare(payload)) {
+          delete payload.url;
+        }
+        await navigator.share(payload);
+        return;
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
+      }
+    }
+
+    setShowShareOptions(true);
   };
 
   if (loading) {
@@ -172,46 +204,35 @@ export const PublicSetlistPage: React.FC<PublicSetlistPageProps> = ({ shareCode:
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between gap-3">
           <Link
             to="/"
-            className="text-sm font-display font-bold text-emerald-300 hover:text-emerald-200 shrink-0"
+            className="text-sm font-display font-bold text-emerald-300 light:text-emerald-700 hover:text-emerald-200 light:hover:text-emerald-800 shrink-0"
           >
             LouvorHub
           </Link>
-          {setlist && setlist.visibility === 'public_link' && !error && (
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={copyLink}
-                className="p-2 rounded-button bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-300"
-                title="Copiar link"
-                aria-label="Copiar link"
-              >
-                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-              </button>
-              <button
-                type="button"
-                onClick={shareWhatsApp}
-                className="p-2 rounded-button bg-stone-900 hover:bg-stone-800 border border-stone-700 text-emerald-400"
-                title="WhatsApp"
-                aria-label="Compartilhar no WhatsApp"
-              >
-                <MessageCircle className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowQr((v) => !v)}
-                className={`p-2 rounded-button border ${
-                  showQr
-                    ? 'bg-emerald-500 text-stone-950 border-emerald-400'
-                    : 'bg-stone-900 hover:bg-stone-800 border-stone-700 text-stone-300'
-                }`}
-                title="QR Code"
-                aria-label="Mostrar QR Code"
-                aria-pressed={showQr}
-              >
-                <QrCode className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-1.5">
+            <ThemeToggle compact />
+            {setlist && setlist.visibility === 'public_link' && !error && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => void handleShare()}
+                  className="p-2 rounded-button bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-300"
+                  title="Compartilhar"
+                  aria-label="Compartilhar"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowQr(true)}
+                  className="p-2 rounded-button bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-300"
+                  title="QR Code"
+                  aria-label="Mostrar QR Code"
+                >
+                  <QrCode className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -232,12 +253,6 @@ export const PublicSetlistPage: React.FC<PublicSetlistPageProps> = ({ shareCode:
               </h1>
               <p className="text-xs text-stone-500">{songs.length} música(s)</p>
             </div>
-
-            {showQr && shareUrl && (
-              <div className="flex justify-center">
-                <ShareQrCode url={shareUrl} size={180} />
-              </div>
-            )}
 
             {songs.length === 0 ? (
               <div className="text-center py-10 text-stone-500">
@@ -264,15 +279,15 @@ export const PublicSetlistPage: React.FC<PublicSetlistPageProps> = ({ shareCode:
                         }}
                         className="w-full p-4 flex items-center gap-3 text-left hover:bg-stone-800/40 transition-colors"
                       >
-                        <span className="w-7 h-7 rounded-lg bg-stone-800 text-emerald-300 font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                        <span className="w-7 h-7 rounded-lg bg-stone-800 light:bg-stone-100 text-emerald-300 light:text-emerald-700 font-mono font-bold text-xs flex items-center justify-center shrink-0">
                           {idx + 1}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="font-display font-bold text-stone-100 truncate">
+                          <p className="font-display font-bold text-stone-100 light:text-stone-900 truncate">
                             {song.number ? `#${song.number} · ` : ''}
                             {song.title}
                           </p>
-                          <p className="text-xs text-stone-500 mt-0.5">
+                          <p className="text-xs text-stone-500 light:text-stone-500 mt-0.5 font-medium">
                             {song.originalKey ? `Tom ${song.originalKey}` : '—'}
                           </p>
                         </div>
@@ -288,7 +303,7 @@ export const PublicSetlistPage: React.FC<PublicSetlistPageProps> = ({ shareCode:
                             <button
                               type="button"
                               onClick={() => void openSongDialog(song.id)}
-                              className="px-2.5 py-1.5 rounded-button text-[11px] font-semibold inline-flex items-center gap-1.5 border bg-stone-950 text-stone-300 border-stone-700 hover:border-emerald-500/50 hover:text-emerald-300 transition-colors"
+                              className="px-2.5 py-1.5 rounded-button text-[11px] font-semibold inline-flex items-center gap-1.5 border bg-stone-950 light:bg-stone-50 text-stone-300 light:text-stone-700 border-stone-700 light:border-stone-200 hover:border-emerald-500/50 hover:text-emerald-300 light:hover:text-emerald-700 transition-colors"
                             >
                               <Maximize2 className="w-3.5 h-3.5" />
                               Abrir completo
@@ -299,7 +314,7 @@ export const PublicSetlistPage: React.FC<PublicSetlistPageProps> = ({ shareCode:
                               className={`px-2.5 py-1.5 rounded-button text-[11px] font-semibold inline-flex items-center gap-1.5 border transition-colors ${
                                 showChords
                                   ? 'bg-emerald-500 text-stone-950 border-emerald-400'
-                                  : 'bg-stone-950 text-stone-300 border-stone-700 hover:border-stone-500'
+                                  : 'bg-stone-950 light:bg-stone-50 text-stone-300 light:text-stone-700 border-stone-700 light:border-stone-200 hover:border-stone-500'
                               }`}
                             >
                               <Guitar className="w-3.5 h-3.5" />
@@ -331,6 +346,154 @@ export const PublicSetlistPage: React.FC<PublicSetlistPageProps> = ({ shareCode:
           </>
         )}
       </div>
+
+      {showShareOptions && setlist && (
+        <div
+          className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setShowShareOptions(false)}
+        >
+          <div
+            className="bg-stone-900 border border-stone-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl text-stone-100 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="public-share-dialog-title"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <h3
+                id="public-share-dialog-title"
+                className="text-lg font-display font-bold text-emerald-100 light:text-stone-900 flex items-center gap-2"
+              >
+                <Share2 className="w-5 h-5 text-emerald-400 light:text-emerald-600" />
+                Compartilhar
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowShareOptions(false)}
+                className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
+                aria-label="Fechar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-stone-400 light:text-stone-500">
+              Escolha como compartilhar{' '}
+              <strong className="text-stone-200 light:text-stone-800">{setlist.title}</strong>
+            </p>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  copyLink();
+                  setShowShareOptions(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 bg-stone-950 hover:bg-stone-800 border border-stone-800 rounded-xl text-sm font-semibold text-stone-200 transition-colors"
+              >
+                {copied ? (
+                  <Check className="w-5 h-5 text-emerald-400 shrink-0" />
+                ) : (
+                  <Link2 className="w-5 h-5 text-stone-400 shrink-0" />
+                )}
+                Copiar link
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  shareWhatsApp();
+                  setShowShareOptions(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 bg-stone-950 hover:bg-stone-800 border border-stone-800 rounded-xl text-sm font-semibold text-stone-200 transition-colors"
+              >
+                <MessageCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+                WhatsApp
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard.writeText(buildShareText(true));
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                  setShowShareOptions(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 bg-stone-950 hover:bg-stone-800 border border-stone-800 rounded-xl text-sm font-semibold text-stone-200 transition-colors"
+              >
+                <Copy className="w-5 h-5 text-stone-400 shrink-0" />
+                Copiar texto
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showQr && shareUrl && setlist && (
+        <div
+          className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setShowQr(false)}
+        >
+          <div
+            className="bg-stone-900 border border-stone-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl text-stone-100 space-y-4"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="public-qr-dialog-title"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <h3
+                id="public-qr-dialog-title"
+                className="text-lg font-display font-bold text-emerald-100 light:text-stone-900 flex items-center gap-2"
+              >
+                <QrCode className="w-5 h-5 text-emerald-400 light:text-emerald-600" />
+                QR Code
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowQr(false)}
+                className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
+                aria-label="Fechar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-stone-400 light:text-stone-500">
+              Escaneie para abrir{' '}
+              <strong className="text-stone-200 light:text-stone-800">{setlist.title}</strong>
+            </p>
+
+            <div className="flex justify-center py-2">
+              <ShareQrCode url={shareUrl} size={200} label="Aponte a câmera para abrir a playlist" />
+            </div>
+
+            <p className="text-[11px] text-stone-500 break-all text-center font-mono">{shareUrl}</p>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-stone-800">
+              <button
+                type="button"
+                onClick={() => copyLink()}
+                className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold inline-flex items-center gap-1.5"
+              >
+                {copied ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                ) : (
+                  <Link2 className="w-3.5 h-3.5" />
+                )}
+                Copiar link
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowQr(false)}
+                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {(detailLoading || detailSong) && (
         <SongDetailModal

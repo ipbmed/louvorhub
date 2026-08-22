@@ -5,6 +5,7 @@ import {
   ListMusic,
   Building2,
   Users,
+  UserCheck,
   Calendar,
   X,
   Church,
@@ -13,7 +14,7 @@ import {
   PanelLeftOpen,
 } from 'lucide-react';
 import { ViewMode } from '../types';
-import { supabase } from '@/lib/supabase';
+import { getAvatarPublicUrl } from '@/utils/avatarUrl';
 
 interface SidebarPermissions {
   canAccessAdminPanel: boolean;
@@ -39,6 +40,7 @@ interface AppSidebarProps {
   userEmail?: string | null;
   userDisplayName?: string | null;
   userAvatarPath?: string | null;
+  userAvatarUpdatedAt?: string | null;
   permissions: SidebarPermissions;
 }
 
@@ -54,6 +56,7 @@ const NAV_ITEMS: {
   { view: 'setlist', label: 'Playlists', icon: ListMusic },
   { view: 'churches', label: 'Igrejas e Bandas', icon: Building2, visible: (p) => p.canManageChurches },
   { view: 'users', label: 'Usuários e Integrantes', icon: Users, visible: (p) => p.canManageUsers },
+  { view: 'accounts', label: 'Contas de usuários', icon: UserCheck, visible: (p) => p.canManageUsers },
 ];
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({
@@ -69,6 +72,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   userEmail,
   userDisplayName,
   userAvatarPath,
+  userAvatarUpdatedAt,
   permissions,
 }) => {
   const [orgMenuOpen, setOrgMenuOpen] = useState(false);
@@ -87,9 +91,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     if (desktopExpanded) setOrgMenuOpen(false);
   }, [desktopExpanded]);
 
-  const avatarUrl = userAvatarPath
-    ? supabase.storage.from('avatars').getPublicUrl(userAvatarPath).data.publicUrl
-    : null;
+  const avatarUrl = getAvatarPublicUrl(userAvatarPath, userAvatarUpdatedAt);
 
   const displayName = userDisplayName?.trim() || userEmail?.split('@')[0] || 'Usuário';
   const initials = displayName
@@ -105,7 +107,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
   const renderUserBlock = (compact: boolean) => (
     <div
-      className={`mt-auto shrink-0 border-t border-stone-800/80 bg-stone-950 ${
+      className={`mt-auto shrink-0 border-t border-stone-800/80 light:border-stone-200 bg-stone-950 light:bg-stone-50 ${
         compact ? 'px-2 pt-2 pb-3' : 'px-3 pt-3 pb-4'
       }`}
     >
@@ -119,29 +121,29 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           compact ? 'p-2 flex justify-center' : 'p-3'
         } ${
           userActive
-            ? 'border-emerald-500/40 bg-emerald-500/15'
-            : 'border-stone-800 bg-stone-900/70 hover:bg-stone-800/80 hover:border-stone-700'
+            ? 'border-emerald-500/40 light:border-emerald-300 bg-emerald-500/15 light:bg-emerald-50'
+            : 'border-stone-800 light:border-stone-200 bg-stone-900/70 light:bg-white hover:bg-stone-800/80 light:hover:bg-stone-100 hover:border-stone-700 light:hover:border-stone-300'
         }`}
         title={compact ? `Perfil · ${displayName}` : 'Abrir perfil'}
       >
         <div className={`flex items-center ${compact ? 'justify-center' : 'gap-3'}`}>
-          <div className="w-10 h-10 rounded-xl overflow-hidden bg-stone-800 border border-stone-700 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl overflow-hidden bg-stone-800 light:bg-stone-100 border border-stone-700 light:border-stone-200 flex items-center justify-center shrink-0">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+              <img key={avatarUrl} src={avatarUrl} alt="" className="w-full h-full object-cover" />
             ) : (
-              <span className="text-xs font-bold text-emerald-300">{initials}</span>
+              <span className="text-xs font-bold text-emerald-300 light:text-emerald-700">{initials}</span>
             )}
           </div>
           {!compact && (
             <>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-stone-100 truncate">{displayName}</p>
+                <p className="text-sm font-semibold text-stone-100 light:text-stone-900 truncate">{displayName}</p>
                 {userEmail && (
-                  <p className="text-[11px] text-stone-500 truncate">{userEmail}</p>
+                  <p className="text-[11px] text-stone-500 light:text-stone-600 truncate">{userEmail}</p>
                 )}
               </div>
               <ChevronRight
-                className={`w-4 h-4 shrink-0 ${userActive ? 'text-emerald-400' : 'text-stone-600'}`}
+                className={`w-4 h-4 shrink-0 ${userActive ? 'text-emerald-400 light:text-emerald-600' : 'text-stone-600 light:text-stone-400'}`}
               />
             </>
           )}
@@ -180,8 +182,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   }}
                   className={`w-full text-left px-3 py-2 text-sm truncate ${
                     o.id === activeOrgId
-                      ? 'bg-emerald-500/15 text-emerald-200 font-semibold'
-                      : 'text-stone-300 hover:bg-stone-800'
+                      ? 'bg-emerald-500/15 text-emerald-200 light:text-emerald-800 font-semibold'
+                      : 'text-stone-300 light:text-stone-700 hover:bg-stone-800 light:hover:bg-emerald-50 light:hover:text-emerald-800'
                   }`}
                 >
                   {o.name}
@@ -239,12 +241,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   : 'gap-3 w-full px-3 py-2.5 text-left'
               } ${
                 active
-                  ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40 shadow-sm'
-                  : 'bg-transparent text-stone-300 border-transparent hover:bg-stone-800/80 hover:text-stone-100'
+                  ? 'bg-emerald-500/20 light:bg-emerald-50 text-emerald-200 light:text-emerald-800 border-emerald-500/40 light:border-emerald-300 shadow-sm'
+                  : 'bg-transparent text-stone-300 light:text-stone-700 border-transparent hover:bg-stone-800/80 light:hover:bg-stone-100 hover:text-stone-100 light:hover:text-stone-900'
               }`}
             >
               <Icon
-                className={`w-4 h-4 shrink-0 ${active ? 'text-emerald-400' : 'text-stone-500'}`}
+                className={`w-4 h-4 shrink-0 ${active ? 'text-emerald-400 light:text-emerald-600' : 'text-stone-500 light:text-stone-400'}`}
               />
               {!compact && <span>{label}</span>}
             </button>

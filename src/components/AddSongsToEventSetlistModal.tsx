@@ -74,11 +74,11 @@ export const AddSongsToEventSetlistModal: React.FC<AddSongsToEventSetlistModalPr
       <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-lg shadow-2xl text-stone-100 overflow-hidden max-h-[min(92vh,640px)] flex flex-col">
         <div className="p-5 border-b border-stone-800 flex items-start justify-between gap-3 shrink-0">
           <div>
-            <h3 className="text-lg font-display font-bold text-emerald-100 flex items-center gap-2">
-              <ListMusic className="w-5 h-5 text-emerald-400" />
+            <h3 className="text-lg font-display font-bold text-emerald-100 light:text-stone-900 flex items-center gap-2">
+              <ListMusic className="w-5 h-5 text-emerald-400 light:text-emerald-600" />
               Adicionar ao repertório
             </h3>
-            <p className="text-xs text-stone-400 mt-1">
+            <p className="text-xs text-stone-400 light:text-stone-500 mt-1">
               Selecione as músicas do catálogo para este evento.
             </p>
           </div>
@@ -120,10 +120,10 @@ export const AddSongsToEventSetlistModal: React.FC<AddSongsToEventSetlistModalPr
                   onClick={() => toggle(song.id)}
                   className={`w-full flex items-center gap-2.5 text-left px-3 py-2.5 rounded-xl border text-xs transition-colors ${
                     already
-                      ? 'bg-stone-950/40 border-stone-800 text-stone-500 opacity-60 cursor-default'
+                      ? 'bg-stone-950/40 light:bg-stone-100 border-stone-800 light:border-stone-200 text-stone-500 opacity-60 cursor-default'
                       : isSelected
-                        ? 'bg-emerald-950/50 border-emerald-700/50 text-emerald-100'
-                        : 'bg-stone-950/40 border-stone-800 text-stone-300 hover:border-stone-700'
+                        ? 'bg-emerald-950/50 light:bg-emerald-50 border-emerald-700/50 light:border-emerald-300 text-emerald-100 light:text-emerald-900 font-semibold'
+                        : 'bg-stone-950/40 light:bg-stone-50 border-stone-800 light:border-stone-200 text-stone-300 light:text-stone-800 hover:border-stone-700 light:hover:border-stone-300'
                   }`}
                 >
                   <span

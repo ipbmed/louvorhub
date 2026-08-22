@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Calendar, ListMusic, Loader2, X } from 'lucide-react';
+import { ListMusic, Loader2, X } from 'lucide-react';
 import type { Setlist, Song } from '@/types';
 import { isGroupSetlist } from '@/services/playlists';
 
@@ -33,7 +33,7 @@ export const AddToSetlistModal: React.FC<AddToSetlistModalProps> = ({
       setError('Selecione uma playlist.');
       return;
     }
-    if (target.items.some((i) => i.songId === song.id)) {
+    if ((target.items ?? []).some((i) => i.songId === song.id)) {
       setError('Esta música já está nesta playlist.');
       return;
     }
@@ -54,11 +54,11 @@ export const AddToSetlistModal: React.FC<AddToSetlistModalProps> = ({
       <div className="bg-stone-900 border border-stone-800 rounded-3xl w-full max-w-md shadow-2xl text-stone-100 overflow-hidden">
         <div className="p-5 border-b border-stone-800 flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-lg font-display font-bold text-emerald-100 flex items-center gap-2">
-              <ListMusic className="w-5 h-5 text-emerald-400" />
+            <h3 className="text-lg font-display font-bold text-emerald-100 light:text-stone-900 flex items-center gap-2">
+              <ListMusic className="w-5 h-5 text-emerald-400 light:text-emerald-600" />
               Adicionar à playlist
             </h3>
-            <p className="text-xs text-stone-400 mt-1 line-clamp-2">{songLabel}</p>
+            <p className="text-xs text-stone-400 light:text-stone-500 mt-1 line-clamp-2">{songLabel}</p>
           </div>
           <button
             type="button"
@@ -81,7 +81,7 @@ export const AddToSetlistModal: React.FC<AddToSetlistModalProps> = ({
                   key={s.id}
                   setlist={s}
                   selected={selectedId === s.id}
-                  alreadyHas={s.items.some((i) => i.songId === song.id)}
+                  alreadyHas={(s.items ?? []).some((i) => i.songId === song.id)}
                   onSelect={() => {
                     setSelectedId(s.id);
                     setError(null);
@@ -108,7 +108,7 @@ export const AddToSetlistModal: React.FC<AddToSetlistModalProps> = ({
           </button>
           <button
             type="button"
-            disabled={!selectedId || saving || options.all.length === 0}
+            disabled={!selectedId || saving || options.length === 0}
             onClick={() => void handleConfirm()}
             className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-stone-950 font-bold rounded-button text-xs inline-flex items-center gap-1.5"
           >
@@ -139,15 +139,13 @@ const SetlistOption: React.FC<{
     <div className="flex items-center justify-between gap-2">
       <span className="font-semibold truncate">{setlist.title}</span>
       <span className="font-mono text-[10px] text-stone-500 shrink-0">
-        {setlist.items.length} mús.
+        {(setlist.items ?? []).length} mús.
       </span>
     </div>
-    <div className="flex items-center gap-2 mt-1 text-[10px] text-stone-500">
-      <span className="inline-flex items-center gap-1">
-        <Calendar className="w-3 h-3" />
-        {setlist.date}
-      </span>
-      {alreadyHas && <span className="text-amber-300/90">Já contém</span>}
-    </div>
+    {alreadyHas && (
+      <div className="mt-1 text-[10px] text-stone-500">
+        <span className="text-amber-300/90">Já contém</span>
+      </div>
+    )}
   </button>
 );

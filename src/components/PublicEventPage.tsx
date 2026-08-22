@@ -22,6 +22,7 @@ import {
   type PublicEventSong,
 } from '@/services/eventShare';
 import { ChordLyricLine } from './ChordLyricLine';
+import { ThemeToggle } from './ThemeToggle';
 
 interface PublicEventPageProps {
   shareCode?: string;
@@ -138,12 +139,13 @@ export const PublicEventPage: React.FC<PublicEventPageProps> = ({ shareCode: sha
     <div className="min-h-screen bg-stone-950 text-stone-100">
       <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
         <div className="flex items-center justify-between gap-3">
-          <Link to="/" className="text-sm font-display font-bold text-emerald-300 hover:text-emerald-200">
+          <Link
+            to="/"
+            className="text-sm font-display font-bold text-emerald-300 light:text-emerald-700 hover:text-emerald-200 light:hover:text-emerald-800"
+          >
             LouvorHub
           </Link>
-          <Link to="/" className="text-xs text-stone-500 hover:text-stone-300">
-            Ir ao app
-          </Link>
+          <ThemeToggle compact />
         </div>
 
         {error && (
@@ -270,19 +272,19 @@ export const PublicEventPage: React.FC<PublicEventPageProps> = ({ shareCode: sha
                             onClick={() => toggleSong(song)}
                             className="w-full p-4 flex items-center gap-3 text-left hover:bg-stone-800/40 transition-colors"
                           >
-                            <span className="w-7 h-7 rounded-lg bg-stone-800 text-emerald-300 font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                            <span className="w-7 h-7 rounded-lg bg-stone-800 light:bg-stone-100 text-emerald-300 light:text-emerald-700 font-mono font-bold text-xs flex items-center justify-center shrink-0">
                               {idx + 1}
                             </span>
                             <div className="min-w-0 flex-1">
-                              <p className="font-display font-bold text-stone-100 truncate">
+                              <p className="font-display font-bold text-stone-100 light:text-stone-900 truncate">
                                 {song.number ? `#${song.number} · ` : ''}
                                 {song.title}
                               </p>
-                              <p className="text-xs text-stone-500 mt-0.5 flex flex-wrap items-center gap-2">
+                              <p className="text-xs text-stone-500 light:text-stone-500 mt-0.5 flex flex-wrap items-center gap-2 font-medium">
                                 {song.originalKey ? `Tom ${song.originalKey}` : '—'}
                                 {song.bpm != null ? ` · ${song.bpm} BPM` : ''}
                                 {song.hasVersion && (
-                                  <span className="inline-flex items-center gap-0.5 text-amber-300">
+                                  <span className="inline-flex items-center gap-0.5 text-amber-300 light:text-amber-700 font-semibold">
                                     <Sparkles className="w-3 h-3" />
                                     Versão
                                   </span>
@@ -298,7 +300,7 @@ export const PublicEventPage: React.FC<PublicEventPageProps> = ({ shareCode: sha
                           {open && (
                             <div className="px-4 pb-4 border-t border-stone-800 pt-3 space-y-1.5">
                               {song.instructions && (
-                                <p className="text-xs text-amber-200/90 mb-2 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-1.5">
+                                <p className="text-xs text-amber-200/90 light:text-amber-800 mb-2 bg-amber-500/10 light:bg-amber-50 border border-amber-500/20 light:border-amber-200 rounded-lg px-2.5 py-1.5">
                                   {song.instructions}
                                 </p>
                               )}

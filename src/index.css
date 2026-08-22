@@ -1,12 +1,15 @@
 @import "tailwindcss";
 
+@custom-variant light (&:where(.light, .light *));
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
   Design tokens
   --radius-button: botões, CTAs, controles clicáveis
   --font-display: títulos de UI (páginas, dialogs) — sans distinta do texto
 */
 @theme {
-  --radius-button: 0.5rem; /* 8px — menos arredondado que o antigo 2xl */
+  --radius-button: 0.5rem; /* 8px */
   --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -26,5 +29,427 @@
   input[type="submit"]:not(.rounded-full):not(.rounded-none),
   input[type="reset"]:not(.rounded-full):not(.rounded-none) {
     border-radius: var(--radius-button);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  html.dark body {
+    background-color: #0c0a09;
+    color: #f5f5f4;
+  }
+
+  html.light body {
+    background-color: #f8fafc;
+    color: #0f172a;
+  }
+}
+
+/*
+  =============================================================================
+  TEMA CLARO: Alto contraste, superfícies nítidas, tipografia refinada e moderna
+  =============================================================================
+*/
+@layer utilities {
+  /* ---------------- Surfaces & Backgrounds ---------------- */
+  /* Nível 0: Base / Container de fundo */
+  html.light .bg-stone-950 {
+    background-color: #f8fafc;
+  }
+
+  /* Nível 1: Cards e painéis principais (branco puro para destaque e nitidez) */
+  html.light .bg-stone-900 {
+    background-color: #ffffff;
+  }
+
+  /* Nível 2: Controles secundários, botões de ação neutros, tags */
+  html.light .bg-stone-800 {
+    background-color: #f1f5f9;
+  }
+
+  /* Nível 3: Hover de botões, divisores ativos */
+  html.light .bg-stone-700 {
+    background-color: #e2e8f0;
+  }
+
+  /* Opacidades & Superfícies com blur */
+  html.light .bg-stone-950\/40 {
+    background-color: rgb(248 250 252 / 0.6);
+  }
+  html.light .bg-stone-950\/70 {
+    background-color: rgb(248 250 252 / 0.85);
+  }
+  html.light .bg-stone-950\/80 {
+    background-color: rgb(255 255 255 / 0.9);
+  }
+  html.light .bg-stone-950\/95 {
+    background-color: rgb(255 255 255 / 0.96);
+  }
+
+  html.light .bg-stone-900\/40 {
+    background-color: #ffffff;
+  }
+  html.light .bg-stone-900\/50 {
+    background-color: #ffffff;
+  }
+  html.light .bg-stone-900\/60 {
+    background-color: #ffffff;
+  }
+  html.light .bg-stone-900\/70 {
+    background-color: #ffffff;
+  }
+  html.light .bg-stone-900\/80 {
+    background-color: #ffffff;
+  }
+  html.light .bg-stone-900\/90 {
+    background-color: #ffffff;
+  }
+  html.light .bg-stone-900\/95 {
+    background-color: rgb(255 255 255 / 0.96);
+  }
+
+  html.light .bg-stone-800\/40 {
+    background-color: rgb(241 245 249 / 0.7);
+  }
+  html.light .bg-stone-800\/60 {
+    background-color: rgb(241 245 249 / 0.85);
+  }
+  html.light .bg-stone-800\/80 {
+    background-color: #f1f5f9;
+  }
+  html.light .bg-stone-800\/90 {
+    background-color: #f1f5f9;
+  }
+
+  /* Overlays modais no tema claro (escurece levemente o fundo) */
+  html.light .fixed.inset-0.bg-stone-950\/80,
+  html.light .fixed.inset-0.bg-stone-950\/70,
+  html.light .absolute.inset-0.bg-stone-950\/80,
+  html.light .absolute.inset-0.bg-stone-950\/70 {
+    background-color: rgb(15 23 42 / 0.45);
+    backdrop-filter: blur(4px);
+  }
+
+  /* ---------------- Tipografia & Contraste de Texto ---------------- */
+  /* Títulos e textos principais: preto/ardósia escuro de alto contraste */
+  html.light .text-stone-50,
+  html.light .text-stone-100 {
+    color: #0f172a;
+  }
+  html.light .text-stone-200 {
+    color: #1e293b;
+  }
+  html.light .text-stone-300 {
+    color: #334155;
+  }
+  /* Subtextos e legendas com contraste acessível (WCAG AA) */
+  html.light .text-stone-400 {
+    color: #475569;
+  }
+  html.light .text-stone-500 {
+    color: #64748b;
+  }
+  html.light .text-stone-600 {
+    color: #475569;
+  }
+
+  /* Destaques de marca (Emerald / Verde LouvorHub) no tema claro */
+  html.light .text-emerald-100 {
+    color: #064e3b;
+  }
+  html.light .text-emerald-200,
+  html.light .text-emerald-300 {
+    color: #047857;
+  }
+  html.light .text-emerald-400 {
+    color: #059669;
+  }
+  html.light .text-teal-300 {
+    color: #0f766e;
+  }
+  html.light .text-amber-50,
+  html.light .text-amber-100 {
+    color: #78350f;
+  }
+  html.light .text-amber-200,
+  html.light .text-amber-300 {
+    color: #b45309;
+  }
+  html.light .text-amber-100\/80,
+  html.light .text-amber-200\/80,
+  html.light .text-amber-200\/90 {
+    color: #92400e;
+  }
+  html.light .text-rose-200,
+  html.light .text-rose-300 {
+    color: #be123c;
+  }
+  html.light .text-rose-400 {
+    color: #e11d48;
+  }
+  html.light .text-blue-300 {
+    color: #1d4ed8;
+  }
+
+  /* Mantém text-stone-950 escuro em botões sólidos coloridos */
+  html.light .text-stone-950 {
+    color: #0c0a09 !important;
+  }
+
+  /* Acordes musicais no tema claro: Verde esmeralda vivo, em negrito */
+  html.light pre span.text-emerald-400 {
+    color: #047857;
+    font-weight: 700;
+  }
+
+  /* ---------------- Bordas & Divisores ---------------- */
+  html.light .border-stone-900,
+  html.light .border-stone-900\/60,
+  html.light .border-stone-800,
+  html.light .border-stone-800\/80,
+  html.light .border-stone-800\/60,
+  html.light .border-stone-800\/40 {
+    border-color: #e2e8f0;
+  }
+
+  html.light .border-stone-700,
+  html.light .border-stone-700\/80,
+  html.light .border-stone-700\/60 {
+    border-color: #cbd5e1;
+  }
+
+  html.light .border-stone-600 {
+    border-color: #94a3b8;
+  }
+
+  html.light .border-t-stone-800,
+  html.light .border-t-stone-800\/80,
+  html.light .border-b-stone-800,
+  html.light .border-r-stone-800 {
+    border-color: #e2e8f0;
+  }
+
+  /* Bordas de destaque coloridas no tema claro */
+  html.light .border-emerald-900\/40,
+  html.light .border-emerald-800\/60,
+  html.light .border-emerald-700\/60,
+  html.light .border-emerald-700\/40 {
+    border-color: #a7f3d0;
+  }
+  html.light .border-emerald-500\/30,
+  html.light .border-emerald-500\/40,
+  html.light .border-emerald-500\/50 {
+    border-color: #6ee7b7;
+  }
+
+  html.light .border-teal-800\/60,
+  html.light .border-teal-500\/40 {
+    border-color: #99f6e4;
+  }
+
+  html.light .border-rose-900\/60,
+  html.light .border-rose-800\/60,
+  html.light .border-rose-800\/40,
+  html.light .border-rose-700\/60 {
+    border-color: #fecdd3;
+  }
+
+  html.light .border-amber-800\/60,
+  html.light .border-amber-500\/40,
+  html.light .border-amber-500\/25 {
+    border-color: #fde68a;
+  }
+
+  html.light .border-blue-800\/60 {
+    border-color: #bfdbfe;
+  }
+
+  /* ---------------- Badges, Chips & Cores Temáticas ---------------- */
+  /* Chips Esmeralda */
+  html.light .bg-emerald-950\/80,
+  html.light .bg-emerald-950\/60,
+  html.light .bg-emerald-950\/40,
+  html.light .bg-emerald-950\/30,
+  html.light .bg-emerald-900\/40 {
+    background-color: #ecfdf5;
+    color: #065f46;
+    border-color: #a7f3d0;
+  }
+
+  html.light .bg-emerald-500\/10,
+  html.light .bg-emerald-500\/15,
+  html.light .bg-emerald-500\/20 {
+    background-color: #ecfdf5;
+    color: #047857;
+    border-color: #a7f3d0;
+  }
+
+  /* Chips Teal / Cânticos */
+  html.light .bg-teal-950\/80,
+  html.light .bg-teal-900\/40,
+  html.light .bg-teal-500\/20 {
+    background-color: #f0fdfa;
+    color: #0f766e;
+    border-color: #99f6e4;
+  }
+
+  /* Chips Rose / Favoritos */
+  html.light .bg-rose-950\/60,
+  html.light .bg-rose-950\/40,
+  html.light .bg-rose-900\/50 {
+    background-color: #fff1f2;
+    color: #9f1239;
+    border-color: #fecdd3;
+  }
+
+  /* Chips Amber / Alertas & Comentários */
+  html.light .bg-amber-950\/40,
+  html.light .bg-amber-950\/20,
+  html.light .bg-amber-900\/40,
+  html.light .bg-amber-500\/10,
+  html.light .bg-amber-500\/15 {
+    background-color: #fffbeb;
+    color: #92400e;
+    border-color: #fde68a;
+  }
+
+  /* Chips Blue / Ações Admin */
+  html.light .bg-blue-950\/60,
+  html.light .bg-blue-900\/50 {
+    background-color: #eff6ff;
+    color: #1e40af;
+    border-color: #bfdbfe;
+  }
+
+  /* ---------------- Inputs, Formulários & Selects ---------------- */
+  html.light input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]),
+  html.light select,
+  html.light textarea {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+  }
+
+  html.light input::placeholder,
+  html.light textarea::placeholder,
+  html.light .placeholder-stone-400::placeholder {
+    color: #94a3b8 !important;
+  }
+
+  html.light input:focus,
+  html.light select:focus,
+  html.light textarea:focus {
+    border-color: #059669 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+  }
+
+  /* ---------------- Interações & Hover ---------------- */
+  html.light .hover\:bg-stone-800:hover,
+  html.light .hover\:bg-stone-800\/80:hover,
+  html.light .hover\:bg-stone-800\/90:hover {
+    background-color: #f1f5f9;
+  }
+
+  html.light .hover\:bg-stone-700:hover,
+  html.light .hover\:bg-stone-700\/80:hover {
+    background-color: #e2e8f0;
+  }
+
+  html.light .light\:hover\:bg-emerald-100:hover {
+    background-color: #d1fae5;
+  }
+
+  html.light .light\:hover\:bg-emerald-200:hover {
+    background-color: #a7f3d0;
+  }
+
+  html.light .light\:hover\:bg-blue-100:hover {
+    background-color: #dbeafe;
+  }
+
+  html.light .light\:hover\:bg-rose-100:hover {
+    background-color: #ffe4e6;
+  }
+
+  html.light .hover\:bg-stone-800\/40:hover {
+    background-color: #ecfdf5;
+  }
+
+  html.light .hover\:bg-stone-800\/70:hover {
+    background-color: #ecfdf5;
+  }
+
+  html.light .hover\:text-stone-100:hover {
+    color: #0f172a;
+  }
+  html.light .hover\:text-stone-200:hover {
+    color: #1e293b;
+  }
+  html.light .hover\:text-stone-300:hover {
+    color: #334155;
+  }
+
+  html.light .hover\:text-emerald-200:hover,
+  html.light .hover\:text-emerald-300:hover {
+    color: #047857;
+  }
+
+  html.light .hover\:border-emerald-500\/40:hover,
+  html.light .hover\:border-emerald-500\/50:hover,
+  html.light .hover\:border-emerald-600\/50:hover,
+  html.light .hover\:border-emerald-700\/40:hover {
+    border-color: #10b981;
+  }
+
+  html.light .hover\:border-stone-500:hover,
+  html.light .hover\:border-stone-700:hover {
+    border-color: #94a3b8;
+  }
+
+  /* ---------------- Header, Cards & Sombras Modernas ---------------- */
+  html.light header.bg-stone-900\/95,
+  html.light header.bg-stone-950\/95 {
+    background-color: rgb(255 255 255 / 0.96);
+    border-bottom-color: #e2e8f0;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  /* Cartões com elevação sutil e suave */
+  html.light .shadow-md {
+    box-shadow: 0 2px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  }
+
+  html.light .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  }
+
+  html.light .shadow-xl {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.07), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  }
+
+  html.light .shadow-2xl {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  }
+
+  html.light .shadow-inner {
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.04);
+  }
+
+  html.light .hover\:shadow-xl:hover {
+    box-shadow: 0 14px 28px -4px rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.03);
+  }
+
+  html.light .hover\:shadow-emerald-950\/20:hover {
+    box-shadow: 0 14px 28px -4px rgba(16, 185, 129, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.03);
+  }
+
+  /* ---------------- Sidebar no Tema Claro ---------------- */
+  html.light aside.bg-stone-950\/95,
+  html.light aside.bg-stone-950 {
+    background-color: #ffffff;
+    border-right-color: #e2e8f0;
   }
 }

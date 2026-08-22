@@ -143,7 +143,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {manageOpen && (
               <div
                 role="menu"
-                className="absolute right-0 mt-2 w-48 bg-stone-950 border border-stone-700 rounded-button shadow-xl z-20 overflow-hidden py-1"
+                className="absolute right-0 mt-2 w-48 bg-stone-950 light:bg-white border border-stone-700 light:border-stone-200 rounded-button shadow-xl z-20 overflow-hidden py-1"
               >
                 <button
                   type="button"
@@ -152,9 +152,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     setManageOpen(false);
                     onManageCategoriesClick();
                   }}
-                  className="w-full px-3 py-2.5 text-left text-xs font-semibold text-stone-200 hover:bg-stone-800 hover:text-emerald-300 flex items-center gap-2"
+                  className="w-full px-3 py-2.5 text-left text-xs font-semibold text-stone-200 light:text-stone-800 hover:bg-stone-800 light:hover:bg-emerald-50 hover:text-emerald-300 light:hover:text-emerald-800 flex items-center gap-2"
                 >
-                  <Tag className="w-3.5 h-3.5 text-emerald-400" />
+                  <Tag className="w-3.5 h-3.5 text-emerald-400 light:text-emerald-600" />
                   Categorias
                 </button>
                 <button
@@ -164,9 +164,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     setManageOpen(false);
                     onManageTagsClick();
                   }}
-                  className="w-full px-3 py-2.5 text-left text-xs font-semibold text-stone-200 hover:bg-stone-800 hover:text-emerald-300 flex items-center gap-2"
+                  className="w-full px-3 py-2.5 text-left text-xs font-semibold text-stone-200 light:text-stone-800 hover:bg-stone-800 light:hover:bg-emerald-50 hover:text-emerald-300 light:hover:text-emerald-800 flex items-center gap-2"
                 >
-                  <Tags className="w-3.5 h-3.5 text-emerald-400" />
+                  <Tags className="w-3.5 h-3.5 text-emerald-400 light:text-emerald-600" />
                   Tags
                 </button>
               </div>

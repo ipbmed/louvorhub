@@ -69,8 +69,8 @@ export const TagManagerModal: React.FC<TagManagerModalProps> = ({
       <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl text-stone-100 relative">
         <div className="flex items-center justify-between pb-4 border-b border-stone-800 mb-5">
           <div className="flex items-center gap-2">
-            <Tags className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-xl font-display font-bold text-emerald-100 tracking-tight">
+            <Tags className="w-5 h-5 text-emerald-400 light:text-emerald-600" />
+            <h3 className="text-xl font-display font-bold text-emerald-100 light:text-stone-900 tracking-tight">
               Gerenciar Tags
             </h3>
           </div>
