@@ -91,6 +91,11 @@ export function usePermissions() {
   const canManageSchedules = isAdmin;
   /** Calendário de eventos (equipe e/ou liturgia) */
   const canAccessEvents = canManageSchedules || canAccessLiturgies;
+  /** Membros da igreja ativa: admin global ou editor da igreja */
+  const canManageOrgMembers = useCallback(
+    (orgId?: string | null) => isAdmin || canEditChurch(orgId),
+    [isAdmin, canEditChurch],
+  );
   /** Any elevated capability (nav beyond public/profile) */
   const canManage =
     isAdmin || canManageChurches || canAccessLiturgies || canManageSchedules;
@@ -110,6 +115,7 @@ export function usePermissions() {
     canAccessLiturgies,
     canAccessAdminPanel,
     canManageUsers,
+    canManageOrgMembers,
     canManageSongs,
     canManageSchedules,
     canAccessEvents,

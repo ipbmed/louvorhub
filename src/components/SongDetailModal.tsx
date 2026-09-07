@@ -6,7 +6,7 @@ import {
   Heart, 
   Volume2, 
   Music2, 
-  Plus, 
+  ListMusic, 
   Copy, 
   Check, 
   Printer, 
@@ -401,8 +401,9 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
                 onClick={() => onAddToSetlist(song)}
                 className="p-1.5 bg-stone-900 hover:bg-stone-800 text-emerald-300 rounded-button border border-stone-800 transition-colors"
                 title="Adicionar à playlist"
+                aria-label="Adicionar à playlist"
               >
-                <Plus className="w-4 h-4" />
+                <ListMusic className="w-4 h-4" />
               </button>
             )}
 
@@ -463,19 +464,20 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
         )}
 
         {/* Lyrics Content Area */}
-        <div className="p-6 sm:p-8 overflow-y-auto flex-1 space-y-6">
-          
-          {/* Song Media Player (YouTube, YouTube Music, Spotify & Audio) */}
+        <div className="overflow-y-auto flex-1">
           {showMedia && mediaCount > 0 && (
-            <SongMediaPlayer
-              key={song.id}
-              song={song}
-              title={song.title}
-              expanded
-              onExpandedChange={setShowMedia}
-            />
+            <div className="w-full bg-stone-950 border-b border-stone-800 p-4 animate-in slide-in-from-top duration-200">
+              <SongMediaPlayer
+                key={song.id}
+                song={song}
+                title={song.title}
+                expanded
+                onExpandedChange={setShowMedia}
+              />
+            </div>
           )}
 
+          <div className="p-3 sm:p-8 space-y-3 sm:space-y-6">
           {sections.map((section, idx) => {
             const isChorus = section.type === 'chorus';
             const isComment = section.type === 'comment';
@@ -483,7 +485,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
             return (
               <div
                 key={idx}
-                className={`p-4 sm:p-5 rounded-2xl transition-all ${
+                className={`p-2.5 sm:p-5 rounded-xl sm:rounded-2xl transition-all ${
                   isComment
                     ? 'bg-amber-950/20 border border-amber-500/25 border-dashed'
                     : isChorus
@@ -492,7 +494,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
                 }`}
                 style={{ fontSize: `${fontSize}px` }}
               >
-                <div className="flex items-center justify-between mb-2 pb-1 border-b border-stone-800/40">
+                <div className="flex items-center justify-between mb-1.5 sm:mb-2 pb-1 border-b border-stone-800/40">
                   <LyricSectionHeading
                     label={section.label}
                     annotation={section.annotation}
@@ -507,7 +509,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
                 </div>
 
                 <div
-                  className={`space-y-2.5 ${
+                  className={`space-y-1.5 sm:space-y-2.5 ${
                     isComment
                       ? 'font-sans italic text-amber-100/80'
                       : showChords
@@ -547,6 +549,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
               {song.instructions && <p><strong>Instruções:</strong> {song.instructions}</p>}
             </div>
           )}
+          </div>
         </div>
 
         {showUnreviewedDialog && (

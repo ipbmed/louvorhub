@@ -159,6 +159,22 @@ export interface ResourceGrant {
 
 export type AccountStatus = 'pending' | 'approved' | 'rejected';
 
+export type OrgInvitationStatus = 'pending' | 'accepted' | 'revoked' | 'expired';
+
+export interface OrgInvitation {
+  id: string;
+  orgId: string;
+  email: string;
+  displayName?: string | null;
+  token: string;
+  status: OrgInvitationStatus;
+  invitedBy?: string | null;
+  createdAt: string;
+  expiresAt: string;
+  acceptedAt?: string | null;
+  acceptedUserId?: string | null;
+}
+
 export interface RegisteredUser {
   id: string;
   email: string;
@@ -318,8 +334,10 @@ export interface Liturgy {
 export type ViewMode =
   | 'public'
   | 'register'
+  | 'workspace'
   | 'setlist'
   | 'churches'
+  | 'organizations'
   | 'events'
   | 'schedules'
   | 'liturgies'

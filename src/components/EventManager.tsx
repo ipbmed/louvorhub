@@ -61,6 +61,8 @@ interface EventManagerProps {
   events: ChurchEvent[];
   musicGroups: MusicGroup[];
   activeChurchId: string;
+  /** Dentro do workspace: oculta o PageHeader (já há título Workspace + abas). */
+  embedded?: boolean;
   onSaveEvent: (event: ChurchEvent) => void | Promise<void>;
   onSaveEventBatch?: (
     event: ChurchEvent,
@@ -75,6 +77,7 @@ export const EventManager: React.FC<EventManagerProps> = ({
   events,
   musicGroups,
   activeChurchId,
+  embedded = false,
   onSaveEvent,
   onSaveEventBatch,
   onDeleteEvent,
@@ -412,31 +415,33 @@ export const EventManager: React.FC<EventManagerProps> = ({
 
   return (
     <div className="w-full">
-      <div className="mb-6">
-        <PageHeader
-          icon={Calendar}
-          title="Eventos"
-          description="Calendário de cultos e eventos. Abra um evento para equipe de louvor, liturgia e repertório."
-          actions={
-            <PageHeaderButton icon={Plus} onClick={() => openNew()}>
-              Adicionar
-            </PageHeaderButton>
-          }
-        />
-      </div>
+      {!embedded && (
+        <div className="mb-6">
+          <PageHeader
+            icon={Calendar}
+            title="Eventos"
+            description="Calendário de cultos e eventos. Abra um evento para equipe de louvor, liturgia e repertório."
+            actions={
+              <PageHeaderButton icon={Plus} onClick={() => openNew()}>
+                Adicionar
+              </PageHeaderButton>
+            }
+          />
+        </div>
+      )}
 
-      <div className="flex flex-col gap-4 bg-stone-900/80 border border-stone-800 p-4 rounded-2xl mb-6">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          <div className="flex items-center bg-stone-950 border border-stone-800 p-1 rounded-xl overflow-x-auto">
+      <div className="flex flex-col gap-2 mb-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-1 overflow-x-auto -mx-0.5 px-0.5">
             {modeButtons.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 type="button"
                 onClick={() => setDisplayMode(id)}
-                className={`px-3 sm:px-4 py-2 rounded-button text-xs font-bold flex items-center gap-1.5 sm:gap-2 transition-all whitespace-nowrap ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-button text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
                   displayMode === id
                     ? 'bg-emerald-500 text-stone-950 shadow-md shadow-emerald-500/20'
-                    : 'text-stone-400 hover:text-stone-200'
+                    : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/60'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -444,14 +449,21 @@ export const EventManager: React.FC<EventManagerProps> = ({
               </button>
             ))}
           </div>
-          <span className="text-xs text-stone-500 font-mono shrink-0">
-            {eventsToShow.length} evento{eventsToShow.length === 1 ? '' : 's'}
-            {displayMode === 'month' || displayMode === 'week' || displayMode === 'calendar'
-              ? ' neste período'
-              : listScope === 'agenda'
-                ? ' próximos'
-                : ' no total'}
-          </span>
+          <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
+            <span className="text-xs text-stone-500 font-mono">
+              {eventsToShow.length} evento{eventsToShow.length === 1 ? '' : 's'}
+              {displayMode === 'month' || displayMode === 'week' || displayMode === 'calendar'
+                ? ' neste período'
+                : listScope === 'agenda'
+                  ? ' próximos'
+                  : ' no total'}
+            </span>
+            {embedded && (
+              <PageHeaderButton icon={Plus} onClick={() => openNew()}>
+                Adicionar
+              </PageHeaderButton>
+            )}
+          </div>
         </div>
 
         {displayMode === 'agenda' && (
@@ -538,7 +550,7 @@ export const EventManager: React.FC<EventManagerProps> = ({
                       setSelectedDay(cell.dateStr);
                     }
                   }}
-                  className={`min-h-[4.5rem] sm:min-h-[6.5rem] rounded-xl border p-1.5 sm:p-2 text-left transition-all flex flex-col gap-1 cursor-pointer ${
+                  className={`min-h-[2.75rem] sm:min-h-[3.75rem] rounded-xl border p-1 sm:p-1.5 text-left transition-all flex flex-col gap-0.5 cursor-pointer ${
                     isSelected
                       ? 'border-emerald-500 bg-emerald-950/40'
                       : isToday
@@ -547,14 +559,14 @@ export const EventManager: React.FC<EventManagerProps> = ({
                   } ${cell.inMonth ? '' : 'opacity-40'}`}
                 >
                   <span
-                    className={`inline-flex w-6 h-6 items-center justify-center rounded-full text-xs font-bold ${
+                    className={`inline-flex w-5 h-5 sm:w-6 sm:h-6 items-center justify-center rounded-full text-[11px] sm:text-xs font-bold ${
                       isToday ? 'bg-emerald-500 text-stone-950' : 'text-stone-300'
                     }`}
                   >
                     {cell.day}
                   </span>
-                  <div className="flex-1 space-y-0.5 overflow-hidden">
-                    {dayEvents.slice(0, 3).map((ev) => (
+                  <div className="flex-1 space-y-0.5 overflow-hidden min-h-0">
+                    {dayEvents.slice(0, 2).map((ev) => (
                       <button
                         key={ev.id}
                         type="button"
@@ -569,9 +581,9 @@ export const EventManager: React.FC<EventManagerProps> = ({
                         <span className="hidden sm:inline"> · {ev.title}</span>
                       </button>
                     ))}
-                    {dayEvents.length > 3 && (
+                    {dayEvents.length > 2 && (
                       <span className="block text-[9px] text-stone-500 font-mono px-0.5">
-                        +{dayEvents.length - 3}
+                        +{dayEvents.length - 2}
                       </span>
                     )}
                   </div>
@@ -580,8 +592,8 @@ export const EventManager: React.FC<EventManagerProps> = ({
             })}
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-stone-800 pt-3">
-            <p className="text-xs text-stone-400">
+          <div className="mt-4 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-between gap-3 border-t border-stone-800 pt-3">
+            <p className="text-xs text-stone-400 shrink-0">
               {selectedDay
                 ? `Dia ${new Date(selectedDay + 'T00:00:00').toLocaleDateString('pt-BR', {
                     weekday: 'long',
@@ -590,15 +602,54 @@ export const EventManager: React.FC<EventManagerProps> = ({
                   })}`
                 : 'Selecione um dia'}
             </p>
-            {selectedDay && (
-              <button
-                type="button"
-                onClick={() => openNew(selectedDay)}
-                className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs"
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1 sm:justify-end min-w-0">
+              <label className="sr-only" htmlFor="upcoming-events-combo">
+                Próximos eventos
+              </label>
+              <select
+                id="upcoming-events-combo"
+                value=""
+                onChange={(e) => {
+                  const id = e.target.value;
+                  if (!id) return;
+                  const ev = upcomingEvents.find((item) => item.id === id);
+                  if (!ev) return;
+                  setSelectedDay(ev.date);
+                  setCalendarCursor(
+                    new Date(Number(ev.date.slice(0, 4)), Number(ev.date.slice(5, 7)) - 1, 1),
+                  );
+                  onOpenEvent(ev.id);
+                }}
+                className="w-full sm:max-w-xs bg-stone-950 border border-stone-700 text-stone-100 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-600 truncate"
               >
-                + Evento neste dia
-              </button>
-            )}
+                <option value="">
+                  {upcomingEvents.length === 0
+                    ? 'Nenhum próximo evento'
+                    : `Próximos eventos (${upcomingEvents.length})`}
+                </option>
+                {upcomingEvents.map((ev) => {
+                  const dateLabel = new Date(ev.date + 'T00:00:00').toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: 'short',
+                  });
+                  return (
+                    <option key={ev.id} value={ev.id}>
+                      {dateLabel}
+                      {ev.time ? ` · ${ev.time}` : ''} · {ev.title}
+                    </option>
+                  );
+                })}
+              </select>
+              {selectedDay && (
+                <button
+                  type="button"
+                  onClick={() => openNew(selectedDay)}
+                  className="px-3 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs whitespace-nowrap"
+                >
+                  + Evento neste dia
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

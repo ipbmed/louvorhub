@@ -52,14 +52,19 @@ import { SongFormModal } from './components/SongFormModal';
 import { CategoryManagerModal } from './components/CategoryManagerModal';
 import { TagManagerModal } from './components/TagManagerModal';
 import { ChurchManager } from './components/ChurchManager';
+import { ChurchWorkspace, WORKSPACE_VIEWS } from './components/ChurchWorkspace';
+import { OrganizationManager } from './components/OrganizationManager';
 import { EventManager } from './components/EventManager';
 import { EventDetail } from './components/EventDetail';
 import { UserManager } from './components/UserManager';
+import { InviteAcceptPage } from './components/InviteAcceptPage';
 import { AlphabetFilter, AlphabetFilterToggle } from './components/AlphabetFilter';
 import { SongTypeFilter, matchesSongTypeFilter } from './components/SongTypeFilter';
 import { AppSidebar } from './components/AppSidebar';
 import { ProfilePage } from './components/ProfilePage';
 import { Music, ArrowUpDown, AlertCircle, LayoutGrid, List, Loader2 } from 'lucide-react';
+import { CatalogSongsLoading } from './components/CatalogSongsLoading';
+import { HelpModal } from './components/HelpModal';
 
 type SongsLayoutMode = 'cards' | 'list';
 const SONGS_LAYOUT_KEY = 'louvorhub_songs_layout';
@@ -85,6 +90,7 @@ export default function App() {
   const playlistShareMatch = useMatch('/playlist/:shareCode');
   const legacyPlaylistShareMatch = useMatch('/repertorio/:shareCode');
   const eventShareMatch = useMatch('/evento/:shareCode');
+  const inviteMatch = useMatch('/convite/:token');
   const selectedEventSongId = songVersionMatch?.params.eventSongId ?? null;
   const selectedSongId = selectedEventSongId
     ? null
@@ -94,6 +100,7 @@ export default function App() {
     legacyPlaylistShareMatch?.params.shareCode ??
     null;
   const eventShareCode = eventShareMatch?.params.shareCode ?? null;
+  const inviteToken = inviteMatch?.params.token ?? null;
   const { ready, user, profile, signOut, configured, refreshMemberships, refreshProfile } = useAuth();
   const { showToast } = useToast();
   const { orgId, memberships, setActiveOrgId, activeOrgId } = useOrg();
@@ -101,6 +108,7 @@ export default function App() {
     isAdmin,
     canAccessAdminPanel,
     canManageUsers,
+    canManageOrgMembers,
     canManageSongs,
     canManageSchedules,
     canManageChurches,
@@ -120,6 +128,7 @@ export default function App() {
   const [showHinos, setShowHinos] = useState(true);
   const [showCanticos, setShowCanticos] = useState(true);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [favoritesFilterLoading, setFavoritesFilterLoading] = useState(false);
   const [quickQuery, setQuickQuery] = useState('');
   const [sortBy, setSortBy] = useState<'number' | 'title' | 'recent'>('number');
   const [songsLayout, setSongsLayout] = useState<SongsLayoutMode>(() => {
@@ -143,6 +152,7 @@ export default function App() {
   const [projectionSongs, setProjectionSongs] = useState<Song[] | null>(null);
   const [showKeypad, setShowKeypad] = useState(false);
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [songToEdit, setSongToEdit] = useState<Song | null | 'new'>(null);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
@@ -172,8 +182,10 @@ export default function App() {
     currentView === 'events' && Boolean(selectedEventId);
 
   const PROTECTED_VIEWS: ViewMode[] = [
+    'workspace',
     'setlist',
     'churches',
+    'organizations',
     'users',
     'accounts',
     'events',
@@ -183,6 +195,8 @@ export default function App() {
     'profile',
   ];
 
+  const canManageActiveOrgMembers = canManageOrgMembers(orgId);
+
   const handleViewChange = (view: ViewMode) => {
     if (!user && PROTECTED_VIEWS.includes(view)) {
       setShowLogin(true);
@@ -191,19 +205,27 @@ export default function App() {
     }
     if (user) {
       if (view === 'admin' && !canAccessAdminPanel) {
-        showToast('Somente administradores acessam o Painel Geral.');
+        showToast('Somente administradores gerenciam músicas.');
         return;
       }
-      if (view === 'users' && !canManageUsers) {
-        showToast('Somente administradores gerenciam usuários.');
+      if (view === 'organizations' && !canAccessAdminPanel) {
+        showToast('Somente administradores gerenciam igrejas.');
         return;
       }
       if (view === 'accounts' && !canManageUsers) {
         showToast('Somente administradores gerenciam contas.');
         return;
       }
+      if (view === 'workspace' && !orgId) {
+        showToast('Associe-se a uma igreja para abrir o workspace.');
+        return;
+      }
+      if (view === 'users' && !canManageActiveOrgMembers) {
+        showToast('Sem permissão para gerenciar membros desta igreja.');
+        return;
+      }
       if (view === 'churches' && !canManageChurches) {
-        showToast('Sem permissão para gerenciar igrejas e grupos.');
+        showToast('Sem permissão para gerenciar grupos e bandas.');
         return;
       }
       if (view === 'events' && !canAccessEvents) {
@@ -213,6 +235,18 @@ export default function App() {
     }
     if (view !== 'events') setSelectedEventId(null);
     setCurrentView(view);
+  };
+
+  const goToCatalog = () => {
+    if (currentView === 'public') return;
+    setSelectedEventId(null);
+    setSidebarDrawerOpen(false);
+    setCurrentView('public');
+  };
+
+  const handleQuickQueryChange = (val: string) => {
+    setQuickQuery(val);
+    if (val.trim()) goToCatalog();
   };
 
   // Visitante: somente consulta de músicas
@@ -288,6 +322,12 @@ export default function App() {
     queryFn: () => orgsService.listOrganizationsForUser(user!.id),
   });
 
+  const allOrganizationsQuery = useQuery({
+    queryKey: ['allOrganizations'],
+    enabled: Boolean(configured && user?.id && canAccessAdminPanel),
+    queryFn: () => orgsService.listAllVisibleOrganizations(),
+  });
+
   const musicGroupsQuery = useQuery({
     queryKey: ['musicGroups', orgIds.join(',')],
     enabled: Boolean(configured && orgIds.length),
@@ -319,9 +359,15 @@ export default function App() {
   });
 
   const songs = songsQuery.data || [];
+  const catalogSongsLoading =
+    Boolean(configured) &&
+    !songsQuery.isError &&
+    (songsQuery.isLoading ||
+      (!songsQuery.data && (songsQuery.isPending || songsQuery.isFetching)));
   const categories = categoriesQuery.data || [];
   const favorites = favoritesQuery.data || [];
   const churches = churchesQuery.data || [];
+  const allOrganizations = allOrganizationsQuery.data || [];
   const musicGroups = musicGroupsQuery.data || [];
   const systemUsers = membersQuery.data || [];
   const setlists = setlistsQuery.data || [];
@@ -469,13 +515,17 @@ export default function App() {
     }
   };
 
+  const isTempChurchId = (id: string) =>
+    id.startsWith('temp-') || id.startsWith('temp-org-') || id.startsWith('church-');
+
   const handleSaveChurch = async (church: Church) => {
     if (!user) {
-      showToast('Faça login para gerenciar igrejas.');
-      return;
+      const err = new Error('Faça login para gerenciar igrejas.');
+      showToast(err.message);
+      throw err;
     }
     try {
-      if (church.id && !church.id.startsWith('temp-') && churches.some((c) => c.id === church.id)) {
+      if (church.id && !isTempChurchId(church.id)) {
         await orgsService.updateOrganization(church);
       } else {
         const created = await orgsService.createOrganization(user.id, church);
@@ -483,9 +533,11 @@ export default function App() {
       }
       await refreshMemberships();
       await queryClient.invalidateQueries({ queryKey: ['churches'] });
+      await queryClient.invalidateQueries({ queryKey: ['allOrganizations'] });
       showToast(`Igreja "${church.name}" salva!`);
     } catch (err) {
       showToast((err as Error).message);
+      throw err;
     }
   };
 
@@ -495,9 +547,11 @@ export default function App() {
       await orgsService.deleteOrganization(id);
       await refreshMemberships();
       await invalidateAll();
+      await queryClient.invalidateQueries({ queryKey: ['allOrganizations'] });
       showToast('Igreja removida.');
     } catch (err) {
       showToast((err as Error).message);
+      throw err;
     }
   };
 
@@ -717,6 +771,30 @@ export default function App() {
     }
   };
 
+  const handleToggleFavoritesOnly = async () => {
+    if (!user) {
+      setShowLogin(true);
+      showToast('Entre para usar favoritos.');
+      return;
+    }
+    const next = !showFavoritesOnly;
+    setShowFavoritesOnly(next);
+    setFavoritesFilterLoading(true);
+    const started = Date.now();
+    try {
+      await queryClient.invalidateQueries({ queryKey: ['favorites', user.id] });
+      await favoritesQuery.refetch();
+    } catch (err) {
+      showToast((err as Error).message || 'Não foi possível atualizar favoritos.');
+    } finally {
+      const elapsed = Date.now() - started;
+      if (elapsed < 280) {
+        await new Promise((r) => setTimeout(r, 280 - elapsed));
+      }
+      setFavoritesFilterLoading(false);
+    }
+  };
+
   const handleToggleFavorite = async (songId: string) => {
     if (!user) {
       setShowLogin(true);
@@ -882,7 +960,40 @@ export default function App() {
 
   const orgOptions = memberships
     .filter((m) => m.organizations && !m.organizations.is_global)
-    .map((m) => ({ id: m.org_id, name: m.organizations!.name }));
+    .map((m) => ({
+      id: m.org_id,
+      name: m.organizations!.name,
+      sigla: m.organizations!.sigla || null,
+    }));
+
+  const workspaceChurch: Church | null = useMemo(() => {
+    if (!orgId) return null;
+    const fromList = churches.find((c) => c.id === orgId);
+    if (fromList) return fromList;
+    const membershipOrg = memberships.find((m) => m.org_id === orgId)?.organizations;
+    if (!membershipOrg) {
+      return { id: orgId, name: 'Igreja', city: '', createdAt: new Date().toISOString() };
+    }
+    return {
+      id: orgId,
+      name: membershipOrg.name,
+      city: membershipOrg.city || '',
+      address: membershipOrg.address || undefined,
+      leader: membershipOrg.leader || undefined,
+      phone: membershipOrg.phone || undefined,
+      sigla: membershipOrg.sigla,
+      color: membershipOrg.color || undefined,
+      createdAt: membershipOrg.created_at || new Date().toISOString(),
+    };
+  }, [orgId, churches, memberships]);
+
+  if (inviteToken) {
+    return (
+      <div className="min-h-screen bg-stone-950 text-stone-100 font-sans">
+        <InviteAcceptPage />
+      </div>
+    );
+  }
 
   if (eventShareCode) {
     return <PublicEventPage shareCode={eventShareCode} />;
@@ -893,9 +1004,20 @@ export default function App() {
   }
 
   if (!ready) {
+    const loadingSongs =
+      Boolean(configured) &&
+      !songsQuery.data &&
+      !songsQuery.isError &&
+      (songsQuery.isPending || songsQuery.isFetching);
     return (
-      <div className="min-h-screen bg-stone-950 text-stone-200 flex items-center justify-center">
-        Carregando…
+      <div className="min-h-screen bg-stone-950 text-stone-200 flex flex-col items-center justify-center gap-3 px-6">
+        <Loader2 className="w-9 h-9 text-emerald-400 animate-spin" />
+        <p className="text-sm font-semibold text-stone-200">
+          {loadingSongs ? 'Carregando músicas…' : 'Carregando…'}
+        </p>
+        <p className="text-[11px] text-stone-500 text-center">
+          {loadingSongs ? 'Montando o catálogo' : 'Preparando a sessão'}
+        </p>
       </div>
     );
   }
@@ -904,13 +1026,11 @@ export default function App() {
     <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col font-sans">
       {!songMatch && (
         <Header
-          currentView={currentView}
           onViewChange={handleViewChange}
           quickNumberQuery={quickQuery}
-          onQuickNumberChange={setQuickQuery}
+          onQuickNumberChange={handleQuickQueryChange}
           onOpenKeypad={() => setShowKeypad(true)}
           onOpenAdvancedSearch={() => setShowAdvancedSearch(true)}
-          isAdmin={canAccessAdminPanel}
           isAuthenticated={Boolean(user)}
           showPublicEvents={!user && currentView === 'public'}
           onAdminAuthClick={() => {
@@ -918,7 +1038,6 @@ export default function App() {
             else if (canAccessAdminPanel) setCurrentView(currentView === 'admin' ? 'public' : 'admin');
             else showToast('Somente administradores acessam o Painel Geral.');
           }}
-          onRegisterClick={() => setCurrentView('register')}
           onSignOut={async () => {
             await signOut();
             setSidebarDrawerOpen(false);
@@ -928,22 +1047,10 @@ export default function App() {
           favoritesCount={favorites.length}
           showFavoritesOnly={showFavoritesOnly}
           onToggleFavoritesOnly={() => {
-            if (!user) {
-              setShowLogin(true);
-              showToast('Entre para usar favoritos.');
-              return;
-            }
-            setShowFavoritesOnly(!showFavoritesOnly);
-          }}
-          onNewSongClick={() => {
-            if (!canManageSongs) {
-              if (!user) setShowLogin(true);
-              else showToast('Somente administradores cadastram músicas.');
-              return;
-            }
-            setSongToEdit('new');
+            void handleToggleFavoritesOnly();
           }}
           onOpenSidebar={() => setSidebarDrawerOpen(true)}
+          onOpenHelp={() => setShowHelp(true)}
         />
       )}
 
@@ -967,19 +1074,27 @@ export default function App() {
             permissions={{
               canAccessAdminPanel,
               canManageUsers,
+              canManageOrgMembers: canManageActiveOrgMembers,
               canManageChurches,
               canAccessLiturgies,
               canManageSchedules,
               canAccessEvents,
             }}
+            onSignOut={async () => {
+              await signOut();
+              setSidebarDrawerOpen(false);
+              setCurrentView('public');
+              showToast('Sessão encerrada.');
+            }}
+            onOpenHelp={() => setShowHelp(true)}
           />
         )}
 
       <main
-        className={`flex-1 w-full min-w-0 py-6 sm:py-8 space-y-6 transition-[padding] duration-200 ${
+        className={`flex-1 w-full min-w-0 py-3 sm:py-8 space-y-4 sm:space-y-6 transition-[padding] duration-200 ${
           isEventDetail
-            ? 'px-3 sm:px-4 lg:px-5 xl:px-6 2xl:px-8'
-            : 'px-4 sm:px-6 lg:px-8'
+            ? 'px-2 sm:px-4 lg:px-5 xl:px-6 2xl:px-8'
+            : 'px-2.5 sm:px-6 lg:px-8'
         }`}
       >
         {!configured && (
@@ -1037,7 +1152,7 @@ export default function App() {
           <AdminDashboard
             songs={songs}
             categories={categories}
-            isLoading={songsQuery.isLoading}
+            isLoading={catalogSongsLoading}
             onNewSongClick={() => setSongToEdit('new')}
             onEditSongClick={(s) => setSongToEdit(s)}
             onDeleteSongClick={handleDeleteSong}
@@ -1060,6 +1175,96 @@ export default function App() {
               })
             }
           />
+        ) : user && orgId && workspaceChurch && WORKSPACE_VIEWS.includes(currentView) ? (
+          <ChurchWorkspace
+            church={workspaceChurch}
+            currentView={currentView}
+            canAccessEvents={canAccessEvents}
+            canManageGroups={canManageChurches}
+            canManageMembers={canManageActiveOrgMembers}
+            canEditChurch={canEditChurch(orgId)}
+            onSaveChurch={handleSaveChurch}
+            onNavigate={handleViewChange}
+            hideTabs={isEventDetail}
+          >
+            {currentView === 'churches' && canManageChurches ? (
+              <ChurchManager
+                churches={churches}
+                musicGroups={musicGroups}
+                systemUsers={systemUsers}
+                onSaveChurch={handleSaveChurch}
+                onDeleteChurch={handleDeleteChurch}
+                onSaveMusicGroup={handleSaveMusicGroup}
+                onDeleteMusicGroup={handleDeleteMusicGroup}
+                isAdmin={isAdmin}
+                allowedChurchIds={churchEditorOrgIds}
+                allowedGroupIds={groupEditorGroupIds}
+                canEditChurch={canEditChurch}
+                canEditGroup={canEditGroup}
+                lockedChurchId={orgId}
+                embedded
+              />
+            ) : currentView === 'users' && canManageActiveOrgMembers ? (
+              <UserManager
+                orgId={orgId}
+                orgName={workspaceChurch?.name}
+                systemUsers={systemUsers}
+                churches={churches}
+                musicGroups={musicGroups}
+                currentUserIsAdmin={isAdmin}
+                embedded
+                onSaveUser={async (u) => {
+                  await handleSaveUser(u);
+                  await refreshProfile();
+                  await refreshGrants();
+                }}
+                onDeleteUser={handleDeleteUser}
+              />
+            ) : currentView === 'events' && canAccessEvents ? (
+              selectedEventId && eventBundle?.event ? (
+                <EventDetail
+                  event={eventBundle.event}
+                  schedule={eventBundle.schedule}
+                  liturgy={eventBundle.liturgy}
+                  setlist={eventBundle.setlist}
+                  songs={songs}
+                  musicGroups={activeChurchGroups}
+                  systemUsers={systemUsers}
+                  canManageTeam={canAccessEvents}
+                  canManageLiturgy={canAccessLiturgies}
+                  canManageSetlist={canAccessEvents}
+                  onBack={() => setSelectedEventId(null)}
+                  onSaveSchedule={handleSaveSchedule}
+                  onDeleteSchedule={handleDeleteSchedule}
+                  onSaveLiturgy={handleSaveLiturgy}
+                  onDeleteLiturgy={handleDeleteLiturgy}
+                  onEnsureLiturgy={handleEnsureEventLiturgy}
+                  onSaveSetlist={handleSaveEventSetlist}
+                  onSaveEvent={handleSaveEvent}
+                  onSaveSongVersion={handleSaveEventSongVersion}
+                  onResetSongVersion={handleResetEventSongVersion}
+                  onSelectSong={openSong}
+                  onShareUpdated={invalidateEvents}
+                />
+              ) : selectedEventId && eventBundleQuery.isLoading ? (
+                <div className="flex items-center justify-center py-20 text-stone-400 gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Carregando evento...
+                </div>
+              ) : (
+                <EventManager
+                  events={events}
+                  musicGroups={activeChurchGroups}
+                  activeChurchId={orgId}
+                  embedded
+                  onSaveEvent={handleSaveEvent}
+                  onSaveEventBatch={handleSaveEventBatch}
+                  onDeleteEvent={handleDeleteEvent}
+                  onOpenEvent={(id) => setSelectedEventId(id)}
+                />
+              )
+            ) : null}
+          </ChurchWorkspace>
         ) : user && currentView === 'setlist' ? (
           <SetlistManager
             setlists={setlists}
@@ -1075,78 +1280,18 @@ export default function App() {
             onOpenProjectionPlaylist={(sequence) => setProjectionSongs(sequence)}
             onSelectSong={openSong}
           />
-        ) : user && currentView === 'churches' && canManageChurches ? (
-          <ChurchManager
-            churches={churches}
-            musicGroups={musicGroups}
-            systemUsers={systemUsers}
-            onSaveChurch={handleSaveChurch}
-            onDeleteChurch={handleDeleteChurch}
-            onSaveMusicGroup={handleSaveMusicGroup}
-            onDeleteMusicGroup={handleDeleteMusicGroup}
-            isAdmin={isAdmin}
-            allowedChurchIds={churchEditorOrgIds}
-            allowedGroupIds={groupEditorGroupIds}
-            canEditChurch={canEditChurch}
-            canEditGroup={canEditGroup}
+        ) : user && currentView === 'organizations' && canAccessAdminPanel ? (
+          <OrganizationManager
+            churches={allOrganizations}
+            loading={allOrganizationsQuery.isLoading}
+            onSave={handleSaveChurch}
+            onDelete={handleDeleteChurch}
+            onRefresh={() => queryClient.invalidateQueries({ queryKey: ['allOrganizations'] })}
           />
         ) : user && currentView === 'accounts' && canManageUsers ? (
           <AccountManager />
-        ) : user && currentView === 'users' && canManageUsers ? (
-          <UserManager
-            systemUsers={systemUsers}
-            churches={churches}
-            musicGroups={musicGroups}
-            currentUserIsAdmin={isAdmin}
-            onSaveUser={async (u) => {
-              await handleSaveUser(u);
-              await refreshProfile();
-              await refreshGrants();
-            }}
-            onDeleteUser={handleDeleteUser}
-          />
-        ) : user && currentView === 'events' && canAccessEvents && orgId ? (
-          selectedEventId && eventBundle?.event ? (
-            <EventDetail
-              event={eventBundle.event}
-              schedule={eventBundle.schedule}
-              liturgy={eventBundle.liturgy}
-              setlist={eventBundle.setlist}
-              songs={songs}
-              musicGroups={activeChurchGroups}
-              systemUsers={systemUsers}
-              canManageTeam={canAccessEvents}
-              canManageLiturgy={canAccessLiturgies}
-              canManageSetlist={canAccessEvents}
-              onBack={() => setSelectedEventId(null)}
-              onSaveSchedule={handleSaveSchedule}
-              onDeleteSchedule={handleDeleteSchedule}
-              onSaveLiturgy={handleSaveLiturgy}
-              onDeleteLiturgy={handleDeleteLiturgy}
-              onEnsureLiturgy={handleEnsureEventLiturgy}
-              onSaveSetlist={handleSaveEventSetlist}
-              onSaveEvent={handleSaveEvent}
-              onSaveSongVersion={handleSaveEventSongVersion}
-              onResetSongVersion={handleResetEventSongVersion}
-              onSelectSong={openSong}
-              onShareUpdated={invalidateEvents}
-            />
-          ) : selectedEventId && eventBundleQuery.isLoading ? (
-            <div className="flex items-center justify-center py-20 text-stone-400 gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Carregando evento...
-            </div>
-          ) : (
-            <EventManager
-              events={events}
-              musicGroups={activeChurchGroups}
-              activeChurchId={orgId}
-              onSaveEvent={handleSaveEvent}
-              onSaveEventBatch={handleSaveEventBatch}
-              onDeleteEvent={handleDeleteEvent}
-              onOpenEvent={(id) => setSelectedEventId(id)}
-            />
-          )
+        ) : catalogSongsLoading ? (
+          <CatalogSongsLoading layout={songsLayout} />
         ) : (
           <div className="w-full space-y-4 sm:space-y-6">
             <div className="flex flex-col gap-3 bg-stone-900/60 p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-stone-800/80">
@@ -1260,11 +1405,16 @@ export default function App() {
               />
             </div>
 
-            {songsQuery.isLoading ? (
-              <div className="bg-stone-900/40 border border-stone-800 rounded-3xl p-16 flex flex-col items-center justify-center gap-3 text-stone-400">
-                <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
-                <p className="text-xs font-medium">Carregando músicas…</p>
-              </div>
+            {favoritesFilterLoading ? (
+              <CatalogSongsLoading
+                layout={songsLayout}
+                title={showFavoritesOnly ? 'Carregando favoritos…' : 'Atualizando catálogo…'}
+                subtitle={
+                  showFavoritesOnly
+                    ? 'Filtrando suas músicas favoritas'
+                    : 'Removendo o filtro de favoritos'
+                }
+              />
             ) : sortedSongs.length > 0 ? (
               songsLayout === 'list' ? (
                 <div className="flex flex-col gap-1.5">
@@ -1413,11 +1563,19 @@ export default function App() {
         <AdvancedSearchModal
           categories={categories}
           filters={advancedFilters}
-          onApplyFilters={setAdvancedFilters}
-          onResetFilters={() => setAdvancedFilters(INITIAL_FILTERS)}
+          onApplyFilters={(next) => {
+            setAdvancedFilters(next);
+            goToCatalog();
+          }}
+          onResetFilters={() => {
+            setAdvancedFilters(INITIAL_FILTERS);
+            goToCatalog();
+          }}
           onClose={() => setShowAdvancedSearch(false)}
         />
       )}
+
+      <HelpModal open={showHelp} onClose={() => setShowHelp(false)} />
 
       {showLogin && (
         <AdminLoginModal

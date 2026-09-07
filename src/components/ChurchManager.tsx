@@ -38,6 +38,10 @@ interface ChurchManagerProps {
   allowedGroupIds?: string[] | null;
   canEditChurch?: (orgId?: string | null) => boolean;
   canEditGroup?: (groupId?: string | null, orgId?: string | null) => boolean;
+  /** Quando definido, fixa a gestão na igreja do workspace */
+  lockedChurchId?: string | null;
+  /** Dentro do workspace: oculta o PageHeader (já há título Workspace + abas). */
+  embedded?: boolean;
 }
 
 export const ChurchManager: React.FC<ChurchManagerProps> = ({
@@ -53,22 +57,39 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
   allowedGroupIds = null,
   canEditChurch = (_orgId?: string | null) => isAdmin,
   canEditGroup = (_groupId?: string | null, _orgId?: string | null) => isAdmin,
+  lockedChurchId = null,
+  embedded = false,
 }) => {
   const churches = useMemo(() => {
-    if (isAdmin) return churchesProp;
-    const orgIds = new Set<string>();
-    for (const id of allowedChurchIds || []) orgIds.add(id);
-    for (const g of musicGroupsProp) {
-      if (allowedGroupIds?.includes(g.id)) orgIds.add(g.churchId);
+    let list = churchesProp;
+    if (lockedChurchId) {
+      list = list.filter((c) => c.id === lockedChurchId);
+    } else if (!isAdmin) {
+      const orgIds = new Set<string>();
+      for (const id of allowedChurchIds || []) orgIds.add(id);
+      for (const g of musicGroupsProp) {
+        if (allowedGroupIds?.includes(g.id)) orgIds.add(g.churchId);
+      }
+      if (!orgIds.size) return [];
+      list = list.filter((c) => orgIds.has(c.id));
     }
-    if (!orgIds.size) return [];
-    return churchesProp.filter((c) => orgIds.has(c.id));
-  }, [churchesProp, musicGroupsProp, isAdmin, allowedChurchIds, allowedGroupIds]);
+    return list;
+  }, [
+    churchesProp,
+    musicGroupsProp,
+    isAdmin,
+    allowedChurchIds,
+    allowedGroupIds,
+    lockedChurchId,
+  ]);
 
   const musicGroups = useMemo(() => {
-    if (isAdmin) return musicGroupsProp;
-    return musicGroupsProp.filter((g) => canEditGroup(g.id, g.churchId));
-  }, [musicGroupsProp, isAdmin, canEditGroup]);
+    const scoped = lockedChurchId
+      ? musicGroupsProp.filter((g) => g.churchId === lockedChurchId)
+      : musicGroupsProp;
+    if (isAdmin) return scoped;
+    return scoped.filter((g) => canEditGroup(g.id, g.churchId));
+  }, [musicGroupsProp, isAdmin, canEditGroup, lockedChurchId]);
 
   const [selectedChurchId, setSelectedChurchId] = useState<string>(
     churches.length > 0 ? churches[0].id : ''
@@ -79,10 +100,14 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
       setSelectedChurchId('');
       return;
     }
+    if (lockedChurchId && churches.some((c) => c.id === lockedChurchId)) {
+      setSelectedChurchId(lockedChurchId);
+      return;
+    }
     if (!churches.some((c) => c.id === selectedChurchId)) {
       setSelectedChurchId(churches[0].id);
     }
-  }, [churches, selectedChurchId]);
+  }, [churches, selectedChurchId, lockedChurchId]);
 
   // Modals state
   const [isChurchModalOpen, setIsChurchModalOpen] = useState(false);
@@ -281,20 +306,26 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
   return (
     <div className="w-full">
       
-      <div className="mb-6">
-        <PageHeader
-          icon={Building2}
-          title="Igrejas e Bandas"
-          description="Gerencie congregações, grupos de louvor e seus integrantes."
-          actions={
-            isAdmin ? (
-              <PageHeaderButton icon={Plus} onClick={openNewChurchModal}>
-                Adicionar
-              </PageHeaderButton>
-            ) : undefined
-          }
-        />
-      </div>
+      {!embedded && (
+        <div className="mb-6">
+          <PageHeader
+            icon={Building2}
+            title={lockedChurchId ? 'Grupos / Bandas' : 'Igrejas e Bandas'}
+            description={
+              lockedChurchId
+                ? 'Gerencie as bandas e grupos de louvor desta igreja.'
+                : 'Gerencie congregações, grupos de louvor e seus integrantes.'
+            }
+            actions={
+              isAdmin && !lockedChurchId ? (
+                <PageHeaderButton icon={Plus} onClick={openNewChurchModal}>
+                  Adicionar
+                </PageHeaderButton>
+              ) : undefined
+            }
+          />
+        </div>
+      )}
 
       {/* Church Selector Tabs */}
       {churches.length === 0 ? (
@@ -318,9 +349,10 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className={`grid grid-cols-1 gap-8 ${lockedChurchId ? '' : 'lg:grid-cols-4'}`}>
           
           {/* Left Column: Churches List Navigation */}
+          {!lockedChurchId && (
           <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-stone-400 px-1">
               Igrejas Cadastradas ({churches.length})
@@ -368,12 +400,14 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
               })}
             </div>
           </div>
+          )}
 
           {/* Right Column: Active Church Details & MusicGroup Management */}
           {activeChurch && (
-            <div className="lg:col-span-3 space-y-6">
+            <div className={`${lockedChurchId ? '' : 'lg:col-span-3'} space-y-6`}>
               
-              {/* Church Card Info */}
+              {/* Church Card Info — oculto no workspace (dados já estão no header da igreja) */}
+              {!lockedChurchId && (
               <div className="bg-stone-900 border border-stone-800 rounded-2xl p-6 shadow-md relative overflow-hidden">
                 <div 
                   className="absolute top-0 left-0 right-0 h-1.5" 
@@ -436,26 +470,22 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
                   )}
                 </div>
               </div>
+              )}
 
               {/* musicGroups / Worship Groups Header */}
-              <div className="flex items-center justify-between pt-2">
-                <div>
-                  <h3 className="text-lg font-display font-bold text-stone-100 flex items-center gap-2">
-                    <Music2 className="w-5 h-5 text-emerald-400" />
-                    Grupos & Bandas de Louvor
-                  </h3>
-                  <p className="text-xs text-stone-400">
-                    Equipes escaladas para reger os momentos de louvor nesta congregação.
-                  </p>
-                </div>
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <h3 className="text-base sm:text-lg font-display font-bold text-stone-100 flex items-center gap-2 min-w-0 truncate">
+                  <Music2 className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 shrink-0" />
+                  Grupos de Louvor
+                </h3>
 
                 {canManageActiveChurch && (
                   <button
                     onClick={openNewMusicGroupModal}
-                    className="px-3.5 py-2 bg-stone-800 hover:bg-stone-700 text-emerald-300 font-semibold rounded-button text-xs border border-stone-700 transition-all flex items-center gap-1.5 shadow-sm"
+                    className="px-2.5 py-1.5 sm:px-3.5 sm:py-2 bg-stone-800 hover:bg-stone-700 text-emerald-300 font-semibold rounded-button text-xs border border-stone-700 transition-all flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap"
                   >
                     <Plus className="w-4 h-4" />
-                    Nova Banda / Grupo
+                    Novo grupo
                   </button>
                 )}
               </div>

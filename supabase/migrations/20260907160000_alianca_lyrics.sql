@@ -1,0 +1,30 @@
+-- Cântico Aliança (Ministério Koinonya) — cifra Cifra Club, tom C
+update public.songs
+set
+  lyrics_md = $lyrics$[ESTROFE]
+[C]Como é precioso, ir[Am]mão
+[Dm]Estar bem junto a Ti[G]
+[C]E juntos, lado a la[Am]do
+[Dm]Andarmos com Jesus[G]
+[Am]E expressarmos o a[Em7]mor[Em]
+Que um [F]dia [G]Ele nos deu[C]
+[G/B]Pelo sangue no Cal[Am]vário [D/F#]
+Sua [Dm]vida [G]trouxe a nós[C]
+
+[REFRAO]
+[G/B]A---liança no Se[Am]nhor[Em]
+Eu [F]tenho [G]com você[C]
+[G/B]Não existem mais ba[Am]rreiras em meu ser [D/F#][G] [E/G#]
+Eu sou [Am]livre pra te a[Em]mar
+Pra te a[F]ceitar[D7/F#]
+E para te pe[C/G]dir
+Per[Dm]doa-me, ir[Gm]mão[C7]
+
+Eu sou [F]um com vo[E]cê
+No a[Am]mor do nos[Am/G]so Pai[D7/F#]
+Somos [C/G]um no a[G]mor de Jesus[C]$lyrics$,
+  musical_key = 'C',
+  composition = 'Bené Gomes',
+  reviewed = true,
+  updated_at = now()
+where title ilike 'Aliança';

@@ -1,16 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { SystemUser, Church, MusicGroup, ResourceGrant, GrantRole } from '../types';
-import { 
-  Users, 
-  UserPlus, 
-  Search, 
-  Building2, 
-  Edit3, 
-  Trash2, 
-  Phone, 
-  Mail, 
-  ShieldCheck, 
-  UserCheck, 
+import {
+  SystemUser,
+  Church,
+  MusicGroup,
+  ResourceGrant,
+  GrantRole,
+  OrgInvitation,
+} from '../types';
+import {
+  Users,
+  UserPlus,
+  Search,
+  Building2,
+  Edit3,
+  Trash2,
+  Phone,
+  Mail,
+  ShieldCheck,
+  UserCheck,
   Music,
   Filter,
   Calendar,
@@ -18,18 +25,32 @@ import {
   X,
   User,
   Shield,
+  LayoutGrid,
+  List,
+  Copy,
+  ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton } from './PageHeader';
 import { KNOWN_SKILLS } from '@/constants/skills';
-import { listAllVisibleOrganizations } from '@/services/organizations';
 import { lookupRegisteredUser } from '@/services/accounts';
+import {
+  createOrgInvitation,
+  inviteAcceptUrl,
+  listOrgInvitations,
+  revokeOrgInvitation,
+} from '@/services/invitations';
+import { useToast } from '@/contexts/ToastProvider';
 import type { RegisteredUser } from '@/types';
 
 interface UserManagerProps {
+  orgId: string;
+  orgName?: string;
   systemUsers: SystemUser[];
   churches: Church[];
   musicGroups?: MusicGroup[];
   currentUserIsAdmin?: boolean;
+  embedded?: boolean;
   onSaveUser: (user: SystemUser) => void | Promise<void>;
   onDeleteUser: (userId: string) => void;
 }
@@ -38,89 +59,162 @@ function normalizeSkill(value: string): string {
   return value.trim().replace(/\s+/g, ' ');
 }
 
-const EMPTY_FORM = {
+const MEMBERS_LAYOUT_KEY = 'louvorhub-members-layout';
+type MembersLayoutMode = 'cards' | 'list';
+
+type EditForm = {
+  name: string;
+  email: string;
+  phone: string;
+  birthDate: string;
+  skills: string[];
+  status: 'active' | 'inactive';
+  isAdmin: boolean;
+  grants: ResourceGrant[];
+};
+
+const EMPTY_EDIT_FORM: EditForm = {
   name: '',
   email: '',
   phone: '',
   birthDate: '',
-  skills: [] as string[],
-  churchId: '',
-  status: 'active' as 'active' | 'inactive',
+  skills: [],
+  status: 'active',
   isAdmin: false,
-  grants: [] as ResourceGrant[],
+  grants: [],
 };
 
 export const UserManager: React.FC<UserManagerProps> = ({
+  orgId,
+  orgName,
   systemUsers,
   churches,
   musicGroups = [],
   currentUserIsAdmin = false,
+  embedded = false,
   onSaveUser,
   onDeleteUser,
 }) => {
+  const { showToast } = useToast();
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterChurchId, setFilterChurchId] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [layoutMode, setLayoutMode] = useState<MembersLayoutMode>(() => {
+    try {
+      return localStorage.getItem(MEMBERS_LAYOUT_KEY) === 'list' ? 'list' : 'cards';
+    } catch {
+      return 'cards';
+    }
+  });
+
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [associateOpen, setAssociateOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
-  const [userForm, setUserForm] = useState({ ...EMPTY_FORM });
+  const [editForm, setEditForm] = useState<EditForm>({ ...EMPTY_EDIT_FORM });
   const [customSkill, setCustomSkill] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [allChurches, setAllChurches] = useState<Church[]>(churches);
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+
+  const [inviteName, setInviteName] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteError, setInviteError] = useState('');
+  const [inviteSaving, setInviteSaving] = useState(false);
+  const [createdInvite, setCreatedInvite] = useState<OrgInvitation | null>(null);
+
+  const [associateEmail, setAssociateEmail] = useState('');
+  const [associateName, setAssociateName] = useState('');
+  const [associateErrors, setAssociateErrors] = useState<Record<string, string>>({});
   const [lookedUpUser, setLookedUpUser] = useState<RegisteredUser | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
+  const [associateSaving, setAssociateSaving] = useState(false);
+
+  const [invitations, setInvitations] = useState<OrgInvitation[]>([]);
+  const [invitationsLoading, setInvitationsLoading] = useState(false);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
+
+  const churchById = useMemo(() => {
+    const map = new Map<string, Church>();
+    for (const c of churches) map.set(c.id, c);
+    return map;
+  }, [churches]);
+
+  const orgGroups = useMemo(
+    () => musicGroups.filter((g) => g.churchId === orgId),
+    [musicGroups, orgId],
+  );
+
+  const orgLabel = orgName || churchById.get(orgId)?.name || 'Igreja';
+
+  const loadInvitations = async () => {
+    if (!orgId) return;
+    setInvitationsLoading(true);
+    try {
+      const rows = await listOrgInvitations(orgId);
+      setInvitations(rows.filter((i) => i.status === 'pending'));
+    } catch (err) {
+      showToast((err as Error).message || 'Não foi possível carregar convites.', 'error');
+    } finally {
+      setInvitationsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (!isModalOpen) return;
+    void loadInvitations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orgId]);
+
+  useEffect(() => {
+    const anyOpen = inviteOpen || associateOpen || editOpen;
+    if (!anyOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [isModalOpen]);
+  }, [inviteOpen, associateOpen, editOpen]);
 
-  useEffect(() => {
-    let cancelled = false;
-    void listAllVisibleOrganizations()
-      .then((list) => {
-        if (!cancelled) setAllChurches(list.length ? list : churches);
-      })
-      .catch(() => {
-        if (!cancelled) setAllChurches(churches);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [churches]);
+  const filteredUsers = systemUsers
+    .filter((u) => {
+      if (filterStatus !== 'all' && u.status !== filterStatus) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchName = u.name.toLowerCase().includes(q);
+        const matchRole = u.mainRole?.toLowerCase().includes(q);
+        const matchSkills = (u.skills || []).some((s) => s.toLowerCase().includes(q));
+        const matchEmail = u.email?.toLowerCase().includes(q);
+        return matchName || matchRole || matchSkills || matchEmail;
+      }
+      return true;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-  const churchById = useMemo(() => {
-    const map = new Map<string, Church>();
-    for (const c of allChurches) map.set(c.id, c);
-    for (const c of churches) map.set(c.id, c);
-    return map;
-  }, [allChurches, churches]);
-
-  const filteredUsers = systemUsers.filter(u => {
-    if (filterChurchId !== 'all' && u.churchId !== filterChurchId) return false;
-    if (filterStatus !== 'all' && u.status !== filterStatus) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const matchName = u.name.toLowerCase().includes(q);
-      const matchRole = u.mainRole?.toLowerCase().includes(q);
-      const matchSkills = (u.skills || []).some((s) => s.toLowerCase().includes(q));
-      const matchEmail = u.email?.toLowerCase().includes(q);
-      return matchName || matchRole || matchSkills || matchEmail;
+  const handleLayoutChange = (mode: MembersLayoutMode) => {
+    setLayoutMode(mode);
+    try {
+      localStorage.setItem(MEMBERS_LAYOUT_KEY, mode);
+    } catch {
+      /* ignore */
     }
-    return true;
-  }).sort((a, b) => a.name.localeCompare(b.name));
+  };
 
-  const handleOpenNewModal = () => {
-    setEditingUser(null);
-    setUserForm({ ...EMPTY_FORM });
-    setCustomSkill('');
-    setFieldErrors({});
+  const openInviteModal = () => {
+    setInviteName('');
+    setInviteEmail('');
+    setInviteError('');
+    setCreatedInvite(null);
+    setInviteSaving(false);
+    setInviteOpen(true);
+  };
+
+  const openAssociateModal = () => {
+    setAssociateEmail('');
+    setAssociateName('');
+    setAssociateErrors({});
     setLookedUpUser(null);
-    setIsModalOpen(true);
+    setLookupLoading(false);
+    setAssociateSaving(false);
+    setAssociateOpen(true);
   };
 
   const handleOpenEditModal = (user: SystemUser) => {
@@ -130,21 +224,19 @@ export const UserManager: React.FC<UserManagerProps> = ({
       : user.mainRole
         ? [user.mainRole]
         : [];
-    setUserForm({
+    setEditForm({
       name: user.name,
       email: user.email || '',
       phone: user.phone || '',
       birthDate: user.birthDate || '',
       skills,
-      churchId: user.churchId || '',
       status: user.status,
       isAdmin: !!user.isAdmin,
       grants: user.grants ? [...user.grants] : [],
     });
     setCustomSkill('');
-    setFieldErrors({});
-    setLookedUpUser(null);
-    setIsModalOpen(true);
+    setEditErrors({});
+    setEditOpen(true);
   };
 
   const lookupUserByEmail = async (email: string) => {
@@ -157,8 +249,8 @@ export const UserManager: React.FC<UserManagerProps> = ({
     try {
       const found = await lookupRegisteredUser(trimmed);
       setLookedUpUser(found);
-      if (found && !userForm.name.trim()) {
-        setUserForm((prev) => ({ ...prev, name: found.display_name }));
+      if (found) {
+        setAssociateName((prev) => (prev.trim() ? prev : found.display_name));
       }
     } catch {
       setLookedUpUser(null);
@@ -167,8 +259,8 @@ export const UserManager: React.FC<UserManagerProps> = ({
     }
   };
 
-  const toggleChurchGrant = (role: 'church_editor' | 'liturgo', orgId: string) => {
-    setUserForm((prev) => {
+  const toggleChurchGrant = (role: 'church_editor' | 'liturgo') => {
+    setEditForm((prev) => {
       const exists = prev.grants.some((g) => g.role === role && g.orgId === orgId);
       const grants = exists
         ? prev.grants.filter((g) => !(g.role === role && g.orgId === orgId))
@@ -177,8 +269,8 @@ export const UserManager: React.FC<UserManagerProps> = ({
     });
   };
 
-  const toggleGroupGrant = (groupId: string, orgId?: string) => {
-    setUserForm((prev) => {
+  const toggleGroupGrant = (groupId: string) => {
+    setEditForm((prev) => {
       const exists = prev.grants.some((g) => g.role === 'group_editor' && g.groupId === groupId);
       const grants = exists
         ? prev.grants.filter((g) => !(g.role === 'group_editor' && g.groupId === groupId))
@@ -189,7 +281,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
 
   const toggleSkill = (skill: string) => {
     const key = skill.toLowerCase();
-    setUserForm((prev) => ({
+    setEditForm((prev) => ({
       ...prev,
       skills: prev.skills.some((s) => s.toLowerCase() === key)
         ? prev.skills.filter((s) => s.toLowerCase() !== key)
@@ -200,80 +292,239 @@ export const UserManager: React.FC<UserManagerProps> = ({
   const addCustomSkill = () => {
     const value = normalizeSkill(customSkill);
     if (!value) return;
-    if (userForm.skills.some((s) => s.toLowerCase() === value.toLowerCase())) {
+    if (editForm.skills.some((s) => s.toLowerCase() === value.toLowerCase())) {
       setCustomSkill('');
       return;
     }
-    setUserForm((prev) => ({ ...prev, skills: [...prev.skills, value] }));
+    setEditForm((prev) => ({ ...prev, skills: [...prev.skills, value] }));
     setCustomSkill('');
   };
 
-  const validate = () => {
-    const next: Record<string, string> = {};
-    if (!userForm.name.trim()) next.name = 'Nome é obrigatório.';
-    if (!userForm.email.trim()) {
-      next.email = 'Informe o e-mail de um usuário já cadastrado.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userForm.email.trim())) {
-      next.email = 'Informe um e-mail válido.';
-    } else if (!editingUser) {
-      if (!lookedUpUser) {
-        next.email = 'Usuário não encontrado. Cadastre a conta antes de associar à igreja.';
-      } else if (lookedUpUser.account_status !== 'approved') {
-        next.email = 'Este usuário ainda não foi aprovado pelo administrador.';
-      }
+  const handleInviteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = inviteEmail.trim();
+    if (!email) {
+      setInviteError('Informe o e-mail.');
+      return;
     }
-    setFieldErrors(next);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setInviteError('Informe um e-mail válido.');
+      return;
+    }
+    setInviteSaving(true);
+    setInviteError('');
+    try {
+      const invitation = await createOrgInvitation({
+        orgId,
+        email,
+        displayName: inviteName.trim() || undefined,
+      });
+      setCreatedInvite(invitation);
+      showToast('Convite criado.');
+      await loadInvitations();
+    } catch (err) {
+      setInviteError((err as Error).message || 'Não foi possível criar o convite.');
+      showToast((err as Error).message || 'Não foi possível criar o convite.', 'error');
+    } finally {
+      setInviteSaving(false);
+    }
+  };
+
+  const copyInviteLink = async (token: string) => {
+    const url = inviteAcceptUrl(token);
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast('Link copiado.');
+    } catch {
+      showToast('Não foi possível copiar o link.', 'error');
+    }
+  };
+
+  const mailtoInvite = (invitation: OrgInvitation) => {
+    const url = inviteAcceptUrl(invitation.token);
+    const subject = encodeURIComponent(`Convite para ${orgLabel} — LouvorHub`);
+    const body = encodeURIComponent(
+      `Olá${invitation.displayName ? ` ${invitation.displayName}` : ''}!\n\n` +
+        `Você foi convidado(a) a participar de ${orgLabel} no LouvorHub.\n\n` +
+        `Aceite o convite pelo link:\n${url}\n`,
+    );
+    window.open(`mailto:${invitation.email}?subject=${subject}&body=${body}`, '_blank');
+  };
+
+  const handleRevokeInvitation = async (id: string) => {
+    if (!confirm('Cancelar este convite pendente?')) return;
+    setRevokingId(id);
+    try {
+      await revokeOrgInvitation(id);
+      showToast('Convite cancelado.');
+      await loadInvitations();
+    } catch (err) {
+      showToast((err as Error).message || 'Não foi possível cancelar o convite.', 'error');
+    } finally {
+      setRevokingId(null);
+    }
+  };
+
+  const validateAssociate = () => {
+    const next: Record<string, string> = {};
+    if (!associateEmail.trim()) {
+      next.email = 'Informe o e-mail de um usuário já cadastrado.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(associateEmail.trim())) {
+      next.email = 'Informe um e-mail válido.';
+    } else if (!lookedUpUser) {
+      next.email = 'Usuário não encontrado. Cadastre a conta antes de associar à igreja.';
+    } else if (lookedUpUser.account_status !== 'approved') {
+      next.email = 'Este usuário ainda não foi aprovado pelo administrador.';
+    }
+    if (!associateName.trim()) next.name = 'Nome é obrigatório.';
+    setAssociateErrors(next);
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleAssociateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
-
-    const skills = userForm.skills.map(normalizeSkill).filter(Boolean);
+    if (!validateAssociate() || !lookedUpUser) return;
+    setAssociateSaving(true);
     const userToSave: SystemUser = {
-      id: editingUser?.id || lookedUpUser?.id || '',
-      name: userForm.name.trim(),
-      email: userForm.email.trim() || undefined,
-      phone: userForm.phone.trim() || undefined,
-      birthDate: userForm.birthDate.trim() || undefined,
+      id: lookedUpUser.id,
+      name: associateName.trim(),
+      email: associateEmail.trim(),
+      status: 'active',
+      churchId: orgId,
+      createdAt: new Date().toISOString(),
+    };
+    try {
+      await Promise.resolve(onSaveUser(userToSave));
+      setAssociateOpen(false);
+      showToast('Membro associado.');
+    } catch {
+      // Erro já tratado no App (toast)
+    } finally {
+      setAssociateSaving(false);
+    }
+  };
+
+  const validateEdit = () => {
+    const next: Record<string, string> = {};
+    if (!editForm.name.trim()) next.name = 'Nome é obrigatório.';
+    setEditErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser || !validateEdit()) return;
+
+    const skills = editForm.skills.map(normalizeSkill).filter(Boolean);
+    const userToSave: SystemUser = {
+      id: editingUser.id,
+      name: editForm.name.trim(),
+      email: editForm.email.trim() || undefined,
+      phone: editForm.phone.trim() || undefined,
+      birthDate: editForm.birthDate.trim() || undefined,
       skills,
       mainRole: skills[0],
-      churchId: userForm.churchId || undefined,
-      status: userForm.status,
-      isAdmin: userForm.isAdmin,
-      grants: userForm.isAdmin ? [] : userForm.grants,
-      membershipId: editingUser?.membershipId,
-      role: editingUser?.role || 'member',
-      createdAt: editingUser ? editingUser.createdAt : new Date().toISOString(),
+      churchId: orgId,
+      status: editForm.status,
+      isAdmin: editForm.isAdmin,
+      grants: editForm.isAdmin ? [] : editForm.grants,
+      membershipId: editingUser.membershipId,
+      role: editingUser.role || 'member',
+      createdAt: editingUser.createdAt,
     };
 
     try {
       await Promise.resolve(onSaveUser(userToSave));
-      setIsModalOpen(false);
+      setEditOpen(false);
     } catch {
-      // Erro já tratado no App (toast); mantém o modal aberto
+      // Erro já tratado no App (toast)
     }
   };
 
+  const toolbarActions = (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      <PageHeaderButton icon={Mail} onClick={openInviteModal}>
+        Convidar
+      </PageHeaderButton>
+      <PageHeaderButton icon={UserPlus} onClick={openAssociateModal}>
+        Associar
+      </PageHeaderButton>
+    </div>
+  );
+
   return (
     <div className="w-full space-y-6">
-      
-      <PageHeader
-        icon={Users}
-        title="Usuários e Integrantes"
-        description="Associe integrantes já cadastrados no sistema à igreja selecionada."
-        actions={
-          <PageHeaderButton icon={UserPlus} onClick={handleOpenNewModal}>
-            Associar
-          </PageHeaderButton>
-        }
-      />
+      {!embedded ? (
+        <PageHeader
+          icon={Users}
+          title="Membros"
+          description={`Convide novos integrantes ou associe contas já cadastradas a ${orgLabel}.`}
+          actions={toolbarActions}
+        />
+      ) : (
+        <div className="flex justify-end">{toolbarActions}</div>
+      )}
+
+      {/* Pending invitations */}
+      {(invitationsLoading || invitations.length > 0) && (
+        <div className="bg-stone-900/60 border border-stone-800 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-xs font-bold uppercase tracking-wide text-stone-400 flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 text-emerald-400" />
+              Convites pendentes
+            </h4>
+            {invitationsLoading && (
+              <Loader2 className="w-3.5 h-3.5 text-stone-500 animate-spin" />
+            )}
+          </div>
+          {!invitationsLoading && invitations.length === 0 ? null : (
+            <ul className="space-y-2">
+              {invitations.map((inv) => (
+                <li
+                  key={inv.id}
+                  className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-3 py-2 bg-stone-950/80 border border-stone-800 rounded-xl"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-stone-200 truncate">
+                      {inv.displayName || inv.email}
+                    </p>
+                    <p className="text-[11px] text-stone-500 font-mono truncate">{inv.email}</p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => void copyInviteLink(inv.token)}
+                      className="p-1.5 text-stone-400 hover:text-stone-100 hover:bg-stone-800 rounded-button"
+                      title="Copiar link"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => mailtoInvite(inv)}
+                      className="p-1.5 text-stone-400 hover:text-stone-100 hover:bg-stone-800 rounded-button"
+                      title="Abrir e-mail"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={revokingId === inv.id}
+                      onClick={() => void handleRevokeInvitation(inv.id)}
+                      className="px-2 py-1 text-[11px] font-semibold text-rose-300 hover:bg-rose-950/40 rounded-button disabled:opacity-50"
+                    >
+                      {revokingId === inv.id ? '…' : 'Revogar'}
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {/* Filter & Search Toolbar */}
       <div className="bg-stone-900/80 border border-stone-800 p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        
-        {/* Search */}
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-stone-500 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
@@ -285,24 +536,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
           />
         </div>
 
-        {/* Filters */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-1.5 bg-stone-950 border border-stone-800 px-3 py-1.5 rounded-xl">
-            <Building2 className="w-3.5 h-3.5 text-emerald-400" />
-            <select
-              value={filterChurchId}
-              onChange={(e) => setFilterChurchId(e.target.value)}
-              className="bg-transparent text-xs text-stone-300 focus:outline-none"
-            >
-              <option value="all" className="bg-stone-900 text-stone-200">Todas as Igrejas</option>
-              {churches.map(c => (
-                <option key={c.id} value={c.id} className="bg-stone-900 text-stone-200">
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <div className="flex items-center gap-1.5 bg-stone-950 border border-stone-800 px-3 py-1.5 rounded-xl">
             <Filter className="w-3.5 h-3.5 text-emerald-400" />
             <select
@@ -310,33 +544,164 @@ export const UserManager: React.FC<UserManagerProps> = ({
               onChange={(e) => setFilterStatus(e.target.value)}
               className="bg-transparent text-xs text-stone-300 focus:outline-none"
             >
-              <option value="all" className="bg-stone-900 text-stone-200">Todos os Status</option>
-              <option value="active" className="bg-stone-900 text-stone-200">Apenas Ativos</option>
-              <option value="inactive" className="bg-stone-900 text-stone-200">Apenas Inativos</option>
+              <option value="all" className="bg-stone-900 text-stone-200">
+                Todos os Status
+              </option>
+              <option value="active" className="bg-stone-900 text-stone-200">
+                Apenas Ativos
+              </option>
+              <option value="inactive" className="bg-stone-900 text-stone-200">
+                Apenas Inativos
+              </option>
             </select>
           </div>
 
+          <div
+            className="flex items-center shrink-0 bg-stone-950 border border-stone-800 rounded-xl p-0.5"
+            role="group"
+            aria-label="Modo de visualização"
+          >
+            <button
+              type="button"
+              onClick={() => handleLayoutChange('cards')}
+              aria-label="Visualização em cards"
+              title="Cards"
+              className={`flex items-center justify-center gap-1.5 min-h-8 min-w-8 sm:min-w-0 px-2 py-1.5 rounded-button text-xs font-semibold transition-all ${
+                layoutMode === 'cards'
+                  ? 'bg-emerald-500 text-stone-950 shadow-sm'
+                  : 'text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">Cards</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleLayoutChange('list')}
+              aria-label="Listagem simples"
+              title="Lista"
+              className={`flex items-center justify-center gap-1.5 min-h-8 min-w-8 sm:min-w-0 px-2 py-1.5 rounded-button text-xs font-semibold transition-all ${
+                layoutMode === 'list'
+                  ? 'bg-emerald-500 text-stone-950 shadow-sm'
+                  : 'text-stone-400 hover:text-stone-200'
+              }`}
+            >
+              <List className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">Lista</span>
+            </button>
+          </div>
+
           <span className="text-xs text-stone-500 font-mono hidden md:inline ml-2">
-            {filteredUsers.length} usuários
+            {filteredUsers.length} membros
           </span>
         </div>
       </div>
 
-      {/* User Cards Grid */}
+      {/* Member list / cards */}
       {filteredUsers.length === 0 ? (
         <div className="text-center py-12 bg-stone-900/40 rounded-2xl border border-dashed border-stone-800">
           <Users className="w-12 h-12 text-stone-600 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-stone-300">Nenhum usuário encontrado</h3>
+          <h3 className="text-base font-bold text-stone-300">Nenhum membro encontrado</h3>
           <p className="text-xs text-stone-500 max-w-sm mx-auto mt-1 mb-4">
-            Tente alterar os termos de busca ou cadastrar um novo integrante para o louvor.
+            Convide alguém por e-mail ou associe uma conta já cadastrada a esta igreja.
           </p>
-          <button
-            type="button"
-            onClick={handleOpenNewModal}
-            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs"
-          >
-            + Cadastrar Usuário
-          </button>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={openInviteModal}
+              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs inline-flex items-center gap-1.5"
+            >
+              <Mail className="w-3.5 h-3.5" />
+              Convidar
+            </button>
+            <button
+              type="button"
+              onClick={openAssociateModal}
+              className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold rounded-button text-xs inline-flex items-center gap-1.5 border border-stone-700"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              Associar
+            </button>
+          </div>
+        </div>
+      ) : layoutMode === 'list' ? (
+        <div className="flex flex-col gap-2">
+          {filteredUsers.map((user) => {
+            const isUserActive = user.status === 'active';
+            const skills = user.skills?.length
+              ? user.skills
+              : user.mainRole
+                ? [user.mainRole]
+                : [];
+
+            return (
+              <div
+                key={user.id}
+                className="flex items-center gap-3 px-3 py-2.5 sm:px-4 bg-stone-900/70 hover:bg-stone-800/90 border border-stone-800 hover:border-emerald-700/40 rounded-xl transition-colors"
+              >
+                <div className="w-9 h-9 rounded-full bg-emerald-950 border border-emerald-700/60 flex items-center justify-center font-bold text-emerald-300 text-sm shrink-0">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <h3 className="font-bold text-stone-100 text-sm truncate">{user.name}</h3>
+                    {user.isAdmin && (
+                      <Shield className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-label="Admin" />
+                    )}
+                    {!user.isAdmin && (user.grants?.length || 0) > 0 && (
+                      <ShieldCheck
+                        className="w-3.5 h-3.5 text-emerald-400 shrink-0"
+                        aria-label="Editor / Liturgo"
+                      />
+                    )}
+                    <span
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 ${
+                        isUserActive
+                          ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                          : 'bg-stone-950 text-stone-500 border-stone-800'
+                      }`}
+                    >
+                      {isUserActive ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5 min-w-0 text-[11px] text-stone-400">
+                    {skills.length > 0 && (
+                      <span className="truncate">{skills.slice(0, 3).join(' · ')}</span>
+                    )}
+                    {user.email && (
+                      <span className="hidden sm:inline truncate font-mono text-stone-500">
+                        {user.email}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenEditModal(user)}
+                    className="p-1.5 text-stone-400 hover:text-stone-100 hover:bg-stone-800 rounded-button transition-colors"
+                    title="Editar membro"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm(`Deseja remover o membro ${user.name}?`)) {
+                        onDeleteUser(user.id);
+                      }
+                    }}
+                    className="p-1.5 text-stone-400 hover:text-rose-400 hover:bg-stone-800 rounded-button transition-colors"
+                    title="Remover membro"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -350,7 +715,6 @@ export const UserManager: React.FC<UserManagerProps> = ({
                 className="bg-stone-900 border border-stone-800 hover:border-stone-700 rounded-2xl p-4 shadow-md transition-all flex flex-col justify-between"
               >
                 <div>
-                  {/* Top Bar: Name & Role Badge */}
                   <div className="flex items-start justify-between gap-2 border-b border-stone-800 pb-3 mb-3">
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-full bg-emerald-950 border border-emerald-700/60 flex items-center justify-center font-bold text-emerald-300 text-sm shrink-0">
@@ -363,41 +727,49 @@ export const UserManager: React.FC<UserManagerProps> = ({
                             <Shield className="w-4 h-4 text-amber-400 shrink-0" aria-label="Admin" />
                           )}
                           {!user.isAdmin && (user.grants?.length || 0) > 0 && (
-                            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" aria-label="Editor / Liturgo" />
+                            <ShieldCheck
+                              className="w-4 h-4 text-emerald-400 shrink-0"
+                              aria-label="Editor / Liturgo"
+                            />
                           )}
                         </h3>
-                        {church && (
+                        {(church || orgLabel) && (
                           <p className="text-[10px] text-stone-400 flex items-center gap-1">
                             <Building2 className="w-3 h-3 text-stone-500" />
-                            <span>{church.name}</span>
+                            <span>{church?.name || orgLabel}</span>
                           </p>
                         )}
                       </div>
                     </div>
 
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                      isUserActive
-                        ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
-                        : 'bg-stone-950 text-stone-500 border-stone-800'
-                    }`}>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        isUserActive
+                          ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                          : 'bg-stone-950 text-stone-500 border-stone-800'
+                      }`}
+                    >
                       {isUserActive ? 'Ativo' : 'Inativo'}
                     </span>
                   </div>
 
-                  {/* Skills */}
                   <div className="mb-3">
-                    <span className="text-[10px] uppercase font-mono text-stone-500 block mb-1.5">Habilidades</span>
-                    {(user.skills?.length || user.mainRole) ? (
+                    <span className="text-[10px] uppercase font-mono text-stone-500 block mb-1.5">
+                      Habilidades
+                    </span>
+                    {user.skills?.length || user.mainRole ? (
                       <div className="flex flex-wrap gap-1">
-                        {(user.skills?.length ? user.skills : [user.mainRole!]).slice(0, 4).map((skill) => (
-                          <span
-                            key={skill}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-950/60 border border-emerald-800/50 rounded-button text-[11px] font-semibold text-emerald-300"
-                          >
-                            <Music className="w-3 h-3 text-emerald-400" />
-                            {skill}
-                          </span>
-                        ))}
+                        {(user.skills?.length ? user.skills : [user.mainRole!])
+                          .slice(0, 4)
+                          .map((skill) => (
+                            <span
+                              key={skill}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-950/60 border border-emerald-800/50 rounded-button text-[11px] font-semibold text-emerald-300"
+                            >
+                              <Music className="w-3 h-3 text-emerald-400" />
+                              {skill}
+                            </span>
+                          ))}
                         {(user.skills?.length || 0) > 4 && (
                           <span className="text-[10px] text-stone-500 self-center">
                             +{(user.skills?.length || 0) - 4}
@@ -409,7 +781,6 @@ export const UserManager: React.FC<UserManagerProps> = ({
                     )}
                   </div>
 
-                  {/* Contact Info */}
                   <div className="space-y-1 text-xs text-stone-400 font-mono mb-4">
                     {user.email && (
                       <div className="flex items-center gap-2 truncate">
@@ -426,30 +797,27 @@ export const UserManager: React.FC<UserManagerProps> = ({
                   </div>
                 </div>
 
-                {/* Bottom Actions */}
                 <div className="pt-3 border-t border-stone-800 flex items-center justify-between text-xs">
-                  <span className="text-[10px] text-stone-500 font-mono">
-                    Usuário do Sistema
-                  </span>
+                  <span className="text-[10px] text-stone-500 font-mono">Membro</span>
 
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => handleOpenEditModal(user)}
                       className="p-1.5 text-stone-400 hover:text-stone-100 hover:bg-stone-800 rounded-button transition-colors"
-                      title="Editar Usuário"
+                      title="Editar membro"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                       type="button"
                       onClick={() => {
-                        if (confirm(`Deseja remover o usuário ${user.name}?`)) {
+                        if (confirm(`Deseja remover o membro ${user.name}?`)) {
                           onDeleteUser(user.id);
                         }
                       }}
                       className="p-1.5 text-stone-400 hover:text-rose-400 hover:bg-stone-800 rounded-button transition-colors"
-                      title="Excluir Usuário"
+                      title="Remover membro"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -461,18 +829,150 @@ export const UserManager: React.FC<UserManagerProps> = ({
         </div>
       )}
 
-      {/* User Form Modal — mesmos campos do perfil + vínculo com a igreja */}
-      {isModalOpen && (
+      {/* Invite modal */}
+      {inviteOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden">
-          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-lg max-h-[min(92vh,720px)] flex flex-col shadow-2xl overflow-hidden">
+          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-md max-h-[min(92vh,640px)] flex flex-col shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between border-b border-stone-800 px-6 py-3 shrink-0">
               <h3 className="font-display font-bold text-stone-100 text-base flex items-center gap-2 tracking-tight">
-                <UserCheck className="w-5 h-5 text-emerald-400" />
-                <span>{editingUser ? 'Editar usuário' : 'Cadastrar usuário'}</span>
+                <Mail className="w-5 h-5 text-emerald-400" />
+                <span>Convidar membro</span>
               </h3>
               <button
                 type="button"
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => setInviteOpen(false)}
+                className="text-stone-400 hover:text-stone-100 p-1 rounded-button"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {createdInvite ? (
+              <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4">
+                <p className="text-xs text-stone-300">
+                  Convite criado para{' '}
+                  <span className="font-semibold text-emerald-300">{createdInvite.email}</span>.
+                  Compartilhe o link abaixo.
+                </p>
+                <div className="bg-stone-950 border border-stone-800 rounded-xl px-3 py-2.5">
+                  <p className="text-[11px] font-mono text-stone-400 break-all">
+                    {inviteAcceptUrl(createdInvite.token)}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => void copyInviteLink(createdInvite.token)}
+                    className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-button text-xs font-semibold inline-flex items-center gap-1.5"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    Copiar link
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => mailtoInvite(createdInvite)}
+                    className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-button text-xs font-semibold inline-flex items-center gap-1.5"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Abrir e-mail
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInviteOpen(false)}
+                    className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 rounded-button text-xs font-bold"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <form
+                  id="invite-form"
+                  onSubmit={(e) => void handleInviteSubmit(e)}
+                  className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4"
+                  noValidate
+                >
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-300 mb-1">
+                      Nome{' '}
+                      <span className="text-stone-500 font-normal">(opcional)</span>
+                    </label>
+                    <div className="relative">
+                      <User className="w-4 h-4 text-stone-500 absolute left-3 top-2.5" />
+                      <input
+                        type="text"
+                        placeholder="Nome do convidado"
+                        value={inviteName}
+                        onChange={(e) => setInviteName(e.target.value)}
+                        className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 pl-9 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-stone-300 mb-1">
+                      E-mail <span className="text-rose-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-stone-500 absolute left-3 top-2.5" />
+                      <input
+                        type="email"
+                        required
+                        placeholder="convidado@email.com"
+                        value={inviteEmail}
+                        onChange={(e) => {
+                          setInviteEmail(e.target.value);
+                          if (inviteError) setInviteError('');
+                        }}
+                        className={`w-full bg-stone-950 border rounded-xl p-2.5 pl-9 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
+                          inviteError ? 'border-rose-600' : 'border-stone-800'
+                        }`}
+                      />
+                    </div>
+                    {inviteError && (
+                      <p className="text-[11px] text-rose-300 mt-1">{inviteError}</p>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-stone-500">
+                    Gera um link de convite para a pessoa entrar em {orgLabel}.
+                  </p>
+                </form>
+                <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-stone-800 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setInviteOpen(false)}
+                    className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    form="invite-form"
+                    disabled={inviteSaving}
+                    className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-stone-950 rounded-button text-xs font-bold shadow-md shadow-emerald-500/20 inline-flex items-center gap-1.5"
+                  >
+                    {inviteSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    Enviar convite
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Associate modal */}
+      {associateOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden">
+          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-md max-h-[min(92vh,560px)] flex flex-col shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between border-b border-stone-800 px-6 py-3 shrink-0">
+              <h3 className="font-display font-bold text-stone-100 text-base flex items-center gap-2 tracking-tight">
+                <UserPlus className="w-5 h-5 text-emerald-400" />
+                <span>Associar membro</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setAssociateOpen(false)}
                 className="text-stone-400 hover:text-stone-100 p-1 rounded-button"
               >
                 <X className="w-4 h-4" />
@@ -480,8 +980,137 @@ export const UserManager: React.FC<UserManagerProps> = ({
             </div>
 
             <form
-              id="user-manager-form"
-              onSubmit={handleSubmit}
+              id="associate-form"
+              onSubmit={(e) => void handleAssociateSubmit(e)}
+              className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4"
+              noValidate
+            >
+              <p className="text-[11px] text-stone-500">
+                Busca conta já cadastrada e associa à igreja ativa.
+              </p>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-300 mb-1">
+                  E-mail <span className="text-rose-400">*</span>
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-stone-500 absolute left-3 top-2.5" />
+                  <input
+                    type="email"
+                    required
+                    placeholder="usuario@email.com"
+                    value={associateEmail}
+                    onChange={(e) => {
+                      setAssociateEmail(e.target.value);
+                      setLookedUpUser(null);
+                      if (associateErrors.email) {
+                        setAssociateErrors((prev) => {
+                          const next = { ...prev };
+                          delete next.email;
+                          return next;
+                        });
+                      }
+                    }}
+                    onBlur={() => void lookupUserByEmail(associateEmail)}
+                    className={`w-full bg-stone-950 border rounded-xl p-2.5 pl-9 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
+                      associateErrors.email ? 'border-rose-600' : 'border-stone-800'
+                    }`}
+                  />
+                </div>
+                {associateErrors.email ? (
+                  <p className="text-[11px] text-rose-300 mt-1">{associateErrors.email}</p>
+                ) : lookupLoading ? (
+                  <p className="text-[11px] text-stone-500 mt-1">Verificando cadastro...</p>
+                ) : lookedUpUser ? (
+                  <p className="text-[11px] text-emerald-300 mt-1">
+                    Cadastro encontrado: {lookedUpUser.display_name} (
+                    {lookedUpUser.account_status === 'approved'
+                      ? 'aprovado'
+                      : lookedUpUser.account_status}
+                    )
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-stone-500 mt-1">
+                    A pessoa precisa ter conta aprovada no Cadastro geral.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-300 mb-1">
+                  Nome <span className="text-rose-400">*</span>
+                </label>
+                <div className="relative">
+                  <User className="w-4 h-4 text-stone-500 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Nome completo"
+                    value={associateName}
+                    onChange={(e) => {
+                      setAssociateName(e.target.value);
+                      if (associateErrors.name) {
+                        setAssociateErrors((prev) => {
+                          const next = { ...prev };
+                          delete next.name;
+                          return next;
+                        });
+                      }
+                    }}
+                    className={`w-full bg-stone-950 border rounded-xl p-2.5 pl-9 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
+                      associateErrors.name ? 'border-rose-600' : 'border-stone-800'
+                    }`}
+                  />
+                </div>
+                {associateErrors.name && (
+                  <p className="text-[11px] text-rose-300 mt-1">{associateErrors.name}</p>
+                )}
+              </div>
+            </form>
+
+            <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-stone-800 shrink-0">
+              <button
+                type="button"
+                onClick={() => setAssociateOpen(false)}
+                className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                form="associate-form"
+                disabled={associateSaving}
+                className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-stone-950 rounded-button text-xs font-bold shadow-md shadow-emerald-500/20 inline-flex items-center gap-1.5"
+              >
+                {associateSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                Associar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit member modal */}
+      {editOpen && editingUser && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden">
+          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-lg max-h-[min(92vh,720px)] flex flex-col shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between border-b border-stone-800 px-6 py-3 shrink-0">
+              <h3 className="font-display font-bold text-stone-100 text-base flex items-center gap-2 tracking-tight">
+                <UserCheck className="w-5 h-5 text-emerald-400" />
+                <span>Editar membro</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditOpen(false)}
+                className="text-stone-400 hover:text-stone-100 p-1 rounded-button"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form
+              id="edit-member-form"
+              onSubmit={(e) => void handleEditSubmit(e)}
               className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 py-4 space-y-4"
               noValidate
             >
@@ -495,11 +1124,11 @@ export const UserManager: React.FC<UserManagerProps> = ({
                     type="text"
                     required
                     placeholder="Nome completo"
-                    value={userForm.name}
+                    value={editForm.name}
                     onChange={(e) => {
-                      setUserForm({ ...userForm, name: e.target.value });
-                      if (fieldErrors.name) {
-                        setFieldErrors((prev) => {
+                      setEditForm({ ...editForm, name: e.target.value });
+                      if (editErrors.name) {
+                        setEditErrors((prev) => {
                           const next = { ...prev };
                           delete next.name;
                           return next;
@@ -507,63 +1136,28 @@ export const UserManager: React.FC<UserManagerProps> = ({
                       }
                     }}
                     className={`w-full bg-stone-950 border rounded-xl p-2.5 pl-9 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
-                      fieldErrors.name ? 'border-rose-600' : 'border-stone-800'
+                      editErrors.name ? 'border-rose-600' : 'border-stone-800'
                     }`}
                   />
                 </div>
-                {fieldErrors.name && (
-                  <p className="text-[11px] text-rose-300 mt-1">{fieldErrors.name}</p>
+                {editErrors.name && (
+                  <p className="text-[11px] text-rose-300 mt-1">{editErrors.name}</p>
                 )}
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  E-mail{' '}
-                  <span className="text-stone-500 font-normal">
-                    {editingUser ? '(login)' : '(obrigatório · usuário cadastrado)'}
-                  </span>
+                  E-mail <span className="text-stone-500 font-normal">(login)</span>
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-stone-500 absolute left-3 top-2.5" />
                   <input
                     type="email"
-                    required
-                    placeholder="usuario@email.com"
-                    value={userForm.email}
-                    onChange={(e) => {
-                      setUserForm({ ...userForm, email: e.target.value });
-                      setLookedUpUser(null);
-                      if (fieldErrors.email) {
-                        setFieldErrors((prev) => {
-                          const next = { ...prev };
-                          delete next.email;
-                          return next;
-                        });
-                      }
-                    }}
-                    onBlur={() => {
-                      if (!editingUser) void lookupUserByEmail(userForm.email);
-                    }}
-                    disabled={Boolean(editingUser)}
-                    className={`w-full bg-stone-950 border rounded-xl p-2.5 pl-9 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-70 ${
-                      fieldErrors.email ? 'border-rose-600' : 'border-stone-800'
-                    }`}
+                    value={editForm.email}
+                    disabled
+                    className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 pl-9 text-xs text-stone-100 opacity-70"
                   />
                 </div>
-                {fieldErrors.email ? (
-                  <p className="text-[11px] text-rose-300 mt-1">{fieldErrors.email}</p>
-                ) : lookupLoading ? (
-                  <p className="text-[11px] text-stone-500 mt-1">Verificando cadastro...</p>
-                ) : lookedUpUser ? (
-                  <p className="text-[11px] text-emerald-300 mt-1">
-                    Cadastro encontrado: {lookedUpUser.display_name} (
-                    {lookedUpUser.account_status === 'approved' ? 'aprovado' : lookedUpUser.account_status})
-                  </p>
-                ) : (
-                  <p className="text-[11px] text-stone-500 mt-1">
-                    A pessoa precisa criar conta em Cadastro geral e ser aprovada antes de entrar na igreja.
-                  </p>
-                )}
               </div>
 
               <div>
@@ -574,8 +1168,8 @@ export const UserManager: React.FC<UserManagerProps> = ({
                     type="text"
                     placeholder="(00) 00000-0000"
                     inputMode="tel"
-                    value={userForm.phone}
-                    onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })}
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                     className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 pl-9 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                   />
                 </div>
@@ -589,9 +1183,9 @@ export const UserManager: React.FC<UserManagerProps> = ({
                   <Calendar className="w-4 h-4 text-stone-500 absolute left-3 top-2.5 pointer-events-none" />
                   <input
                     type="date"
-                    value={userForm.birthDate}
+                    value={editForm.birthDate}
                     max={new Date().toISOString().slice(0, 10)}
-                    onChange={(e) => setUserForm({ ...userForm, birthDate: e.target.value })}
+                    onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
                     className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 pl-9 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                   />
                 </div>
@@ -599,11 +1193,11 @@ export const UserManager: React.FC<UserManagerProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-stone-300 mb-2">
-                  Minhas habilidades
+                  Habilidades
                 </label>
                 <div className="flex flex-wrap gap-1.5 mb-3">
                   {KNOWN_SKILLS.map((skill) => {
-                    const selected = userForm.skills.some(
+                    const selected = editForm.skills.some(
                       (s) => s.toLowerCase() === skill.toLowerCase(),
                     );
                     return (
@@ -623,11 +1217,11 @@ export const UserManager: React.FC<UserManagerProps> = ({
                   })}
                 </div>
 
-                {userForm.skills.filter(
+                {editForm.skills.filter(
                   (s) => !KNOWN_SKILLS.some((k) => k.toLowerCase() === s.toLowerCase()),
                 ).length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-3">
-                    {userForm.skills
+                    {editForm.skills
                       .filter(
                         (s) => !KNOWN_SKILLS.some((k) => k.toLowerCase() === s.toLowerCase()),
                       )
@@ -675,26 +1269,9 @@ export const UserManager: React.FC<UserManagerProps> = ({
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  Membro da igreja{' '}
-                  <span className="text-stone-500 font-normal">(opcional)</span>
-                </label>
-                <div className="relative">
-                  <Building2 className="w-4 h-4 text-stone-500 absolute left-3 top-2.5 pointer-events-none" />
-                  <select
-                    value={userForm.churchId}
-                    onChange={(e) => setUserForm({ ...userForm, churchId: e.target.value })}
-                    className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 pl-9 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                  >
-                    <option value="">Não informado</option>
-                    {allChurches.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="text-xs text-stone-400 flex items-center gap-1.5 px-1">
+                <Building2 className="w-3.5 h-3.5 text-stone-500" />
+                Igreja: <span className="font-semibold text-stone-200">{orgLabel}</span>
               </div>
 
               <div className="space-y-3 p-3 bg-stone-950 rounded-xl border border-stone-800">
@@ -706,9 +1283,11 @@ export const UserManager: React.FC<UserManagerProps> = ({
                   >
                     <input
                       type="checkbox"
-                      checked={userForm.isAdmin}
+                      checked={editForm.isAdmin}
                       disabled={!currentUserIsAdmin}
-                      onChange={(e) => setUserForm({ ...userForm, isAdmin: e.target.checked })}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, isAdmin: e.target.checked })
+                      }
                       className="rounded border-stone-700 bg-stone-900 text-amber-500 focus:ring-amber-500 disabled:opacity-50"
                     />
                     <Shield className="w-3.5 h-3.5 text-amber-400" />
@@ -720,69 +1299,64 @@ export const UserManager: React.FC<UserManagerProps> = ({
                     <button
                       type="button"
                       onClick={() =>
-                        setUserForm({
-                          ...userForm,
-                          status: userForm.status === 'active' ? 'inactive' : 'active',
+                        setEditForm({
+                          ...editForm,
+                          status: editForm.status === 'active' ? 'inactive' : 'active',
                         })
                       }
                       className={`px-3 py-1 rounded-button text-xs font-bold transition-all ${
-                        userForm.status === 'active'
+                        editForm.status === 'active'
                           ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
                           : 'bg-stone-800 text-stone-400 border border-stone-700'
                       }`}
                     >
-                      {userForm.status === 'active' ? 'Ativo' : 'Inativo'}
+                      {editForm.status === 'active' ? 'Ativo' : 'Inativo'}
                     </button>
                   </div>
                 </div>
 
-                {!userForm.isAdmin && (
+                {!editForm.isAdmin && (
                   <div className="space-y-3 pt-2 border-t border-stone-800">
                     <p className="text-[11px] text-stone-500 font-semibold uppercase tracking-wide">
                       Permissões por recurso
                     </p>
 
                     <div>
-                      <p className="text-xs font-semibold text-stone-300 mb-1.5">Editor da igreja</p>
-                      <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
-                        {allChurches.map((c) => {
-                          const selected = userForm.grants.some(
-                            (g) => g.role === 'church_editor' && g.orgId === c.id,
-                          );
-                          return (
-                            <button
-                              key={`ce-${c.id}`}
-                              type="button"
-                              onClick={() => toggleChurchGrant('church_editor', c.id)}
-                              className={`px-2.5 py-1 rounded-button text-[11px] font-semibold border ${
-                                selected
-                                  ? 'bg-emerald-500 text-stone-950 border-emerald-400'
-                                  : 'bg-stone-900 text-stone-300 border-stone-700'
-                              }`}
-                            >
-                              {c.name}
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <p className="text-xs font-semibold text-stone-300 mb-1.5">
+                        Editor da igreja
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => toggleChurchGrant('church_editor')}
+                        className={`px-2.5 py-1 rounded-button text-[11px] font-semibold border ${
+                          editForm.grants.some(
+                            (g) => g.role === 'church_editor' && g.orgId === orgId,
+                          )
+                            ? 'bg-emerald-500 text-stone-950 border-emerald-400'
+                            : 'bg-stone-900 text-stone-300 border-stone-700'
+                        }`}
+                      >
+                        {orgLabel}
+                      </button>
                     </div>
 
                     <div>
-                      <p className="text-xs font-semibold text-stone-300 mb-1.5">Editor de grupo</p>
-                      {musicGroups.length === 0 ? (
+                      <p className="text-xs font-semibold text-stone-300 mb-1.5">
+                        Editor de grupo
+                      </p>
+                      {orgGroups.length === 0 ? (
                         <p className="text-[11px] text-stone-500">Nenhum grupo cadastrado.</p>
                       ) : (
                         <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
-                          {musicGroups.map((g) => {
-                            const selected = userForm.grants.some(
+                          {orgGroups.map((g) => {
+                            const selected = editForm.grants.some(
                               (gr) => gr.role === 'group_editor' && gr.groupId === g.id,
                             );
-                            const churchName = churchById.get(g.churchId)?.name;
                             return (
                               <button
                                 key={`ge-${g.id}`}
                                 type="button"
-                                onClick={() => toggleGroupGrant(g.id, g.churchId)}
+                                onClick={() => toggleGroupGrant(g.id)}
                                 className={`px-2.5 py-1 rounded-button text-[11px] font-semibold border ${
                                   selected
                                     ? 'bg-teal-500 text-stone-950 border-teal-400'
@@ -790,9 +1364,6 @@ export const UserManager: React.FC<UserManagerProps> = ({
                                 }`}
                               >
                                 {g.name}
-                                {churchName ? (
-                                  <span className="opacity-70"> · {churchName}</span>
-                                ) : null}
                               </button>
                             );
                           })}
@@ -802,60 +1373,48 @@ export const UserManager: React.FC<UserManagerProps> = ({
 
                     <div>
                       <p className="text-xs font-semibold text-stone-300 mb-1.5">Liturgo</p>
-                      <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto">
-                        {allChurches.map((c) => {
-                          const selected = userForm.grants.some(
-                            (g) => g.role === 'liturgo' && g.orgId === c.id,
-                          );
-                          return (
-                            <button
-                              key={`li-${c.id}`}
-                              type="button"
-                              onClick={() => toggleChurchGrant('liturgo', c.id)}
-                              className={`px-2.5 py-1 rounded-button text-[11px] font-semibold border ${
-                                selected
-                                  ? 'bg-violet-500 text-stone-950 border-violet-400'
-                                  : 'bg-stone-900 text-stone-300 border-stone-700'
-                              }`}
-                            >
-                              {c.name}
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleChurchGrant('liturgo')}
+                        className={`px-2.5 py-1 rounded-button text-[11px] font-semibold border ${
+                          editForm.grants.some((g) => g.role === 'liturgo' && g.orgId === orgId)
+                            ? 'bg-violet-500 text-stone-950 border-violet-400'
+                            : 'bg-stone-900 text-stone-300 border-stone-700'
+                        }`}
+                      >
+                        {orgLabel}
+                      </button>
                     </div>
                   </div>
                 )}
 
-                {userForm.isAdmin && (
+                {editForm.isAdmin && (
                   <p className="text-[11px] text-amber-200/80 pt-1 border-t border-stone-800">
                     Admin tem permissão total; grants por recurso não são necessários.
                   </p>
                 )}
               </div>
-
             </form>
 
             <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-stone-800 shrink-0">
               <button
                 type="button"
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => setEditOpen(false)}
                 className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                form="user-manager-form"
+                form="edit-member-form"
                 className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 rounded-button text-xs font-bold shadow-md shadow-emerald-500/20"
               >
-                Salvar usuário
+                Salvar
               </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 };

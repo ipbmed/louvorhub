@@ -395,12 +395,12 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
       )}
 
       {activeSetlist && (
-        <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 shadow-xl space-y-6">
+        <div className="bg-stone-900 border border-stone-800 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-xl space-y-3 sm:space-y-4">
           <div
             className={
               editingDetails
-                ? 'pb-4 border-b border-stone-800'
-                : 'flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-stone-800 gap-4'
+                ? 'pb-3 border-b border-stone-800'
+                : 'flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 border-b border-stone-800 gap-2.5 sm:gap-3'
             }
           >
             {editingDetails ? (
@@ -468,14 +468,14 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                     )}
                   </div>
                   <div className="flex items-start gap-2">
-                    <h3 className="text-xl font-display font-bold text-stone-100">
+                    <h3 className="text-lg sm:text-xl font-display font-bold text-stone-100">
                       {activeSetlist.title}
                     </h3>
                     {canEdit && (
                       <button
                         type="button"
                         onClick={startEditingDetails}
-                        className="p-1.5 text-stone-500 hover:text-emerald-400 rounded-button shrink-0"
+                        className="p-1 text-stone-500 hover:text-emerald-400 rounded-button shrink-0"
                         title="Editar nome"
                         aria-label="Editar nome"
                       >
@@ -485,12 +485,12 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                   </div>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto sm:justify-end">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto sm:justify-end">
               {activeSongsInOrder.length > 0 && (
                 <button
                   type="button"
                   onClick={() => onOpenProjectionPlaylist(activeSongsInOrder)}
-                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs flex items-center gap-1.5"
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs flex items-center gap-1.5"
                 >
                   <Tv className="w-4 h-4" />
                   Projeção
@@ -501,7 +501,7 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                 <button
                   type="button"
                   onClick={handleToggleVisibility}
-                  className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
+                  className="p-1.5 sm:p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
                   title="Alternar público/privado"
                 >
                   {activeSetlist.visibility === 'public_link' ? (
@@ -519,7 +519,7 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                 <button
                   type="button"
                   onClick={openSharePeople}
-                  className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
+                  className="p-1.5 sm:p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
                 >
                   <Users className="w-4 h-4" />
                   <span className="hidden sm:inline">Pessoas</span>
@@ -529,7 +529,7 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
               <button
                 type="button"
                 onClick={() => void handleShare()}
-                className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
+                className="p-1.5 sm:p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
                 title="Compartilhar"
               >
                 <Share2 className="w-4 h-4" />
@@ -540,7 +540,7 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowQr(true)}
-                  className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
+                  className="p-1.5 sm:p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
                   title="Mostrar QR Code"
                 >
                   <QrCode className="w-4 h-4" />
@@ -551,7 +551,7 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
               <button
                 type="button"
                 onClick={handleCopyText}
-                className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
+                className="p-1.5 sm:p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
               >
                 {copiedHint === 'text' ? (
                   <Check className="w-4 h-4 text-emerald-400" />
@@ -567,7 +567,7 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                   onClick={() =>
                     void onArchiveSetlist(activeSetlist.id, !activeSetlist.archived)
                   }
-                  className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
+                  className="p-1.5 sm:p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
                   title={activeSetlist.archived ? 'Desarquivar' : 'Arquivar'}
                 >
                   {activeSetlist.archived ? (
@@ -585,7 +585,7 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                 <button
                   type="button"
                   onClick={() => onDeleteSetlist(activeSetlist.id)}
-                  className="p-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 rounded-button border border-rose-800/40"
+                  className="p-1.5 sm:p-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 rounded-button border border-rose-800/40"
                   title="Excluir"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -613,7 +613,7 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
               {activeSongsInOrder.map((song, idx) => (
                 <div
                   key={song.id}
-                  className="bg-stone-950 light:bg-stone-50 border border-stone-800/80 light:border-stone-200 hover:border-emerald-500/40 rounded-2xl p-4 flex items-center justify-between gap-3"
+                  className="bg-stone-950 light:bg-stone-50 border border-stone-800/80 light:border-stone-200 hover:border-emerald-500/40 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="w-7 h-7 rounded-lg bg-stone-800 light:bg-stone-100 text-emerald-300 light:text-emerald-700 font-mono font-bold text-xs flex items-center justify-center shrink-0">

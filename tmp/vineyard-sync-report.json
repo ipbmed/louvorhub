@@ -1,0 +1,92 @@
+{
+  "updated": [
+    {
+      "id": "45bd4b19-afb3-4597-88e8-c5d2ba99fd59",
+      "title": "Quebrantado",
+      "pageUrl": "https://www.cifraclub.com.br/vineyard/quebrantado/",
+      "tone": "C",
+      "youtubeUrl": "https://www.youtube.com/watch?v=QbnmpJo3DiI"
+    },
+    {
+      "id": "d71f3704-8ff9-4b3c-a4cb-2936474996c7",
+      "title": "Meu Respirar",
+      "pageUrl": "https://www.cifraclub.com.br/vineyard/meu-respirar/",
+      "tone": "A",
+      "youtubeUrl": "https://www.youtube.com/watch?v=iayK_ohthKU"
+    },
+    {
+      "id": "a6fe1e41-4648-48f3-9ffa-44dfe29101e4",
+      "title": "Vem, Esta É a Hora",
+      "pageUrl": "https://www.cifraclub.com.br/vineyard/vem-esta-a-hora/",
+      "tone": "D",
+      "youtubeUrl": "https://www.youtube.com/watch?v=7j5aLkEe_vE"
+    },
+    {
+      "id": "7a11abac-dfc7-4fb3-9e1b-61fa0c7c8899",
+      "title": "Eterno Deus",
+      "pageUrl": "https://www.cifraclub.com.br/vineyard/eterno-deus/",
+      "tone": "C",
+      "youtubeUrl": "https://www.youtube.com/watch?v=D67gv66OmFc"
+    },
+    {
+      "id": "cb992c64-04e0-4531-9d06-2bfa6f630795",
+      "title": "Tua Voz",
+      "pageUrl": "https://www.cifraclub.com.br/vineyard/eu-vim-aqui/",
+      "tone": "G",
+      "youtubeUrl": null
+    },
+    {
+      "id": "168b76b5-6cab-4fc8-bc1f-57b2c42dedca",
+      "title": "Perdão e Graça",
+      "pageUrl": "https://www.cifraclub.com.br/vineyard/perdao-e-graca/",
+      "tone": "F",
+      "youtubeUrl": null
+    }
+  ],
+  "inserted": [
+    {
+      "id": "951144c3-17da-4971-8814-d27c25d6cc8c",
+      "title": "Me Derramar",
+      "pageUrl": "https://www.cifraclub.com.br/vineyard/me-derramar/",
+      "tone": "G",
+      "youtubeUrl": "https://www.youtube.com/watch?v=LJyK6vZRFSw"
+    },
+    {
+      "id": "bfca8132-8b0f-4cb1-953f-c122c7222cba",
+      "title": "Senhor, Te Quero",
+      "pageUrl": "https://www.cifraclub.com.br/vineyard/senhor-te-quero/",
+      "tone": "G",
+      "youtubeUrl": "https://www.youtube.com/watch?v=8ZylBo6Zv18"
+    },
+    {
+      "id": "939f46cf-bbd4-4aff-83d8-20ceed35b669",
+      "title": "Eu So Tenho a Ti",
+      "pageUrl": "https://www.cifraclub.com.br/vineyard/eu-so-tenho-ti/",
+      "tone": "Bb",
+      "youtubeUrl": "https://www.youtube.com/watch?v=iHyJ7mYHLVs"
+    },
+    {
+      "id": "c0c5cbfa-d19c-4063-9af3-f4f4accb94e8",
+      "title": "Entrega",
+      "pageUrl": "https://www.cifraclub.com.br/vineyard/entrega/",
+      "tone": "D",
+      "youtubeUrl": "https://www.youtube.com/watch?v=z1vnYfxqIZ8"
+    },
+    {
+      "id": "80423cfa-da70-41f3-bc4f-f8b563c52014",
+      "title": "Acende o Fogo Em Mim",
+      "pageUrl": "https://www.cifraclub.com.br/vineyard/acende-fogo-em-mim/",
+      "tone": "C",
+      "youtubeUrl": "https://www.youtube.com/watch?v=jP85GwXBK2k"
+    },
+    {
+      "id": "09ebba98-640d-4b4a-b12b-98625c668469",
+      "title": "Agnus Dei",
+      "pageUrl": "https://www.cifraclub.com.br/david-quinlan/agnus-dei/",
+      "tone": "C",
+      "youtubeUrl": "https://www.youtube.com/watch?v=csIeNzdl0E0"
+    }
+  ],
+  "errors": [],
+  "skipped": []
+}

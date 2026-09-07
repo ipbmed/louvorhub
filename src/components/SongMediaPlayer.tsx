@@ -252,8 +252,8 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
   }
 
   return (
-    <div className="bg-stone-900 light:bg-white border border-stone-800 light:border-stone-200 rounded-2xl p-4 my-2 shadow-sm space-y-3">
-      <div className="flex items-center justify-between gap-2 border-b border-stone-800 light:border-stone-200 pb-2.5">
+    <div className="w-full space-y-3">
+      <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <Radio className="w-4 h-4 text-emerald-400 light:text-emerald-600 shrink-0" aria-hidden />
           <h4 className="text-xs font-bold text-stone-100 light:text-stone-900 uppercase tracking-wider truncate">

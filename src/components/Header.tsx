@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BookOpen,
   Search,
@@ -7,61 +7,65 @@ import {
   LockOpen,
   Grid,
   Heart,
-  Plus,
   Menu,
+  X,
+  HelpCircle,
 } from 'lucide-react';
 import { ViewMode } from '../types';
 import { PublicEventsFab } from './PublicEventsFab';
 import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
-  currentView: ViewMode;
   onViewChange: (view: ViewMode) => void;
   quickNumberQuery: string;
   onQuickNumberChange: (val: string) => void;
   onOpenKeypad: () => void;
   onOpenAdvancedSearch: () => void;
-  isAdmin: boolean;
   isAuthenticated: boolean;
   onAdminAuthClick: () => void;
-  onRegisterClick?: () => void;
   onSignOut?: () => void;
   favoritesCount: number;
   showFavoritesOnly: boolean;
   onToggleFavoritesOnly: () => void;
-  onNewSongClick: () => void;
   /** Mobile: abre o drawer do menu */
   onOpenSidebar?: () => void;
   /** Mostra notificação de eventos públicos (visitantes). */
   showPublicEvents?: boolean;
+  onOpenHelp?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  currentView,
   onViewChange,
   quickNumberQuery,
   onQuickNumberChange,
   onOpenKeypad,
   onOpenAdvancedSearch,
-  isAdmin,
   isAuthenticated,
   onAdminAuthClick,
-  onRegisterClick,
   onSignOut,
   favoritesCount,
   showFavoritesOnly,
   onToggleFavoritesOnly,
-  onNewSongClick,
   onOpenSidebar,
   showPublicEvents = false,
+  onOpenHelp,
 }) => {
   const [inputVal, setInputVal] = useState(quickNumberQuery);
+
+  useEffect(() => {
+    setInputVal(quickNumberQuery);
+  }, [quickNumberQuery]);
 
   const handleQuickSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputVal.trim()) {
       onQuickNumberChange(inputVal.trim());
     }
+  };
+
+  const clearSearch = () => {
+    setInputVal('');
+    onQuickNumberChange('');
   };
 
   return (
@@ -111,9 +115,22 @@ export const Header: React.FC<HeaderProps> = ({
                   onQuickNumberChange(e.target.value);
                 }}
                 placeholder="Buscar hino por nº, título, letra..."
-                className="w-full bg-stone-800/90 border border-stone-700/80 rounded-xl py-2 pl-10 pr-24 text-sm text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+                className={`w-full bg-stone-800/90 border border-stone-700/80 rounded-xl py-2 pl-10 text-sm text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all ${
+                  inputVal.trim() ? 'pr-32' : 'pr-24'
+                }`}
               />
               <Search className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
+              {inputVal.trim() && (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  title="Limpar busca"
+                  aria-label="Limpar busca"
+                  className="absolute right-14 top-1.5 p-1.5 rounded-button text-stone-400 hover:text-stone-100 hover:bg-stone-700/80 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onOpenKeypad}
@@ -137,6 +154,17 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Direita — ações */}
           <div className="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0 ml-auto">
             <ThemeToggle />
+            {onOpenHelp && (
+              <button
+                type="button"
+                onClick={onOpenHelp}
+                className="p-2 rounded-button bg-stone-800/80 text-stone-300 border border-stone-700 hover:bg-stone-700/80 hover:text-emerald-300 transition-colors"
+                title="Ajuda"
+                aria-label="Abrir ajuda"
+              >
+                <HelpCircle className="w-4 h-4" />
+              </button>
+            )}
             <PublicEventsFab enabled={showPublicEvents} />
 
             {isAuthenticated && (
@@ -161,33 +189,11 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {isAdmin && (
-              <button
-                onClick={onNewSongClick}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-semibold rounded-button text-xs shadow-md shadow-emerald-500/20 transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">Nova Música</span>
-              </button>
-            )}
-
-            {!isAuthenticated && onRegisterClick && (
-              <button
-                type="button"
-                onClick={onRegisterClick}
-                className="p-2 sm:px-3 sm:py-2 rounded-button text-xs font-medium flex items-center gap-1.5 transition-all border bg-stone-800/80 text-stone-300 border-stone-700 hover:bg-stone-700/80 hover:text-stone-100"
-                title="Criar conta"
-              >
-                <span className="hidden sm:inline">Cadastrar</span>
-                <span className="sm:hidden">+</span>
-              </button>
-            )}
-
             <button
               onClick={isAuthenticated && onSignOut ? onSignOut : onAdminAuthClick}
               className={`p-2 sm:px-3 sm:py-2 rounded-button text-xs font-medium flex items-center gap-1.5 transition-all border ${
                 isAuthenticated
-                  ? 'bg-emerald-950/60 text-emerald-300 border-emerald-700/60 shadow-sm'
+                  ? 'hidden sm:flex bg-emerald-950/60 text-emerald-300 border-emerald-700/60 shadow-sm'
                   : 'bg-stone-800/80 text-stone-400 border-stone-700 hover:bg-stone-700/80 hover:text-stone-200'
               }`}
               title={isAuthenticated ? 'Sair' : 'Entrar com e-mail'}
@@ -218,9 +224,22 @@ export const Header: React.FC<HeaderProps> = ({
                 onQuickNumberChange(e.target.value);
               }}
               placeholder="Nº, título ou palavra..."
-              className="w-full bg-stone-800 border border-stone-700 rounded-xl py-2 pl-9 pr-16 text-xs text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              className={`w-full bg-stone-800 border border-stone-700 rounded-xl py-2 pl-9 text-xs text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
+                inputVal.trim() ? 'pr-24' : 'pr-16'
+              }`}
             />
             <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-3" />
+            {inputVal.trim() && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                title="Limpar busca"
+                aria-label="Limpar busca"
+                className="absolute right-12 top-1.5 p-1.5 rounded-button text-stone-400 hover:text-stone-100 hover:bg-stone-700/80 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
             <button
               type="button"
               onClick={onOpenKeypad}

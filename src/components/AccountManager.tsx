@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
+  Calendar,
   Check,
   Edit3,
   Loader2,
   Mail,
   Phone,
+  Plus,
   Search,
   ShieldCheck,
   UserCheck,
@@ -23,6 +25,7 @@ import {
   rejectUserAccount,
 } from '@/services/accounts';
 import { PageHeader, PageHeaderButton } from './PageHeader';
+import { KNOWN_SKILLS } from '@/constants/skills';
 
 interface AccountManagerProps {
   onAccountsChanged?: () => void;
@@ -44,6 +47,8 @@ type AccountForm = {
   name: string;
   email: string;
   phone: string;
+  birthDate: string;
+  skills: string[];
   isAdmin: boolean;
   accountStatus: AccountStatus;
 };
@@ -52,9 +57,15 @@ const EMPTY_FORM: AccountForm = {
   name: '',
   email: '',
   phone: '',
+  birthDate: '',
+  skills: [],
   isAdmin: false,
   accountStatus: 'approved',
 };
+
+function normalizeSkill(value: string): string {
+  return value.trim().replace(/\s+/g, ' ');
+}
 
 export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChanged }) => {
   const [accounts, setAccounts] = useState<RegisteredUser[]>([]);
@@ -66,6 +77,7 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
   const [modalMode, setModalMode] = useState<'create' | 'edit' | null>(null);
   const [editingAccount, setEditingAccount] = useState<RegisteredUser | null>(null);
   const [form, setForm] = useState<AccountForm>({ ...EMPTY_FORM });
+  const [customSkill, setCustomSkill] = useState('');
   const [saving, setSaving] = useState(false);
 
   const loadAccounts = async () => {
@@ -116,6 +128,7 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
   const openCreateModal = () => {
     setEditingAccount(null);
     setForm({ ...EMPTY_FORM, accountStatus: 'approved' });
+    setCustomSkill('');
     setErrorMsg('');
     setModalMode('create');
   };
@@ -126,9 +139,12 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
       name: account.display_name || '',
       email: account.email || '',
       phone: account.phone || '',
+      birthDate: '',
+      skills: [],
       isAdmin: Boolean(account.is_admin),
       accountStatus: account.account_status,
     });
+    setCustomSkill('');
     setErrorMsg('');
     setModalMode('edit');
   };
@@ -138,6 +154,28 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
     setModalMode(null);
     setEditingAccount(null);
     setForm({ ...EMPTY_FORM });
+    setCustomSkill('');
+  };
+
+  const toggleSkill = (skill: string) => {
+    const normalized = normalizeSkill(skill);
+    if (!normalized) return;
+    setForm((prev) => {
+      const exists = prev.skills.some((s) => s.toLowerCase() === normalized.toLowerCase());
+      return {
+        ...prev,
+        skills: exists
+          ? prev.skills.filter((s) => s.toLowerCase() !== normalized.toLowerCase())
+          : [...prev.skills, normalized],
+      };
+    });
+  };
+
+  const addCustomSkill = () => {
+    const normalized = normalizeSkill(customSkill);
+    if (!normalized) return;
+    toggleSkill(normalized);
+    setCustomSkill('');
   };
 
   const handleApprove = async (userId: string) => {
@@ -177,6 +215,8 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
           name: form.name,
           email: form.email,
           phone: form.phone || undefined,
+          birthDate: form.birthDate || undefined,
+          skills: form.skills,
           isAdmin: form.isAdmin,
         });
       } else if (modalMode === 'edit' && editingAccount) {
@@ -206,10 +246,10 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
       <PageHeader
         icon={Users}
         title="Contas de usuários"
-        description="Cadastro geral, aprovações e criação/edição manual de contas."
+        description="Cadastro completo de contas do sistema, aprovações e permissões de administrador."
         actions={
           <PageHeaderButton icon={UserPlus} onClick={openCreateModal}>
-            Cadastrar manualmente
+            Novo cadastro
           </PageHeaderButton>
         }
       />
@@ -299,8 +339,7 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
                 <button
                   type="button"
                   onClick={() => openEditModal(account)}
-                  className="px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-button text-xs font-semibold inline-flex items-center gap-1.5 border border-stone-700"
-                  title="Editar conta"
+                  className="px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-button text-xs inline-flex items-center gap-1.5 border border-stone-700"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                   Editar
@@ -347,17 +386,18 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
 
       {modalMode && (
         <div
-          className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4"
           onClick={closeModal}
         >
           <div
-            className="bg-stone-900 border border-stone-800 rounded-3xl p-6 w-full max-w-md shadow-2xl text-stone-100"
+            className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-lg max-h-[min(92vh,760px)] flex flex-col shadow-2xl text-stone-100 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-display font-bold text-emerald-100">
+            <div className="flex items-center justify-between border-b border-stone-800 px-4 sm:px-5 py-3 shrink-0">
+              <h3 className="text-lg font-display font-bold text-emerald-100 flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-emerald-400" />
                 {modalMode === 'create' ? 'Cadastrar usuário' : 'Editar conta'}
               </h3>
               <button
@@ -370,53 +410,135 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
               </button>
             </div>
 
-            <p className="text-xs text-stone-500 mb-4">
-              {modalMode === 'create'
-                ? 'Cria a conta já aprovada. Depois associe a pessoa à igreja em Usuários e Integrantes.'
-                : 'Altere nome, e-mail, telefone, status e permissão de administrador.'}
-            </p>
+            <form
+              onSubmit={(e) => void handleSave(e)}
+              className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-5 py-4 space-y-3.5 text-sm"
+            >
+              <p className="text-xs text-stone-500">
+                {modalMode === 'create'
+                  ? 'Cria a conta completa já aprovada. A pessoa poderá entrar com magic link neste e-mail. Depois associe-a a uma igreja em Membros, se necessário.'
+                  : 'Altere nome, e-mail, telefone, status e permissão de administrador.'}
+              </p>
 
-            {errorMsg && (
-              <div className="bg-rose-950/60 border border-rose-800/60 rounded-2xl p-3 mb-4 text-xs text-rose-300">
-                {errorMsg}
-              </div>
-            )}
+              {errorMsg && (
+                <div className="bg-rose-950/60 border border-rose-800/60 rounded-xl p-3 text-xs text-rose-300">
+                  {errorMsg}
+                </div>
+              )}
 
-            <form onSubmit={(e) => void handleSave(e)} className="space-y-4 text-sm">
               <div>
-                <label className="block text-stone-400 font-semibold mb-1">Nome</label>
+                <label className="block text-stone-400 font-semibold mb-1 text-xs">
+                  Nome <span className="text-rose-400">*</span>
+                </label>
                 <input
                   type="text"
                   required
                   value={form.name}
                   onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-stone-100"
+                  placeholder="Nome completo"
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-stone-100"
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-stone-400 font-semibold mb-1">E-mail</label>
+                <label className="block text-stone-400 font-semibold mb-1 text-xs">
+                  E-mail <span className="text-rose-400">*</span>
+                </label>
                 <input
                   type="email"
                   required
                   value={form.email}
                   onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-stone-100"
+                  placeholder="usuario@email.com"
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-stone-100"
                 />
               </div>
               <div>
-                <label className="block text-stone-400 font-semibold mb-1">Telefone (opcional)</label>
+                <label className="block text-stone-400 font-semibold mb-1 text-xs">Telefone</label>
                 <input
                   type="tel"
                   value={form.phone}
                   onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-stone-100"
+                  placeholder="(00) 00000-0000"
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-stone-100"
                 />
               </div>
 
+              {modalMode === 'create' && (
+                <>
+                  <div>
+                    <label className="block text-stone-400 font-semibold mb-1 text-xs">
+                      Data de nascimento
+                    </label>
+                    <div className="relative">
+                      <Calendar className="w-4 h-4 text-stone-500 absolute left-3 top-2.5 pointer-events-none" />
+                      <input
+                        type="date"
+                        value={form.birthDate}
+                        max={new Date().toISOString().slice(0, 10)}
+                        onChange={(e) => setForm((prev) => ({ ...prev, birthDate: e.target.value }))}
+                        className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 pl-9 text-stone-100"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-stone-400 font-semibold mb-2 text-xs">
+                      Habilidades
+                    </label>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {KNOWN_SKILLS.map((skill) => {
+                        const selected = form.skills.some(
+                          (s) => s.toLowerCase() === skill.toLowerCase(),
+                        );
+                        return (
+                          <button
+                            key={skill}
+                            type="button"
+                            onClick={() => toggleSkill(skill)}
+                            className={`px-2.5 py-1.5 rounded-button text-[11px] font-semibold border transition-colors ${
+                              selected
+                                ? 'bg-emerald-500 text-stone-950 border-emerald-400'
+                                : 'bg-stone-950 text-stone-300 border-stone-700 hover:border-emerald-700/60'
+                            }`}
+                          >
+                            {skill}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        value={customSkill}
+                        onChange={(e) => setCustomSkill(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addCustomSkill();
+                          }
+                        }}
+                        placeholder="Outra habilidade…"
+                        className="flex-1 bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100"
+                      />
+                      <button
+                        type="button"
+                        onClick={addCustomSkill}
+                        disabled={!customSkill.trim()}
+                        className="px-3 py-2 bg-stone-800 hover:bg-stone-700 disabled:opacity-40 border border-stone-700 rounded-button text-xs font-semibold inline-flex items-center gap-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Adicionar
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+
               {modalMode === 'edit' && (
                 <div>
-                  <label className="block text-stone-400 font-semibold mb-1">Status da conta</label>
+                  <label className="block text-stone-400 font-semibold mb-1 text-xs">
+                    Status da conta
+                  </label>
                   <select
                     value={form.accountStatus}
                     onChange={(e) =>
@@ -425,7 +547,7 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
                         accountStatus: e.target.value as AccountStatus,
                       }))
                     }
-                    className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-stone-100"
+                    className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-stone-100"
                   >
                     <option value="pending">Pendente</option>
                     <option value="approved">Aprovado</option>
@@ -444,7 +566,7 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
                 Administrador do sistema
               </label>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-2 border-t border-stone-800">
                 <button
                   type="button"
                   onClick={closeModal}
@@ -459,7 +581,7 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
                   className="px-4 py-2 bg-emerald-500 text-stone-950 font-bold rounded-button text-xs inline-flex items-center gap-1.5"
                 >
                   {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  Salvar
+                  {modalMode === 'create' ? 'Salvar usuário' : 'Salvar'}
                 </button>
               </div>
             </form>

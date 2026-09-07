@@ -1,29 +1,37 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   BookOpen,
-  LayoutDashboard,
   ListMusic,
-  Building2,
-  Users,
   UserCheck,
-  Calendar,
   X,
   Church,
+  ChevronDown,
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
+  Music,
+  LockOpen,
+  HelpCircle,
 } from 'lucide-react';
 import { ViewMode } from '../types';
 import { getAvatarPublicUrl } from '@/utils/avatarUrl';
+import { WORKSPACE_VIEWS } from './ChurchWorkspace';
 
 interface SidebarPermissions {
   canAccessAdminPanel: boolean;
   canManageUsers: boolean;
+  canManageOrgMembers: boolean;
   canManageChurches: boolean;
   canAccessLiturgies: boolean;
   canManageSchedules: boolean;
   canAccessEvents: boolean;
 }
+
+type OrgOption = {
+  id: string;
+  name: string;
+  sigla?: string | null;
+};
 
 interface AppSidebarProps {
   currentView: ViewMode;
@@ -34,7 +42,7 @@ interface AppSidebarProps {
   /** Desktop: expandido (textos) vs minimizado (só ícones) */
   desktopExpanded?: boolean;
   onToggleDesktop?: () => void;
-  orgOptions: { id: string; name: string }[];
+  orgOptions: OrgOption[];
   activeOrgId?: string;
   onOrgChange: (orgId: string) => void;
   userEmail?: string | null;
@@ -42,22 +50,35 @@ interface AppSidebarProps {
   userAvatarPath?: string | null;
   userAvatarUpdatedAt?: string | null;
   permissions: SidebarPermissions;
+  onSignOut?: () => void;
+  onOpenHelp?: () => void;
 }
 
-const NAV_ITEMS: {
+type NavItem = {
   view: ViewMode;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   visible?: (p: SidebarPermissions) => boolean;
-}[] = [
-  { view: 'public', label: 'Músicas', icon: BookOpen },
-  { view: 'admin', label: 'Painel Geral', icon: LayoutDashboard, visible: (p) => p.canAccessAdminPanel },
-  { view: 'events', label: 'Eventos', icon: Calendar, visible: (p) => p.canAccessEvents },
+};
+
+const PERSONAL_NAV: NavItem[] = [
+  { view: 'public', label: 'Catálogo', icon: BookOpen },
   { view: 'setlist', label: 'Playlists', icon: ListMusic },
-  { view: 'churches', label: 'Igrejas e Bandas', icon: Building2, visible: (p) => p.canManageChurches },
-  { view: 'users', label: 'Usuários e Integrantes', icon: Users, visible: (p) => p.canManageUsers },
+];
+
+const ADMIN_NAV: NavItem[] = [
+  { view: 'admin', label: 'Músicas', icon: Music, visible: (p) => p.canAccessAdminPanel },
+  { view: 'organizations', label: 'Igrejas', icon: Church, visible: (p) => p.canAccessAdminPanel },
   { view: 'accounts', label: 'Contas de usuários', icon: UserCheck, visible: (p) => p.canManageUsers },
 ];
+
+const ADMIN_VIEWS: ViewMode[] = ['admin', 'organizations', 'accounts'];
+
+function orgLabel(org: OrgOption | undefined): string {
+  if (!org) return 'Igreja';
+  const sigla = org.sigla?.trim();
+  return sigla || org.name;
+}
 
 export const AppSidebar: React.FC<AppSidebarProps> = ({
   currentView,
@@ -74,9 +95,13 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   userAvatarPath,
   userAvatarUpdatedAt,
   permissions,
+  onSignOut,
+  onOpenHelp,
 }) => {
   const [orgMenuOpen, setOrgMenuOpen] = useState(false);
   const orgMenuRef = useRef<HTMLDivElement>(null);
+  const hasWorkspace = orgOptions.length > 0;
+  const multiOrg = orgOptions.length > 1;
 
   useEffect(() => {
     if (!orgMenuOpen) return;
@@ -86,10 +111,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
   }, [orgMenuOpen]);
-
-  useEffect(() => {
-    if (desktopExpanded) setOrgMenuOpen(false);
-  }, [desktopExpanded]);
 
   const avatarUrl = getAvatarPublicUrl(userAvatarPath, userAvatarUpdatedAt);
 
@@ -102,8 +123,164 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     .toUpperCase();
 
   const userActive = currentView === 'profile';
-  const activeOrgName =
-    orgOptions.find((o) => o.id === activeOrgId)?.name || 'Igreja ativa';
+  const activeOrg = orgOptions.find((o) => o.id === activeOrgId) || orgOptions[0];
+  const activeLabel = orgLabel(activeOrg);
+  const activeFullName = activeOrg?.name || 'Igreja';
+
+  const renderNavButton = (item: NavItem, compact: boolean) => {
+    const { view, label, icon: Icon } = item;
+    const active = currentView === view;
+    return (
+      <button
+        key={view}
+        type="button"
+        onClick={() => {
+          onViewChange(view);
+          onClose();
+        }}
+        title={compact ? label : undefined}
+        className={`flex items-center rounded-button text-sm font-semibold transition-all border ${
+          compact
+            ? 'justify-center w-full px-0 py-2.5'
+            : 'gap-3 w-full px-3 py-2.5 text-left'
+        } ${
+          active
+            ? 'bg-emerald-500/20 light:bg-emerald-50 text-emerald-200 light:text-emerald-800 border-emerald-500/40 light:border-emerald-300 shadow-sm'
+            : 'bg-transparent text-stone-300 light:text-stone-700 border-transparent hover:bg-stone-800/80 light:hover:bg-stone-100 hover:text-stone-100 light:hover:text-stone-900'
+        }`}
+      >
+        <Icon
+          className={`w-4 h-4 shrink-0 ${active ? 'text-emerald-400 light:text-emerald-600' : 'text-stone-500 light:text-stone-400'}`}
+        />
+        {!compact && <span>{label}</span>}
+      </button>
+    );
+  };
+
+  const openWorkspace = () => {
+    onViewChange('workspace');
+    onClose();
+    setOrgMenuOpen(false);
+  };
+
+  const renderChurchItem = (compact: boolean) => {
+    const workspaceActive = WORKSPACE_VIEWS.includes(currentView);
+    const activeClass = workspaceActive
+      ? 'bg-emerald-500/20 light:bg-emerald-50 text-emerald-200 light:text-emerald-800 border-emerald-500/40 light:border-emerald-300 shadow-sm'
+      : 'bg-transparent text-stone-300 light:text-stone-700 border-transparent hover:bg-stone-800/80 light:hover:bg-stone-100 hover:text-stone-100 light:hover:text-stone-900';
+    const iconClass = workspaceActive
+      ? 'text-emerald-400 light:text-emerald-600'
+      : 'text-stone-500 light:text-stone-400';
+
+    if (compact) {
+      return (
+        <div className="relative" ref={orgMenuRef}>
+          <button
+            type="button"
+            onClick={() => {
+              if (multiOrg) setOrgMenuOpen((v) => !v);
+              else openWorkspace();
+            }}
+            title={activeFullName}
+            aria-label={`Abrir workspace: ${activeFullName}`}
+            className={`w-full flex items-center justify-center px-0 py-2.5 rounded-button text-sm font-semibold transition-all border ${activeClass}`}
+          >
+            <Church className={`w-4 h-4 shrink-0 ${iconClass}`} />
+          </button>
+          {orgMenuOpen && multiOrg && (
+            <div className="absolute left-full top-0 ml-2 z-50 w-56 rounded-xl border border-stone-700 bg-stone-900 shadow-xl py-1">
+              <p className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-stone-500 font-bold">
+                Trocar igreja
+              </p>
+              {orgOptions.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => {
+                    onOrgChange(o.id);
+                    setOrgMenuOpen(false);
+                    onViewChange('workspace');
+                    onClose();
+                  }}
+                  className={`w-full text-left px-3 py-2 text-sm truncate ${
+                    o.id === activeOrgId
+                      ? 'bg-emerald-500/15 text-emerald-200 font-semibold'
+                      : 'text-stone-300 hover:bg-stone-800'
+                  }`}
+                  title={o.name}
+                >
+                  {orgLabel(o)}
+                  {o.sigla?.trim() && o.sigla.trim() !== o.name ? (
+                    <span className="block text-[10px] text-stone-500 truncate font-normal">{o.name}</span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative" ref={orgMenuRef}>
+        <div
+          className={`flex items-stretch rounded-button border overflow-hidden transition-all ${activeClass}`}
+        >
+          <button
+            type="button"
+            onClick={openWorkspace}
+            title={activeFullName}
+            className="flex-1 min-w-0 flex items-center gap-3 px-3 py-2.5 text-left text-sm font-semibold"
+          >
+            <Church className={`w-4 h-4 shrink-0 ${iconClass}`} />
+            <span className="truncate">{activeLabel}</span>
+          </button>
+          {multiOrg && (
+            <button
+              type="button"
+              onClick={() => setOrgMenuOpen((v) => !v)}
+              className={`px-2.5 border-l shrink-0 ${
+                workspaceActive
+                  ? 'border-emerald-500/30 text-emerald-300 light:text-emerald-700 light:border-emerald-300'
+                  : 'border-stone-700/80 light:border-stone-200 text-stone-500'
+              }`}
+              aria-label="Trocar igreja"
+              title="Trocar igreja"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+        {orgMenuOpen && multiOrg && (
+          <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl border border-stone-700 light:border-stone-200 bg-stone-900 light:bg-white shadow-xl py-1">
+            {orgOptions.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => {
+                  onOrgChange(o.id);
+                  setOrgMenuOpen(false);
+                  onViewChange('workspace');
+                  onClose();
+                }}
+                className={`w-full text-left px-3 py-2 text-sm truncate ${
+                  o.id === activeOrgId
+                    ? 'bg-emerald-500/15 text-emerald-200 light:text-emerald-800 font-semibold'
+                    : 'text-stone-300 light:text-stone-700 hover:bg-stone-800 light:hover:bg-stone-100'
+                }`}
+                title={o.name}
+              >
+                {orgLabel(o)}
+                {o.sigla?.trim() && o.sigla.trim() !== o.name ? (
+                  <span className="block text-[10px] text-stone-500 truncate font-normal">{o.name}</span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderUserBlock = (compact: boolean) => (
     <div
@@ -111,6 +288,23 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         compact ? 'px-2 pt-2 pb-3' : 'px-3 pt-3 pb-4'
       }`}
     >
+      {onOpenHelp && (
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            onOpenHelp();
+          }}
+          className={`w-full mb-2 rounded-button border border-stone-800 light:border-stone-200 text-stone-300 light:text-stone-700 hover:text-emerald-300 light:hover:text-emerald-700 hover:border-emerald-700/50 light:hover:border-emerald-300 hover:bg-stone-900 light:hover:bg-stone-100 transition-colors ${
+            compact ? 'p-2 flex justify-center' : 'px-3 py-2.5 flex items-center gap-2 text-sm font-semibold'
+          }`}
+          title="Ajuda"
+          aria-label="Abrir ajuda"
+        >
+          <HelpCircle className="w-4 h-4 text-emerald-400 light:text-emerald-600 shrink-0" />
+          {!compact && <span>Ajuda</span>}
+        </button>
+      )}
       <button
         type="button"
         onClick={() => {
@@ -152,109 +346,52 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     </div>
   );
 
-  const renderOrgSelect = (compact: boolean) => {
-    if (!orgOptions.length) return null;
-
-    if (compact) {
-      return (
-        <div className="px-2 pb-2 relative" ref={orgMenuRef}>
-          <button
-            type="button"
-            onClick={() => setOrgMenuOpen((v) => !v)}
-            className="w-full flex items-center justify-center p-2.5 rounded-button border border-stone-800 bg-stone-900/70 text-emerald-400 hover:bg-stone-800 hover:border-stone-700"
-            title={activeOrgName}
-            aria-label={`Igreja ativa: ${activeOrgName}`}
-          >
-            <Church className="w-4 h-4" />
-          </button>
-          {orgMenuOpen && (
-            <div className="absolute left-full top-0 ml-2 z-50 w-56 rounded-xl border border-stone-700 bg-stone-900 shadow-xl py-1">
-              <p className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-stone-500 font-bold">
-                Igreja ativa
-              </p>
-              {orgOptions.map((o) => (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => {
-                    onOrgChange(o.id);
-                    setOrgMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 text-sm truncate ${
-                    o.id === activeOrgId
-                      ? 'bg-emerald-500/15 text-emerald-200 light:text-emerald-800 font-semibold'
-                      : 'text-stone-300 light:text-stone-700 hover:bg-stone-800 light:hover:bg-emerald-50 light:hover:text-emerald-800'
-                  }`}
-                >
-                  {o.name}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      );
-    }
+  const renderNav = (compact: boolean) => {
+    const personalItems = PERSONAL_NAV.filter(({ visible }) => !visible || visible(permissions));
+    const adminItems = ADMIN_NAV.filter(({ visible }) => !visible || visible(permissions));
+    const adminActive = ADMIN_VIEWS.includes(currentView);
+    const showAdmin = adminItems.length > 0;
 
     return (
-      <div className="px-3 pb-3">
-        <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-stone-500 font-bold mb-1.5">
-          <Church className="w-3 h-3" />
-          Igreja ativa
-        </label>
-        <select
-          value={activeOrgId || ''}
-          onChange={(e) => onOrgChange(e.target.value)}
-          className="w-full bg-stone-900 border border-stone-700 text-stone-100 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-600"
-          title="Trocar igreja"
-        >
-          {orgOptions.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.name}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  };
+      <nav
+        className={`flex flex-col gap-1 flex-1 overflow-y-auto min-h-0 ${
+          compact ? 'px-2 pb-2' : 'px-3 pb-3'
+        }`}
+      >
+        {personalItems.map((item) => renderNavButton(item, compact))}
 
-  const renderNav = (compact: boolean) => (
-    <nav
-      className={`flex flex-col gap-1 flex-1 overflow-y-auto min-h-0 ${
-        compact ? 'px-2 pb-2' : 'px-3 pb-3'
-      }`}
-    >
-      {NAV_ITEMS.filter(({ visible }) => !visible || visible(permissions)).map(
-        ({ view, label, icon: Icon }) => {
-          const active = currentView === view;
-          return (
-            <button
-              key={view}
-              type="button"
-              onClick={() => {
-                onViewChange(view);
-                onClose();
-              }}
-              title={compact ? label : undefined}
-              className={`flex items-center rounded-button text-sm font-semibold transition-all border ${
-                compact
-                  ? 'justify-center w-full px-0 py-2.5'
-                  : 'gap-3 w-full px-3 py-2.5 text-left'
-              } ${
-                active
-                  ? 'bg-emerald-500/20 light:bg-emerald-50 text-emerald-200 light:text-emerald-800 border-emerald-500/40 light:border-emerald-300 shadow-sm'
-                  : 'bg-transparent text-stone-300 light:text-stone-700 border-transparent hover:bg-stone-800/80 light:hover:bg-stone-100 hover:text-stone-100 light:hover:text-stone-900'
+        {hasWorkspace && (
+          <div className={`mt-3 ${compact ? 'pt-2' : 'pt-3'} border-t border-stone-800/80`}>
+            {!compact && (
+              <p className="px-1 mb-2 text-[10px] uppercase tracking-wider text-stone-500 font-bold">
+                Igreja
+              </p>
+            )}
+            {renderChurchItem(compact)}
+          </div>
+        )}
+
+        {showAdmin && (
+          <div className={`mt-3 ${compact ? 'pt-2' : 'pt-3'} border-t border-stone-800/80`}>
+            {!compact && (
+              <p className="px-1 mb-2 text-[10px] uppercase tracking-wider text-stone-500 font-bold">
+                Administração
+              </p>
+            )}
+            <div
+              className={`flex flex-col gap-1 ${
+                adminActive && !compact
+                  ? 'rounded-2xl border border-violet-500/20 bg-violet-500/5 p-1.5'
+                  : ''
               }`}
             >
-              <Icon
-                className={`w-4 h-4 shrink-0 ${active ? 'text-emerald-400 light:text-emerald-600' : 'text-stone-500 light:text-stone-400'}`}
-              />
-              {!compact && <span>{label}</span>}
-            </button>
-          );
-        },
-      )}
-    </nav>
-  );
+              {adminItems.map((item) => renderNavButton(item, compact))}
+            </div>
+          </div>
+        )}
+      </nav>
+    );
+  };
 
   return (
     <>
@@ -287,7 +424,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             </button>
           )}
         </div>
-        <div className="shrink-0">{renderOrgSelect(!desktopExpanded)}</div>
         {renderNav(!desktopExpanded)}
         {renderUserBlock(!desktopExpanded)}
       </aside>
@@ -311,9 +447,24 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="pt-3 shrink-0">{renderOrgSelect(false)}</div>
             {renderNav(false)}
             {renderUserBlock(false)}
+            {onSignOut && (
+              <div className="px-3 pb-4 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onSignOut();
+                  }}
+                  className="w-full px-3 py-2.5 rounded-button text-sm font-semibold flex items-center justify-center gap-2 transition-all border bg-emerald-950/60 text-emerald-300 border-emerald-700/60 shadow-sm"
+                  title="Sair"
+                >
+                  <LockOpen className="w-4 h-4 text-emerald-400" />
+                  Sair
+                </button>
+              </div>
+            )}
           </aside>
         </div>
       )}

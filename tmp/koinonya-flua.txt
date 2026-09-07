@@ -1,0 +1,46 @@
+# Flua
+# tom=B
+# yt=https://www.youtube.com/watch?v=L8UeZIKZ_yw
+# spotify=-
+# composition=Bené Gomes / Willen Soares
+
+[INTRO]
+[G#m7] [D#m7] [Cm7] [G#m7] [E] [B]
+
+[Primeira Parte]
+
+[B]Flua em mim, Se[F#/A#]nhor, a Tua [Gm]graça[Gm/F#]
+[C#m]Flua em mim, Se[C#m/B]nhor, o Teu a[F#/A#]mor[F#]
+[B]Flua em mim, Se[F#/A#]nhor, a Tua [Gm]vida[Gm/F#]
+[C#m]Flua em mim, Sen[F#]hor, o Teu [B]perdão[F#]
+
+[Segunda Parte]
+
+[B]Flua em mim, Se[F#/A#]nhor, a Tua [G#m]graça[G#m/F#]
+[C#m]Flua em mim, Se[C#m/B]nhor, o Teu a[F#/A#]mor[F#]
+[B]Flua em mim, Se[F#/A#]nhor, a Tua [G#m]vida[G#m/F#]
+[C#m]Flua em mim, Sen[F#]hor, o Teu [B]perdão[B/D#]
+[REFRAO]
+E7M        B/D#  G#m  C#m           B  B/D#
+Para te adorar      e declarar meu amor
+E7M        B/D#    G#m    C#m     E/F#  B9  B/D#
+Para te adorar meu Rei, Senhor da minha vida!
+
+E7M        B/D#  G#m  C#m  E/F#     B  B/D#
+Para te adorar      e declarar meu amor
+E7M        B/D#    G#m    C#m     E/F#  B9
+Para te adorar meu Rei, Senhor da minha vida!
+[SOLO]
+E7M  B/D#  G#m  C#m  B  B/D#
+       E7M  B/D#  G#m  C#m
+[E/F#] [F/G] [C] [C/E]
+[REFRAO]
+F7M        C/E  Am  Dm     F/G      C  C/E
+Para te adorar      e declarar meu amor
+F7M        C/E     Am     Dm      F/G   C   C/E
+Para te adorar meu Rei, Senhor da minha vida!
+
+F7M        C/E  Am  Dm     F/G      C  C/E
+Para te adorar      e declarar meu amor
+F7M        C/E     Am     Dm      F/G   C   Bb  C  Bb  C
+Para te adorar meu Rei, Senhor da minha vida!

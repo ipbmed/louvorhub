@@ -141,17 +141,17 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-4 animate-in fade-in duration-200">
       
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl w-full max-w-lg shadow-2xl flex flex-col text-stone-100 relative max-h-[90vh] overflow-hidden">
+      <div className="bg-stone-900 border border-stone-800 rounded-2xl sm:rounded-3xl w-full max-w-lg shadow-2xl flex flex-col text-stone-100 relative max-h-[90vh] overflow-hidden">
         
         {/* Header — fixo, fora da área com scroll */}
-        <div className="shrink-0 flex items-center justify-between px-6 pt-6 pb-4 border-b border-stone-800">
+        <div className="shrink-0 flex items-center justify-between px-3.5 sm:px-5 pt-3.5 sm:pt-5 pb-3 border-b border-stone-800">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-9 h-9 shrink-0 rounded-xl bg-emerald-500/20 light:bg-emerald-100 text-emerald-300 light:text-emerald-800 flex items-center justify-center font-bold">
-              <Filter className="w-5 h-5" />
+            <div className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-xl bg-emerald-500/20 light:bg-emerald-100 text-emerald-300 light:text-emerald-800 flex items-center justify-center font-bold">
+              <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <h3 className="text-xl font-display font-bold text-emerald-100 light:text-stone-900 tracking-tight truncate">
+            <h3 className="text-lg sm:text-xl font-display font-bold text-emerald-100 light:text-stone-900 tracking-tight truncate">
               Busca avançada
             </h3>
           </div>
@@ -164,10 +164,10 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 py-5 space-y-4 text-xs sm:text-sm">
+        <form onSubmit={handleSubmit} className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3.5 sm:px-5 py-3 sm:py-4 space-y-3 text-xs sm:text-sm">
           
           {/* Filter Song Type: Hinos vs Cânticos */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <div>
               <label className="block text-stone-400 font-semibold mb-1">
                 Tipo de Conteúdo
@@ -175,7 +175,7 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
               <select
                 value={localFilters.songType}
                 onChange={(e) => handleChange('songType', e.target.value)}
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2 sm:p-2.5 text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
               >
                 <option value="all">Todos (Hinos e Cânticos)</option>
                 <option value="hino">Apenas Hinos (com Número)</option>
@@ -191,7 +191,7 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
                 value={localFilters.hymnal}
                 onChange={(e) => handleChange('hymnal', e.target.value)}
                 disabled={isCanticoOnly}
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-stone-100 disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2 sm:p-2.5 text-stone-100 disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
               >
                 <option value="">Todos os Hinários</option>
                 <option value="Novo Cântico">Novo Cântico</option>
@@ -213,15 +213,15 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
                 value={localFilters.keyword}
                 onChange={(e) => handleChange('keyword', e.target.value)}
                 placeholder="Ex: Alvo mais que a neve, Aclame, Cruz..."
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl py-2.5 pl-9 pr-4 text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                className="w-full bg-stone-950 border border-stone-800 rounded-xl py-2 sm:py-2.5 pl-9 pr-3 text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
               />
-              <Search className="w-4 h-4 text-stone-400 absolute left-3 top-3" />
+              <Search className="w-4 h-4 text-stone-400 absolute left-3 top-2.5 sm:top-3" />
             </div>
           </div>
 
           {/* Number Range */}
           {showNumberRange && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <div>
                 <label className="block text-stone-400 font-semibold mb-1">
                   Número Mínimo
@@ -231,7 +231,7 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
                   value={localFilters.minNumber}
                   onChange={(e) => handleChange('minNumber', e.target.value)}
                   placeholder="Ex: 1"
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 font-mono text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2 sm:p-2.5 font-mono text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                 />
               </div>
               <div>
@@ -243,7 +243,7 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
                   value={localFilters.maxNumber}
                   onChange={(e) => handleChange('maxNumber', e.target.value)}
                   placeholder="Ex: 100"
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 font-mono text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2 sm:p-2.5 font-mono text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                 />
               </div>
             </div>
@@ -257,7 +257,7 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
             <select
               value={localFilters.category}
               onChange={(e) => handleChange('category', e.target.value)}
-              className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2 sm:p-2.5 text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
             >
               <option value="">Todas as Categorias</option>
               {categories.map((cat) => (
@@ -269,7 +269,7 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
           </div>
 
           {/* Key / Tom dropdown */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             <div>
               <label className="block text-stone-400 font-semibold mb-1">
                 Tom Original
@@ -277,7 +277,7 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
               <select
                 value={localFilters.key}
                 onChange={(e) => handleChange('key', e.target.value)}
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-stone-100 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2 sm:p-2.5 text-stone-100 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
               >
                 <option value="">Qualquer Tom</option>
                 {MUSICAL_KEYS.map((k) => (
@@ -295,13 +295,13 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
                 value={localFilters.author}
                 onChange={(e) => handleChange('author', e.target.value)}
                 placeholder="Ex: Lutero, Newton..."
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2 sm:p-2.5 text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
               />
             </div>
           </div>
 
           {/* Chords Toggle filter */}
-          <div className="pt-2">
+          <div className="pt-1">
             <label className="flex items-center gap-2 cursor-pointer text-stone-300 font-medium">
               <input
                 type="checkbox"
@@ -314,14 +314,14 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-4 border-t border-stone-800 flex items-center justify-between gap-3">
+          <div className="pt-3 border-t border-stone-800 flex items-center justify-between gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => {
                 onResetFilters();
                 onClose();
               }}
-              className="px-4 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button font-medium flex items-center gap-1.5 transition-colors"
+              className="px-3 sm:px-4 py-2 sm:py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button font-medium flex items-center gap-1.5 transition-colors"
             >
               <RotateCcw className="w-4 h-4" />
               <span>Limpar Filtros</span>
@@ -329,7 +329,7 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
 
             <button
               type="submit"
-              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-colors"
+              className="px-4 sm:px-6 py-2 sm:py-2.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-colors"
             >
               <Check className="w-4 h-4" />
               <span>Aplicar Filtros</span>

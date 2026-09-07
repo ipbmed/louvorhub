@@ -1,6 +1,6 @@
 import React from 'react';
 import { Song } from '../types';
-import { Heart, Music, Tv, Edit3, Trash2, Plus, Volume2, Eye, Maximize2 } from 'lucide-react';
+import { Heart, Music, Tv, Edit3, Trash2, ListMusic, Volume2, Eye, Maximize2 } from 'lucide-react';
 import { stripChords } from '../utils/chordTransposer';
 import { playReferenceTone } from '../utils/audioTone';
 import { SongMediaPlayer } from './SongMediaPlayer';
@@ -158,8 +158,9 @@ export const SongCard: React.FC<SongCardProps> = ({
               }}
               className={iconActionBtn}
               title="Adicionar à playlist"
+              aria-label="Adicionar à playlist"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <ListMusic className="w-3.5 h-3.5" />
             </button>
           )}
 

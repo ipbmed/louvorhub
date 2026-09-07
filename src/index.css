@@ -42,8 +42,8 @@
   }
 
   html.light body {
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #f1f5f9;
+    color: #020617;
   }
 }
 
@@ -56,7 +56,7 @@
   /* ---------------- Surfaces & Backgrounds ---------------- */
   /* Nível 0: Base / Container de fundo */
   html.light .bg-stone-950 {
-    background-color: #f8fafc;
+    background-color: #f1f5f9;
   }
 
   /* Nível 1: Cards e painéis principais (branco puro para destaque e nitidez) */
@@ -66,26 +66,26 @@
 
   /* Nível 2: Controles secundários, botões de ação neutros, tags */
   html.light .bg-stone-800 {
-    background-color: #f1f5f9;
+    background-color: #e2e8f0;
   }
 
   /* Nível 3: Hover de botões, divisores ativos */
   html.light .bg-stone-700 {
-    background-color: #e2e8f0;
+    background-color: #cbd5e1;
   }
 
   /* Opacidades & Superfícies com blur */
   html.light .bg-stone-950\/40 {
-    background-color: rgb(248 250 252 / 0.6);
+    background-color: rgb(241 245 249 / 0.7);
   }
   html.light .bg-stone-950\/70 {
-    background-color: rgb(248 250 252 / 0.85);
+    background-color: rgb(241 245 249 / 0.9);
   }
   html.light .bg-stone-950\/80 {
-    background-color: rgb(255 255 255 / 0.9);
+    background-color: rgb(255 255 255 / 0.92);
   }
   html.light .bg-stone-950\/95 {
-    background-color: rgb(255 255 255 / 0.96);
+    background-color: rgb(255 255 255 / 0.97);
   }
 
   html.light .bg-stone-900\/40 {
@@ -111,16 +111,16 @@
   }
 
   html.light .bg-stone-800\/40 {
-    background-color: rgb(241 245 249 / 0.7);
+    background-color: rgb(226 232 240 / 0.75);
   }
   html.light .bg-stone-800\/60 {
-    background-color: rgb(241 245 249 / 0.85);
+    background-color: rgb(226 232 240 / 0.9);
   }
   html.light .bg-stone-800\/80 {
-    background-color: #f1f5f9;
+    background-color: #e2e8f0;
   }
   html.light .bg-stone-800\/90 {
-    background-color: #f1f5f9;
+    background-color: #e2e8f0;
   }
 
   /* Overlays modais no tema claro (escurece levemente o fundo) */
@@ -133,41 +133,41 @@
   }
 
   /* ---------------- Tipografia & Contraste de Texto ---------------- */
-  /* Títulos e textos principais: preto/ardósia escuro de alto contraste */
+  /* Títulos e textos principais: quase preto para máximo contraste */
   html.light .text-stone-50,
   html.light .text-stone-100 {
-    color: #0f172a;
+    color: #020617;
   }
   html.light .text-stone-200 {
-    color: #1e293b;
+    color: #0f172a;
   }
   html.light .text-stone-300 {
+    color: #1e293b;
+  }
+  /* Subtextos com contraste forte (WCAG AA+) */
+  html.light .text-stone-400 {
     color: #334155;
   }
-  /* Subtextos e legendas com contraste acessível (WCAG AA) */
-  html.light .text-stone-400 {
-    color: #475569;
-  }
   html.light .text-stone-500 {
-    color: #64748b;
+    color: #475569;
   }
   html.light .text-stone-600 {
-    color: #475569;
+    color: #334155;
   }
 
-  /* Destaques de marca (Emerald / Verde LouvorHub) no tema claro */
+  /* Destaques de marca (Emerald) mais escuros no claro */
   html.light .text-emerald-100 {
-    color: #064e3b;
+    color: #022c22;
   }
   html.light .text-emerald-200,
   html.light .text-emerald-300 {
-    color: #047857;
+    color: #065f46;
   }
   html.light .text-emerald-400 {
-    color: #059669;
+    color: #047857;
   }
   html.light .text-teal-300 {
-    color: #0f766e;
+    color: #115e59;
   }
   html.light .text-amber-50,
   html.light .text-amber-100 {
@@ -175,32 +175,32 @@
   }
   html.light .text-amber-200,
   html.light .text-amber-300 {
-    color: #b45309;
+    color: #92400e;
   }
   html.light .text-amber-100\/80,
   html.light .text-amber-200\/80,
   html.light .text-amber-200\/90 {
-    color: #92400e;
+    color: #78350f;
   }
   html.light .text-rose-200,
   html.light .text-rose-300 {
-    color: #be123c;
+    color: #9f1239;
   }
   html.light .text-rose-400 {
-    color: #e11d48;
+    color: #be123c;
   }
   html.light .text-blue-300 {
-    color: #1d4ed8;
+    color: #1e40af;
   }
 
   /* Mantém text-stone-950 escuro em botões sólidos coloridos */
   html.light .text-stone-950 {
-    color: #0c0a09 !important;
+    color: #020617 !important;
   }
 
-  /* Acordes musicais no tema claro: Verde esmeralda vivo, em negrito */
+  /* Acordes musicais no tema claro */
   html.light pre span.text-emerald-400 {
-    color: #047857;
+    color: #065f46;
     font-weight: 700;
   }
 
@@ -211,17 +211,17 @@
   html.light .border-stone-800\/80,
   html.light .border-stone-800\/60,
   html.light .border-stone-800\/40 {
-    border-color: #e2e8f0;
+    border-color: #cbd5e1;
   }
 
   html.light .border-stone-700,
   html.light .border-stone-700\/80,
   html.light .border-stone-700\/60 {
-    border-color: #cbd5e1;
+    border-color: #94a3b8;
   }
 
   html.light .border-stone-600 {
-    border-color: #94a3b8;
+    border-color: #64748b;
   }
 
   html.light .border-t-stone-800,
@@ -328,14 +328,14 @@
   html.light select,
   html.light textarea {
     background-color: #ffffff !important;
-    border-color: #cbd5e1 !important;
-    color: #0f172a !important;
+    border-color: #94a3b8 !important;
+    color: #020617 !important;
   }
 
   html.light input::placeholder,
   html.light textarea::placeholder,
   html.light .placeholder-stone-400::placeholder {
-    color: #94a3b8 !important;
+    color: #64748b !important;
   }
 
   html.light input:focus,
@@ -350,12 +350,12 @@
   html.light .hover\:bg-stone-800:hover,
   html.light .hover\:bg-stone-800\/80:hover,
   html.light .hover\:bg-stone-800\/90:hover {
-    background-color: #f1f5f9;
+    background-color: #cbd5e1;
   }
 
   html.light .hover\:bg-stone-700:hover,
   html.light .hover\:bg-stone-700\/80:hover {
-    background-color: #e2e8f0;
+    background-color: #94a3b8;
   }
 
   html.light .light\:hover\:bg-emerald-100:hover {

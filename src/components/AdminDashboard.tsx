@@ -12,12 +12,12 @@ import {
   Music, 
   Search, 
   FileJson,
-  Shield,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
   Loader2,
   SlidersHorizontal,
+  X,
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton } from './PageHeader';
 
@@ -124,8 +124,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     <div className="w-full space-y-6 animate-in fade-in duration-300">
       
       <PageHeader
-        icon={Shield}
-        title="Painel Geral"
+        icon={Music}
+        title="Músicas"
         description="Gestão de cadastros, categorias, edições e backup do caderno de hinos"
         actions={
           <div className="relative" ref={manageRef}>
@@ -217,9 +217,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nº, título, letra..."
-              className="w-full bg-stone-950 border border-stone-800 rounded-xl py-2 pl-9 pr-3 text-xs text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+              className={`w-full bg-stone-950 border border-stone-800 rounded-xl py-2 pl-9 text-xs text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
+                searchTerm.trim() ? 'pr-9' : 'pr-3'
+              }`}
             />
             <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-2.5" />
+            {searchTerm.trim() && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                title="Limpar busca"
+                aria-label="Limpar busca"
+                className="absolute right-2 top-1.5 p-1 rounded-button text-stone-400 hover:text-stone-100 hover:bg-stone-800 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
