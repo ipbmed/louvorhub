@@ -16,6 +16,7 @@ import {
 } from './types';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useToast } from '@/contexts/ToastProvider';
+import { useApiBusy } from '@/contexts/ApiBusyProvider';
 import { useOrg } from '@/hooks/useOrg';
 import { usePermissions } from '@/hooks/usePermissions';
 import * as songsService from '@/services/songs';
@@ -103,6 +104,7 @@ export default function App() {
   const inviteToken = inviteMatch?.params.token ?? null;
   const { ready, user, profile, signOut, configured, refreshMemberships, refreshProfile } = useAuth();
   const { showToast } = useToast();
+  const { withBusy } = useApiBusy();
   const { orgId, memberships, setActiveOrgId, activeOrgId } = useOrg();
   const {
     isAdmin,
@@ -159,6 +161,7 @@ export default function App() {
   const [showTagManager, setShowTagManager] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [sidebarDrawerOpen, setSidebarDrawerOpen] = useState(false);
+  const [churchEditRequestKey, setChurchEditRequestKey] = useState(0);
   const [sidebarDesktopOpen, setSidebarDesktopOpen] = useState(() => {
     try {
       return localStorage.getItem('louvorhub_sidebar_desktop') !== '0';
@@ -180,6 +183,8 @@ export default function App() {
 
   const isEventDetail =
     currentView === 'events' && Boolean(selectedEventId);
+  const isWorkspaceShell =
+    Boolean(user && orgId && WORKSPACE_VIEWS.includes(currentView));
 
   const PROTECTED_VIEWS: ViewMode[] = [
     'workspace',
@@ -233,7 +238,8 @@ export default function App() {
         return;
       }
     }
-    if (view !== 'events') setSelectedEventId(null);
+    // Sai do detalhe do evento ao trocar de aba (ou ao clicar de novo em Eventos).
+    if (view !== 'events' || currentView === 'events') setSelectedEventId(null);
     setCurrentView(view);
   };
 
@@ -444,34 +450,39 @@ export default function App() {
   const handleSaveSong = async (song: Song) => {
     if (!requireOrg()) throw new Error('Selecione uma igreja');
     const category = categories.find((c) => c.name === song.category || c.id === song.categoryId);
-    return saveSongMutation.mutateAsync({
-      ...song,
-      categoryId: category?.id || song.categoryId,
-      category: category?.name || song.category,
-      // Sempre enviar array (mesmo vazio) para o serviço não usar fallback legado
-      mediaLinks: song.mediaLinks ?? [],
-      youtubeUrl: song.youtubeUrl,
-      spotifyUrl: song.spotifyUrl,
-      otherMediaUrl: song.otherMediaUrl,
-    });
+    return withBusy(() =>
+      saveSongMutation.mutateAsync({
+        ...song,
+        categoryId: category?.id || song.categoryId,
+        category: category?.name || song.category,
+        // Sempre enviar array (mesmo vazio) para o serviço não usar fallback legado
+        mediaLinks: song.mediaLinks ?? [],
+        youtubeUrl: song.youtubeUrl,
+        spotifyUrl: song.spotifyUrl,
+        otherMediaUrl: song.otherMediaUrl,
+      }),
+    );
   };
 
   const handleDeleteSong = (song: Song) => {
     const label = song.number ? `hino #${song.number}` : `cântico "${song.title}"`;
     if (confirm(`Tem certeza que deseja excluir o ${label}?`)) {
-      deleteSongMutation.mutate(song.id);
+      void withBusy(() => deleteSongMutation.mutateAsync(song.id));
     }
   };
 
   const handleSaveCategories = async (updated: Category[]) => {
     if (!requireOrg()) return;
-    try {
-      await categoriesService.replaceCategories(orgId!, updated);
-      await queryClient.invalidateQueries({ queryKey: ['categories'] });
-      showToast('Categorias atualizadas!');
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        await categoriesService.replaceCategories(orgId!, updated);
+        await queryClient.invalidateQueries({ queryKey: ['categories'] });
+        showToast('Categorias atualizadas!');
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleSaveSetlist = async (setlist: Setlist) => {
@@ -479,40 +490,48 @@ export default function App() {
       showToast('Faça login para salvar a playlist.');
       return;
     }
-    try {
-      await playlistsService.upsertSetlist(user.id, {
-        ...setlist,
-        kind: 'individual',
-        eventId: null,
-        orgId: null,
-        groupId: null,
-      });
-      await queryClient.invalidateQueries({ queryKey: ['setlists'] });
-      showToast(`Playlist "${setlist.title}" salva!`);
-    } catch (err) {
-      showToast((err as Error).message);
-      throw err;
-    }
+    return withBusy(async () => {
+      try {
+        await playlistsService.upsertSetlist(user.id, {
+          ...setlist,
+          kind: 'individual',
+          eventId: null,
+          orgId: null,
+          groupId: null,
+        });
+        await queryClient.invalidateQueries({ queryKey: ['setlists'] });
+        showToast(`Playlist "${setlist.title}" salva!`);
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleDeleteSetlist = async (id: string) => {
-    try {
-      await playlistsService.deleteSetlist(id);
-      await queryClient.invalidateQueries({ queryKey: ['setlists'] });
-      showToast('Playlist excluída.');
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        await playlistsService.deleteSetlist(id);
+        await queryClient.invalidateQueries({ queryKey: ['setlists'] });
+        showToast('Playlist excluída.');
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleArchiveSetlist = async (id: string, archived: boolean) => {
-    try {
-      await playlistsService.setSetlistArchived(id, archived);
-      await queryClient.invalidateQueries({ queryKey: ['setlists'] });
-      showToast(archived ? 'Playlist arquivada.' : 'Playlist desarquivada.');
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        await playlistsService.setSetlistArchived(id, archived);
+        await queryClient.invalidateQueries({ queryKey: ['setlists'] });
+        showToast(archived ? 'Playlist arquivada.' : 'Playlist desarquivada.');
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const isTempChurchId = (id: string) =>
@@ -524,55 +543,65 @@ export default function App() {
       showToast(err.message);
       throw err;
     }
-    try {
-      if (church.id && !isTempChurchId(church.id)) {
-        await orgsService.updateOrganization(church);
-      } else {
-        const created = await orgsService.createOrganization(user.id, church);
-        setActiveOrgId(created.id);
+    return withBusy(async () => {
+      try {
+        if (church.id && !isTempChurchId(church.id)) {
+          await orgsService.updateOrganization(church);
+        } else {
+          const created = await orgsService.createOrganization(user.id, church);
+          setActiveOrgId(created.id);
+        }
+        await refreshMemberships();
+        await queryClient.invalidateQueries({ queryKey: ['churches'] });
+        await queryClient.invalidateQueries({ queryKey: ['allOrganizations'] });
+        showToast(`Igreja "${church.name}" salva!`);
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
       }
-      await refreshMemberships();
-      await queryClient.invalidateQueries({ queryKey: ['churches'] });
-      await queryClient.invalidateQueries({ queryKey: ['allOrganizations'] });
-      showToast(`Igreja "${church.name}" salva!`);
-    } catch (err) {
-      showToast((err as Error).message);
-      throw err;
-    }
+    });
   };
 
   const handleDeleteChurch = async (id: string) => {
     if (!confirm('Remover esta igreja? Esta ação é irreversível.')) return;
-    try {
-      await orgsService.deleteOrganization(id);
-      await refreshMemberships();
-      await invalidateAll();
-      await queryClient.invalidateQueries({ queryKey: ['allOrganizations'] });
-      showToast('Igreja removida.');
-    } catch (err) {
-      showToast((err as Error).message);
-      throw err;
-    }
+    return withBusy(async () => {
+      try {
+        await orgsService.deleteOrganization(id);
+        await refreshMemberships();
+        await invalidateAll();
+        await queryClient.invalidateQueries({ queryKey: ['allOrganizations'] });
+        showToast('Igreja removida.');
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleSaveMusicGroup = async (group: MusicGroup) => {
-    try {
-      await musicGroupsService.upsertMusicGroup(group);
-      await queryClient.invalidateQueries({ queryKey: ['musicGroups'] });
-      showToast(`Grupo "${group.name}" salvo!`);
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        await musicGroupsService.upsertMusicGroup(group);
+        await queryClient.invalidateQueries({ queryKey: ['musicGroups'] });
+        showToast(`Grupo "${group.name}" salvo!`);
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleDeleteMusicGroup = async (id: string) => {
-    try {
-      await musicGroupsService.deleteMusicGroup(id);
-      await queryClient.invalidateQueries({ queryKey: ['musicGroups'] });
-      showToast('Grupo de louvor removido.');
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        await musicGroupsService.deleteMusicGroup(id);
+        await queryClient.invalidateQueries({ queryKey: ['musicGroups'] });
+        showToast('Grupo de louvor removido.');
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const invalidateEvents = async () => {
@@ -583,13 +612,16 @@ export default function App() {
 
   const handleSaveEvent = async (event: ChurchEvent) => {
     if (!requireOrg()) return;
-    try {
-      await eventsService.upsertEvent(user?.id, { ...event, churchId: orgId! });
-      await invalidateEvents();
-      showToast('Evento salvo!');
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        await eventsService.upsertEvent(user?.id, { ...event, churchId: orgId! });
+        await invalidateEvents();
+        showToast('Evento salvo!');
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleSaveEventBatch = async (
@@ -598,93 +630,125 @@ export default function App() {
     intervalDays: number,
   ) => {
     if (!requireOrg()) return;
-    try {
-      const created = await eventsService.upsertEventBatch(
-        user?.id,
-        { ...event, churchId: orgId! },
-        count,
-        intervalDays,
-      );
-      await invalidateEvents();
-      showToast(`${created.length} eventos criados!`);
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        const created = await eventsService.upsertEventBatch(
+          user?.id,
+          { ...event, churchId: orgId! },
+          count,
+          intervalDays,
+        );
+        await invalidateEvents();
+        showToast(`${created.length} eventos criados!`);
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleDeleteEvent = async (id: string) => {
-    try {
-      await eventsService.deleteEvent(id);
-      if (selectedEventId === id) setSelectedEventId(null);
-      await invalidateEvents();
-      showToast('Evento removido.');
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        await eventsService.deleteEvent(id);
+        if (selectedEventId === id) setSelectedEventId(null);
+        await invalidateEvents();
+        showToast('Evento removido.');
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleSaveSchedule = async (schedule: WorshipSchedule | WorshipSchedule[]) => {
-    try {
-      const list = Array.isArray(schedule) ? schedule : [schedule];
-      for (const item of list) {
-        await schedulesService.upsertSchedule(user?.id, {
-          ...item,
-          eventId: item.eventId || selectedEventId || undefined,
-        });
+    return withBusy(async () => {
+      try {
+        const list = Array.isArray(schedule) ? schedule : [schedule];
+        for (const item of list) {
+          await schedulesService.upsertSchedule(user?.id, {
+            ...item,
+            eventId: item.eventId || selectedEventId || undefined,
+          });
+        }
+        await invalidateEvents();
+        showToast(
+          list.length > 1
+            ? `${list.length} escalas salvas!`
+            : 'Equipe de louvor salva!',
+        );
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
       }
-      await invalidateEvents();
-      showToast(
-        list.length > 1
-          ? `${list.length} escalas salvas!`
-          : 'Equipe de louvor salva!',
-      );
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    });
   };
 
   const handleDeleteSchedule = async (id: string) => {
-    try {
-      await schedulesService.deleteSchedule(id);
-      await invalidateEvents();
-      showToast('Escala removida.');
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        await schedulesService.deleteSchedule(id);
+        await invalidateEvents();
+        showToast('Escala removida.');
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleSaveLiturgy = async (liturgy: Liturgy) => {
-    try {
-      await liturgiesService.upsertLiturgy(user?.id, {
-        ...liturgy,
-        eventId: liturgy.eventId || selectedEventId || undefined,
-      });
-      await invalidateEvents();
-      showToast('Liturgia salva!');
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        const eventId = liturgy.eventId || selectedEventId || undefined;
+        const eventTitle =
+          (eventId && eventId === eventBundle?.event?.id
+            ? eventBundle.event.title
+            : undefined) || liturgy.serviceTitle;
+        const eventDate =
+          (eventId && eventId === eventBundle?.event?.id
+            ? eventBundle.event.date
+            : undefined) || liturgy.date;
+        await liturgiesService.upsertLiturgy(user?.id, {
+          ...liturgy,
+          eventId,
+          serviceTitle: eventTitle || liturgy.serviceTitle,
+          date: eventDate || liturgy.date,
+        });
+        await invalidateEvents();
+        showToast('Liturgia salva!');
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleDeleteLiturgy = async (id: string) => {
-    try {
-      await liturgiesService.deleteLiturgy(id);
-      await invalidateEvents();
-      showToast('Liturgia removida.');
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        await liturgiesService.deleteLiturgy(id);
+        await invalidateEvents();
+        showToast('Liturgia removida.');
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleEnsureEventLiturgy = async () => {
     if (!selectedEventId || !eventBundle?.event) return;
-    try {
-      await eventsService.ensureEventLiturgy(user?.id, eventBundle.event);
-      await invalidateEvents();
-      showToast('Liturgia criada para o evento.');
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        await eventsService.ensureEventLiturgy(user?.id, eventBundle.event);
+        await invalidateEvents();
+        showToast('Liturgia criada para o evento.');
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleSaveEventSetlist = async (setlist: Setlist) => {
@@ -694,18 +758,21 @@ export default function App() {
       showToast('Evento não encontrado.');
       return;
     }
-    try {
-      await eventSongsService.upsertEventRepertoireFromSetlist({
-        ...setlist,
-        orgId: orgId!,
-        eventId,
-        kind: 'group_schedule',
-      });
-      await invalidateEvents();
-      showToast('Repertório do evento atualizado!');
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        await eventSongsService.upsertEventRepertoireFromSetlist({
+          ...setlist,
+          orgId: orgId!,
+          eventId,
+          kind: 'group_schedule',
+        });
+        await invalidateEvents();
+        showToast('Repertório do evento atualizado!');
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleSaveEventSongVersion = async (customization: ScheduleSongCustomization) => {
@@ -714,46 +781,54 @@ export default function App() {
       showToast('Evento não encontrado.');
       return;
     }
-    try {
-      await eventSongsService.upsertEventSongVersion({
-        eventId,
-        customization,
-      });
-      await invalidateEvents();
-      showToast('Versão do evento salva!');
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        await eventSongsService.upsertEventSongVersion({
+          eventId,
+          customization,
+        });
+        await invalidateEvents();
+        showToast('Versão do evento salva!');
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleResetEventSongVersion = async (songId: string) => {
     const eventId = selectedEventId || eventBundle?.event?.id;
     if (!eventId) return;
-    try {
-      await eventSongsService.resetEventSongVersion(eventId, songId);
-      await invalidateEvents();
-      showToast('Versão do evento removida. Catálogo restaurado.');
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        await eventSongsService.resetEventSongVersion(eventId, songId);
+        await invalidateEvents();
+        showToast('Versão do evento removida. Catálogo restaurado.');
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleSaveUser = async (member: SystemUser) => {
     if (!requireOrg()) return;
     const isNew = !member.id || member.id.startsWith('temp-') || !member.membershipId;
-    try {
-      await membersService.upsertSystemUserAsProfile(orgId!, member);
-      await queryClient.invalidateQueries({ queryKey: ['members'] });
-      showToast(
-        isNew
-          ? `Integrante "${member.name}" associado à igreja!`
-          : `Usuário "${member.name}" atualizado!`,
-      );
-    } catch (err) {
-      const message = (err as Error).message || 'Não foi possível salvar o usuário.';
-      showToast(message);
-      throw err;
-    }
+    return withBusy(async () => {
+      try {
+        await membersService.upsertSystemUserAsProfile(orgId!, member);
+        await queryClient.invalidateQueries({ queryKey: ['members'] });
+        showToast(
+          isNew
+            ? `Integrante "${member.name}" associado à igreja!`
+            : `Usuário "${member.name}" atualizado!`,
+        );
+      } catch (err) {
+        const message = (err as Error).message || 'Não foi possível salvar o usuário.';
+        showToast(message);
+        throw err;
+      }
+    });
   };
 
   const handleDeleteUser = async (id: string) => {
@@ -762,13 +837,16 @@ export default function App() {
       showToast('Membership não encontrado.');
       return;
     }
-    try {
-      await membersService.removeMembership(member.membershipId);
-      await queryClient.invalidateQueries({ queryKey: ['members'] });
-      showToast('Membro removido da igreja.');
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        await membersService.removeMembership(member.membershipId);
+        await queryClient.invalidateQueries({ queryKey: ['members'] });
+        showToast('Membro removido da igreja.');
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleToggleFavoritesOnly = async () => {
@@ -801,12 +879,15 @@ export default function App() {
       showToast('Entre para salvar favoritos.');
       return;
     }
-    try {
-      const next = await favoritesService.toggleFavorite(user.id, songId);
-      queryClient.setQueryData(['favorites', user.id], next);
-    } catch (err) {
-      showToast((err as Error).message);
-    }
+    return withBusy(async () => {
+      try {
+        const next = await favoritesService.toggleFavorite(user.id, songId);
+        queryClient.setQueryData(['favorites', user.id], next);
+      } catch (err) {
+        showToast((err as Error).message);
+        throw err;
+      }
+    });
   };
 
   const handleAddToSetlist = (song: Song) => {
@@ -821,17 +902,19 @@ export default function App() {
     if (!songToAddToSetlist || !user) return;
     const song = songToAddToSetlist;
     const name = song.number ? `Hino #${song.number}` : `Cântico "${song.title}"`;
-    if ((setlist.items ?? []).some((i) => i.songId === song.id)) {
-      throw new Error(`${name} já está nesta playlist.`);
-    }
-    await playlistsService.upsertSetlist(user.id, {
-      ...setlist,
-      orgId: null,
-      groupId: null,
-      items: [...(setlist.items ?? []), { id: `item-${Date.now()}`, songId: song.id }],
+    return withBusy(async () => {
+      if ((setlist.items ?? []).some((i) => i.songId === song.id)) {
+        throw new Error(`${name} já está nesta playlist.`);
+      }
+      await playlistsService.upsertSetlist(user.id, {
+        ...setlist,
+        orgId: null,
+        groupId: null,
+        items: [...(setlist.items ?? []), { id: `item-${Date.now()}`, songId: song.id }],
+      });
+      await queryClient.invalidateQueries({ queryKey: ['setlists'] });
+      showToast(`${name} adicionado a "${setlist.title}"!`);
     });
-    await queryClient.invalidateQueries({ queryKey: ['setlists'] });
-    showToast(`${name} adicionado a "${setlist.title}"!`);
   };
 
   const handleImportJSON = async (file: File) => {
@@ -1050,7 +1133,21 @@ export default function App() {
             void handleToggleFavoritesOnly();
           }}
           onOpenSidebar={() => setSidebarDrawerOpen(true)}
-          onOpenHelp={() => setShowHelp(true)}
+          currentView={currentView}
+          activeChurchSigla={workspaceChurch?.sigla}
+          activeChurchName={workspaceChurch?.name}
+          canEditActiveChurch={Boolean(orgId && canEditChurch(orgId))}
+          onEditActiveChurch={() => {
+            if (!orgId || !canEditChurch(orgId)) return;
+            // Garante ChurchWorkspace montado para abrir o modal, sem trocar a aba se já estiver no workspace
+            if (!WORKSPACE_VIEWS.includes(currentView)) {
+              setCurrentView('workspace');
+              setSelectedEventId(null);
+            }
+            requestAnimationFrame(() => {
+              setChurchEditRequestKey((k) => k + 1);
+            });
+          }}
         />
       )}
 
@@ -1091,10 +1188,12 @@ export default function App() {
         )}
 
       <main
-        className={`flex-1 w-full min-w-0 py-3 sm:py-8 space-y-4 sm:space-y-6 transition-[padding] duration-200 ${
-          isEventDetail
-            ? 'px-2 sm:px-4 lg:px-5 xl:px-6 2xl:px-8'
-            : 'px-2.5 sm:px-6 lg:px-8'
+        className={`flex-1 w-full min-w-0 space-y-4 sm:space-y-6 transition-[padding] duration-200 ${
+          isWorkspaceShell
+            ? 'px-0 py-0 sm:py-0'
+            : isEventDetail
+              ? 'px-2 sm:px-4 lg:px-5 xl:px-6 2xl:px-8 py-3 sm:py-8'
+              : 'px-2.5 sm:px-6 lg:px-8 py-3 sm:py-8'
         }`}
       >
         {!configured && (
@@ -1185,7 +1284,11 @@ export default function App() {
             canEditChurch={canEditChurch(orgId)}
             onSaveChurch={handleSaveChurch}
             onNavigate={handleViewChange}
-            hideTabs={isEventDetail}
+            onBack={isEventDetail ? () => setSelectedEventId(null) : undefined}
+            backLabel={isEventDetail ? 'Voltar ao calendário' : undefined}
+            editRequestKey={churchEditRequestKey}
+            events={events}
+            onOpenEvent={(id) => setSelectedEventId(id)}
           >
             {currentView === 'churches' && canManageChurches ? (
               <ChurchManager
@@ -1230,10 +1333,10 @@ export default function App() {
                   songs={songs}
                   musicGroups={activeChurchGroups}
                   systemUsers={systemUsers}
+                  churchName={workspaceChurch?.name}
                   canManageTeam={canAccessEvents}
                   canManageLiturgy={canAccessLiturgies}
                   canManageSetlist={canAccessEvents}
-                  onBack={() => setSelectedEventId(null)}
                   onSaveSchedule={handleSaveSchedule}
                   onDeleteSchedule={handleDeleteSchedule}
                   onSaveLiturgy={handleSaveLiturgy}

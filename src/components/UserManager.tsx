@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton } from './PageHeader';
 import { KNOWN_SKILLS } from '@/constants/skills';
-import { lookupRegisteredUser } from '@/services/accounts';
+import { listRegisteredUsers } from '@/services/accounts';
 import {
   createOrgInvitation,
   inviteAcceptUrl,
@@ -42,6 +42,20 @@ import {
 } from '@/services/invitations';
 import { useToast } from '@/contexts/ToastProvider';
 import type { RegisteredUser } from '@/types';
+import { getAvatarPublicUrl } from '@/utils/avatarUrl';
+
+function MemberAvatar({ name, avatarPath }: { name: string; avatarPath?: string }) {
+  const url = getAvatarPublicUrl(avatarPath);
+  return (
+    <div className="w-9 h-9 rounded-full overflow-hidden bg-emerald-950 light:bg-emerald-100 border border-emerald-700/60 light:border-emerald-300 flex items-center justify-center font-bold text-emerald-300 light:text-emerald-700 text-sm shrink-0">
+      {url ? (
+        <img src={url} alt="" className="w-full h-full object-cover" />
+      ) : (
+        <span aria-hidden>{name.charAt(0).toUpperCase()}</span>
+      )}
+    </div>
+  );
+}
 
 interface UserManagerProps {
   orgId: string;
@@ -122,11 +136,12 @@ export const UserManager: React.FC<UserManagerProps> = ({
   const [inviteSaving, setInviteSaving] = useState(false);
   const [createdInvite, setCreatedInvite] = useState<OrgInvitation | null>(null);
 
-  const [associateEmail, setAssociateEmail] = useState('');
-  const [associateName, setAssociateName] = useState('');
-  const [associateErrors, setAssociateErrors] = useState<Record<string, string>>({});
-  const [lookedUpUser, setLookedUpUser] = useState<RegisteredUser | null>(null);
-  const [lookupLoading, setLookupLoading] = useState(false);
+  const [associateSearch, setAssociateSearch] = useState('');
+  const [associateAccounts, setAssociateAccounts] = useState<RegisteredUser[]>([]);
+  const [associateAccountsLoading, setAssociateAccountsLoading] = useState(false);
+  const [associateAccountsError, setAssociateAccountsError] = useState('');
+  const [selectedAccount, setSelectedAccount] = useState<RegisteredUser | null>(null);
+  const [associateError, setAssociateError] = useState('');
   const [associateSaving, setAssociateSaving] = useState(false);
 
   const [invitations, setInvitations] = useState<OrgInvitation[]>([]);
@@ -207,14 +222,41 @@ export const UserManager: React.FC<UserManagerProps> = ({
     setInviteOpen(true);
   };
 
+  const memberIds = useMemo(() => new Set(systemUsers.map((u) => u.id)), [systemUsers]);
+
+  const filteredAssociateAccounts = useMemo(() => {
+    const q = associateSearch.trim().toLowerCase();
+    return associateAccounts
+      .filter((a) => a.account_status === 'approved' && !memberIds.has(a.id))
+      .filter((a) => {
+        if (!q) return true;
+        const hay = `${a.display_name} ${a.email} ${a.phone || ''}`.toLowerCase();
+        return hay.includes(q);
+      })
+      .sort((a, b) => a.display_name.localeCompare(b.display_name, 'pt-BR'));
+  }, [associateAccounts, associateSearch, memberIds]);
+
   const openAssociateModal = () => {
-    setAssociateEmail('');
-    setAssociateName('');
-    setAssociateErrors({});
-    setLookedUpUser(null);
-    setLookupLoading(false);
+    setAssociateSearch('');
+    setSelectedAccount(null);
+    setAssociateError('');
+    setAssociateAccountsError('');
     setAssociateSaving(false);
     setAssociateOpen(true);
+    setAssociateAccountsLoading(true);
+    void (async () => {
+      try {
+        const rows = await listRegisteredUsers('approved');
+        setAssociateAccounts(rows);
+      } catch (err) {
+        setAssociateAccounts([]);
+        setAssociateAccountsError(
+          (err as Error).message || 'Não foi possível carregar as contas cadastradas.',
+        );
+      } finally {
+        setAssociateAccountsLoading(false);
+      }
+    })();
   };
 
   const handleOpenEditModal = (user: SystemUser) => {
@@ -237,26 +279,6 @@ export const UserManager: React.FC<UserManagerProps> = ({
     setCustomSkill('');
     setEditErrors({});
     setEditOpen(true);
-  };
-
-  const lookupUserByEmail = async (email: string) => {
-    const trimmed = email.trim();
-    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setLookedUpUser(null);
-      return;
-    }
-    setLookupLoading(true);
-    try {
-      const found = await lookupRegisteredUser(trimmed);
-      setLookedUpUser(found);
-      if (found) {
-        setAssociateName((prev) => (prev.trim() ? prev : found.display_name));
-      }
-    } catch {
-      setLookedUpUser(null);
-    } finally {
-      setLookupLoading(false);
-    }
   };
 
   const toggleChurchGrant = (role: 'church_editor' | 'liturgo') => {
@@ -365,30 +387,23 @@ export const UserManager: React.FC<UserManagerProps> = ({
     }
   };
 
-  const validateAssociate = () => {
-    const next: Record<string, string> = {};
-    if (!associateEmail.trim()) {
-      next.email = 'Informe o e-mail de um usuário já cadastrado.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(associateEmail.trim())) {
-      next.email = 'Informe um e-mail válido.';
-    } else if (!lookedUpUser) {
-      next.email = 'Usuário não encontrado. Cadastre a conta antes de associar à igreja.';
-    } else if (lookedUpUser.account_status !== 'approved') {
-      next.email = 'Este usuário ainda não foi aprovado pelo administrador.';
-    }
-    if (!associateName.trim()) next.name = 'Nome é obrigatório.';
-    setAssociateErrors(next);
-    return Object.keys(next).length === 0;
-  };
-
   const handleAssociateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateAssociate() || !lookedUpUser) return;
+    if (!selectedAccount) {
+      setAssociateError('Selecione uma conta cadastrada para associar.');
+      return;
+    }
+    if (selectedAccount.account_status !== 'approved') {
+      setAssociateError('Este usuário ainda não foi aprovado pelo administrador.');
+      return;
+    }
+    setAssociateError('');
     setAssociateSaving(true);
     const userToSave: SystemUser = {
-      id: lookedUpUser.id,
-      name: associateName.trim(),
-      email: associateEmail.trim(),
+      id: selectedAccount.id,
+      name: selectedAccount.display_name,
+      email: selectedAccount.email,
+      phone: selectedAccount.phone || undefined,
       status: 'active',
       churchId: orgId,
       createdAt: new Date().toISOString(),
@@ -639,9 +654,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
                 key={user.id}
                 className="flex items-center gap-3 px-3 py-2.5 sm:px-4 bg-stone-900/70 hover:bg-stone-800/90 border border-stone-800 hover:border-emerald-700/40 rounded-xl transition-colors"
               >
-                <div className="w-9 h-9 rounded-full bg-emerald-950 border border-emerald-700/60 flex items-center justify-center font-bold text-emerald-300 text-sm shrink-0">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
+                <MemberAvatar name={user.name} avatarPath={user.avatarUrl} />
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 min-w-0">
@@ -658,8 +671,8 @@ export const UserManager: React.FC<UserManagerProps> = ({
                     <span
                       className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0 ${
                         isUserActive
-                          ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
-                          : 'bg-stone-950 text-stone-500 border-stone-800'
+                          ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800/50 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200'
+                          : 'bg-stone-950 text-stone-500 border-stone-800 light:bg-stone-100 light:text-stone-600 light:border-stone-300'
                       }`}
                     >
                       {isUserActive ? 'Ativo' : 'Inativo'}
@@ -717,9 +730,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
                 <div>
                   <div className="flex items-start justify-between gap-2 border-b border-stone-800 pb-3 mb-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-full bg-emerald-950 border border-emerald-700/60 flex items-center justify-center font-bold text-emerald-300 text-sm shrink-0">
-                        {user.name.charAt(0).toUpperCase()}
-                      </div>
+                      <MemberAvatar name={user.name} avatarPath={user.avatarUrl} />
                       <div>
                         <h3 className="font-bold text-stone-100 text-sm flex items-center gap-1.5">
                           <span>{user.name}</span>
@@ -745,8 +756,8 @@ export const UserManager: React.FC<UserManagerProps> = ({
                     <span
                       className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                         isUserActive
-                          ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
-                          : 'bg-stone-950 text-stone-500 border-stone-800'
+                          ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800/50 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200'
+                          : 'bg-stone-950 text-stone-500 border-stone-800 light:bg-stone-100 light:text-stone-600 light:border-stone-300'
                       }`}
                     >
                       {isUserActive ? 'Ativo' : 'Inativo'}
@@ -764,7 +775,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
                           .map((skill) => (
                             <span
                               key={skill}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-950/60 border border-emerald-800/50 rounded-button text-[11px] font-semibold text-emerald-300"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-950/60 border border-emerald-800/50 light:bg-emerald-50 light:border-emerald-200 rounded-button text-[11px] font-semibold text-emerald-300 light:text-emerald-700"
                             >
                               <Music className="w-3 h-3 text-emerald-400" />
                               {skill}
@@ -964,7 +975,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
       {/* Associate modal */}
       {associateOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden">
-          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-md max-h-[min(92vh,560px)] flex flex-col shadow-2xl overflow-hidden">
+          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-md max-h-[min(92vh,640px)] flex flex-col shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between border-b border-stone-800 px-6 py-3 shrink-0">
               <h3 className="font-display font-bold text-stone-100 text-base flex items-center gap-2 tracking-tight">
                 <UserPlus className="w-5 h-5 text-emerald-400" />
@@ -982,88 +993,84 @@ export const UserManager: React.FC<UserManagerProps> = ({
             <form
               id="associate-form"
               onSubmit={(e) => void handleAssociateSubmit(e)}
-              className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4"
+              className="flex-1 min-h-0 overflow-hidden flex flex-col"
               noValidate
             >
-              <p className="text-[11px] text-stone-500">
-                Busca conta já cadastrada e associa à igreja ativa.
-              </p>
+              <div className="px-6 py-4 space-y-3 shrink-0">
+                <p className="text-[11px] text-stone-500">
+                  Busque nas contas aprovadas e selecione quem deseja associar a esta igreja.
+                </p>
 
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  E-mail <span className="text-rose-400">*</span>
-                </label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-stone-500 absolute left-3 top-2.5" />
+                  <Search className="w-4 h-4 text-stone-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
-                    type="email"
-                    required
-                    placeholder="usuario@email.com"
-                    value={associateEmail}
+                    type="search"
+                    autoFocus
+                    placeholder="Buscar por nome, e-mail ou telefone..."
+                    value={associateSearch}
                     onChange={(e) => {
-                      setAssociateEmail(e.target.value);
-                      setLookedUpUser(null);
-                      if (associateErrors.email) {
-                        setAssociateErrors((prev) => {
-                          const next = { ...prev };
-                          delete next.email;
-                          return next;
-                        });
-                      }
+                      setAssociateSearch(e.target.value);
+                      setAssociateError('');
                     }}
-                    onBlur={() => void lookupUserByEmail(associateEmail)}
-                    className={`w-full bg-stone-950 border rounded-xl p-2.5 pl-9 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
-                      associateErrors.email ? 'border-rose-600' : 'border-stone-800'
-                    }`}
+                    className="w-full bg-stone-950 border border-stone-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                   />
                 </div>
-                {associateErrors.email ? (
-                  <p className="text-[11px] text-rose-300 mt-1">{associateErrors.email}</p>
-                ) : lookupLoading ? (
-                  <p className="text-[11px] text-stone-500 mt-1">Verificando cadastro...</p>
-                ) : lookedUpUser ? (
-                  <p className="text-[11px] text-emerald-300 mt-1">
-                    Cadastro encontrado: {lookedUpUser.display_name} (
-                    {lookedUpUser.account_status === 'approved'
-                      ? 'aprovado'
-                      : lookedUpUser.account_status}
-                    )
-                  </p>
-                ) : (
-                  <p className="text-[11px] text-stone-500 mt-1">
-                    A pessoa precisa ter conta aprovada no Cadastro geral.
-                  </p>
+
+                {associateError && (
+                  <p className="text-[11px] text-rose-300">{associateError}</p>
+                )}
+                {associateAccountsError && (
+                  <p className="text-[11px] text-rose-300">{associateAccountsError}</p>
                 )}
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  Nome <span className="text-rose-400">*</span>
-                </label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-stone-500 absolute left-3 top-2.5" />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Nome completo"
-                    value={associateName}
-                    onChange={(e) => {
-                      setAssociateName(e.target.value);
-                      if (associateErrors.name) {
-                        setAssociateErrors((prev) => {
-                          const next = { ...prev };
-                          delete next.name;
-                          return next;
-                        });
-                      }
-                    }}
-                    className={`w-full bg-stone-950 border rounded-xl p-2.5 pl-9 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
-                      associateErrors.name ? 'border-rose-600' : 'border-stone-800'
-                    }`}
-                  />
-                </div>
-                {associateErrors.name && (
-                  <p className="text-[11px] text-rose-300 mt-1">{associateErrors.name}</p>
+              <div className="flex-1 min-h-0 overflow-y-auto px-6 pb-4">
+                {associateAccountsLoading ? (
+                  <div className="py-10 flex justify-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
+                  </div>
+                ) : filteredAssociateAccounts.length === 0 ? (
+                  <div className="py-10 text-center text-xs text-stone-500">
+                    {associateSearch.trim()
+                      ? 'Nenhuma conta encontrada com essa busca.'
+                      : 'Não há contas aprovadas disponíveis para associar.'}
+                  </div>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {filteredAssociateAccounts.map((account) => {
+                      const selected = selectedAccount?.id === account.id;
+                      return (
+                        <li key={account.id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedAccount(account);
+                              setAssociateError('');
+                            }}
+                            className={`w-full text-left rounded-xl border px-3 py-2.5 transition-colors ${
+                              selected
+                                ? 'bg-emerald-950/50 border-emerald-600/60 light:bg-emerald-50 light:border-emerald-300'
+                                : 'bg-stone-950/60 border-stone-800 hover:border-stone-700 light:bg-white light:border-stone-200 light:hover:border-stone-300'
+                            }`}
+                          >
+                            <p className="text-sm font-semibold text-stone-100 truncate">
+                              {account.display_name}
+                            </p>
+                            <p className="text-[11px] text-stone-400 truncate flex items-center gap-1 mt-0.5">
+                              <Mail className="w-3 h-3 shrink-0" />
+                              {account.email}
+                            </p>
+                            {account.phone && (
+                              <p className="text-[11px] text-stone-500 truncate flex items-center gap-1 mt-0.5">
+                                <Phone className="w-3 h-3 shrink-0" />
+                                {account.phone}
+                              </p>
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 )}
               </div>
             </form>
@@ -1079,7 +1086,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
               <button
                 type="submit"
                 form="associate-form"
-                disabled={associateSaving}
+                disabled={associateSaving || !selectedAccount}
                 className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-stone-950 rounded-button text-xs font-bold shadow-md shadow-emerald-500/20 inline-flex items-center gap-1.5"
               >
                 {associateSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
@@ -1306,8 +1313,8 @@ export const UserManager: React.FC<UserManagerProps> = ({
                       }
                       className={`px-3 py-1 rounded-button text-xs font-bold transition-all ${
                         editForm.status === 'active'
-                          ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                          : 'bg-stone-800 text-stone-400 border border-stone-700'
+                          ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/50 light:bg-emerald-50 light:text-emerald-700 light:border-emerald-200'
+                          : 'bg-stone-800 text-stone-400 border border-stone-700 light:bg-stone-100 light:text-stone-600 light:border-stone-300'
                       }`}
                     >
                       {editForm.status === 'active' ? 'Ativo' : 'Inativo'}

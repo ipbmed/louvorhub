@@ -186,6 +186,9 @@ export interface RegisteredUser {
   is_admin?: boolean;
   approved_at?: string | null;
   created_at?: string;
+  avatar_path?: string | null;
+  birth_date?: string | null;
+  skills?: string[];
 }
 
 export interface SystemUser {

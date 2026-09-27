@@ -14,32 +14,40 @@ import {
   Edit3, 
   MoveUp, 
   MoveDown, 
-  BookOpen, 
   Tv, 
   Printer, 
-  CheckCircle2, 
-  User, 
   Music, 
-  Sparkles,
   Layers,
   ChevronLeft,
   ChevronRight,
-  Maximize2,
-  X
+  X,
+  HelpCircle,
+  FileDown,
+  Loader2,
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton } from './PageHeader';
+import { SongSearchSelect } from './SongSearchSelect';
+import {
+  LITURGY_MARKDOWN_EXAMPLE,
+  LITURGY_MARKDOWN_HELP,
+  parseLiturgyMarkdown,
+} from '@/utils/liturgyMarkdown';
 
 interface LiturgyManagerProps {
   liturgies: Liturgy[];
   churches: Church[];
   songs: Song[];
-  onSaveLiturgy: (liturgy: Liturgy) => void;
-  onDeleteLiturgy: (id: string) => void;
+  onSaveLiturgy: (liturgy: Liturgy) => void | Promise<void>;
+  onDeleteLiturgy: (id: string) => void | Promise<void>;
   onSelectSong?: (song: Song) => void;
   /** null = todas (admin) */
   allowedChurchIds?: string[] | null;
   /** Igreja ativa do menu — lista e formulário ficam nesse escopo */
   activeChurchId?: string;
+  /** Título do evento vinculado (substitui o título da liturgia) */
+  linkedEventTitle?: string;
+  /** Data do evento vinculado (substitui a data da liturgia) */
+  linkedEventDate?: string;
   /** Dentro do detalhe do evento: sem cabeçalho de página */
   embedded?: boolean;
   canManageLiturgies?: (orgId?: string | null) => boolean;
@@ -54,6 +62,8 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
   onSelectSong,
   allowedChurchIds = null,
   activeChurchId,
+  linkedEventTitle,
+  linkedEventDate,
   embedded = false,
   canManageLiturgies = (_orgId?: string | null) => true,
 }) => {
@@ -75,13 +85,22 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
 
   // Form State
   const [formChurchId, setFormChurchId] = useState('');
-  const [formDate, setFormDate] = useState('');
-  const [formServiceTitle, setFormServiceTitle] = useState('Culto Solene de Adoração');
   const [formTheme, setFormTheme] = useState('');
   const [formBibleVerse, setFormBibleVerse] = useState('');
   const [formPreacher, setFormPreacher] = useState('');
   const [formLeader, setFormLeader] = useState('');
   const [formItems, setFormItems] = useState<LiturgyItem[]>([]);
+  const [mdImportOpen, setMdImportOpen] = useState(false);
+  const [mdImportText, setMdImportText] = useState(LITURGY_MARKDOWN_EXAMPLE);
+  const [mdHelpOpen, setMdHelpOpen] = useState(false);
+  const [mdImportError, setMdImportError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const resolvedServiceTitle = (fallback?: string) =>
+    (linkedEventTitle || fallback || 'Culto').trim() || 'Culto';
+
+  const resolvedServiceDate = (fallback?: string) =>
+    linkedEventDate || fallback || new Date().toISOString().slice(0, 10);
 
   const filteredLiturgies = liturgies
     .filter((l) => {
@@ -97,8 +116,6 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
     if (!defaultChurchId || !canManageLiturgies(defaultChurchId)) return;
     setEditingLiturgy(null);
     setFormChurchId(defaultChurchId);
-    setFormDate(new Date().toISOString().slice(0, 10));
-    setFormServiceTitle('Culto Solene de Adoração');
     setFormTheme('');
     setFormBibleVerse('Salmo 95:1-7');
     setFormPreacher('');
@@ -110,6 +127,10 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
       { id: 'item-4', order: 4, type: 'sermon', title: 'Pregação da Palavra de Deus', duration: '35 min' },
       { id: 'item-5', order: 5, type: 'benediction', title: 'Bênção Apostólica & Tríplice Amém', duration: '3 min' },
     ]);
+    setMdImportOpen(false);
+    setMdHelpOpen(false);
+    setMdImportError('');
+    setMdImportText(LITURGY_MARKDOWN_EXAMPLE);
     setIsModalOpen(true);
   };
 
@@ -117,14 +138,27 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
     if (!canManageLiturgies(liturgy.churchId)) return;
     setEditingLiturgy(liturgy);
     setFormChurchId(liturgy.churchId);
-    setFormDate(liturgy.date);
-    setFormServiceTitle(liturgy.serviceTitle);
     setFormTheme(liturgy.theme || '');
     setFormBibleVerse(liturgy.bibleVerse || '');
     setFormPreacher(liturgy.preacher || '');
     setFormLeader(liturgy.leader || '');
     setFormItems([...liturgy.items]);
+    setMdImportOpen(false);
+    setMdHelpOpen(false);
+    setMdImportError('');
+    setMdImportText(LITURGY_MARKDOWN_EXAMPLE);
     setIsModalOpen(true);
+  };
+
+  const handleImportMarkdown = () => {
+    const parsed = parseLiturgyMarkdown(mdImportText, songs);
+    if (parsed.length === 0) {
+      setMdImportError('Nenhum momento reconhecido. Confira o formato no ajuda.');
+      return;
+    }
+    setMdImportError('');
+    setFormItems(parsed);
+    setMdImportOpen(false);
   };
 
   // Form Items Reordering
@@ -171,16 +205,16 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
     setFormItems(updated);
   };
 
-  const handleSaveForm = (e: React.FormEvent) => {
+  const handleSaveForm = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formChurchId || !formDate || !formServiceTitle) return;
+    if (!formChurchId || saving) return;
 
     const liturgyToSave: Liturgy = {
       id: editingLiturgy?.id || `temp-liturgy-${Date.now()}`,
       churchId: activeChurchId || formChurchId,
       eventId: editingLiturgy?.eventId,
-      date: formDate,
-      serviceTitle: formServiceTitle,
+      date: resolvedServiceDate(editingLiturgy?.date),
+      serviceTitle: resolvedServiceTitle(editingLiturgy?.serviceTitle),
       theme: formTheme,
       bibleVerse: formBibleVerse,
       preacher: formPreacher,
@@ -189,29 +223,60 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
       createdAt: editingLiturgy ? editingLiturgy.createdAt : new Date().toISOString(),
     };
 
-    onSaveLiturgy(liturgyToSave);
-    setIsModalOpen(false);
+    setSaving(true);
+    try {
+      await Promise.resolve(onSaveLiturgy(liturgyToSave));
+      setIsModalOpen(false);
+    } catch {
+      // toast já exibido pelo caller
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Helpers for Liturgy item badge colors
   const getItemBadge = (type: LiturgyItemType) => {
     switch (type) {
       case 'hymn':
-        return { label: 'Hino / Louvor', bg: 'bg-emerald-950/80 text-emerald-300 border-emerald-800/60' };
+        return {
+          label: 'Música',
+          bg: 'bg-emerald-950/80 light:bg-emerald-50 text-emerald-300 light:text-emerald-800 border-emerald-800/60 light:border-emerald-200',
+        };
       case 'prayer':
-        return { label: 'Oração', bg: 'bg-purple-950/80 text-purple-300 border-purple-800/60' };
+        return {
+          label: 'Oração',
+          bg: 'bg-purple-950/80 light:bg-purple-50 text-purple-300 light:text-purple-800 border-purple-800/60 light:border-purple-200',
+        };
       case 'reading':
-        return { label: 'Leitura Bíblica', bg: 'bg-blue-950/80 text-blue-300 border-blue-800/60' };
+        return {
+          label: 'Leitura Bíblica',
+          bg: 'bg-blue-950/80 light:bg-blue-50 text-blue-300 light:text-blue-800 border-blue-800/60 light:border-blue-200',
+        };
       case 'sermon':
-        return { label: 'Pregação', bg: 'bg-emerald-950/80 text-emerald-300 border-emerald-800/60' };
+        return {
+          label: 'Pregação',
+          bg: 'bg-emerald-950/80 light:bg-emerald-50 text-emerald-300 light:text-emerald-800 border-emerald-800/60 light:border-emerald-200',
+        };
       case 'offertory':
-        return { label: 'Dízimos & Ofertas', bg: 'bg-emerald-900/40 text-emerald-200 border-emerald-700/60' };
+        return {
+          label: 'Dízimos & Ofertas',
+          bg: 'bg-emerald-900/40 light:bg-emerald-50 text-emerald-200 light:text-emerald-800 border-emerald-700/60 light:border-emerald-200',
+        };
       case 'supper':
-        return { label: 'Ceia do Senhor', bg: 'bg-rose-950/80 text-rose-300 border-rose-800/60' };
+        return {
+          label: 'Ceia do Senhor',
+          bg: 'bg-rose-950/80 light:bg-rose-50 text-rose-300 light:text-rose-800 border-rose-800/60 light:border-rose-200',
+        };
       case 'benediction':
-        return { label: 'Bênção Final', bg: 'bg-indigo-950/80 text-indigo-300 border-indigo-800/60' };
+        return {
+          label: 'Bênção Final',
+          bg: 'bg-indigo-950/80 light:bg-indigo-50 text-indigo-300 light:text-indigo-800 border-indigo-800/60 light:border-indigo-200',
+        };
       default:
-        return { label: 'Liturgia', bg: 'bg-stone-800 text-stone-300 border-stone-700' };
+        return {
+          label: 'Liturgia',
+          bg: 'bg-stone-800 light:bg-stone-100 text-stone-300 light:text-stone-700 border-stone-700 light:border-stone-200',
+        };
     }
   };
 
@@ -261,7 +326,9 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
             return (
               <div
                 key={liturgy.id}
-                className="bg-stone-900 border border-stone-800 hover:border-stone-700 rounded-2xl p-6 shadow-md flex flex-col justify-between transition-all"
+                className={`bg-stone-900 border border-stone-800 hover:border-stone-700 rounded-2xl shadow-md flex flex-col justify-between transition-all ${
+                  embedded ? 'p-3 sm:p-4' : 'p-6'
+                }`}
               >
                 <div>
                   {/* Top Info */}
@@ -272,11 +339,11 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                           {church ? church.name : 'Congregação'}
                         </span>
                         <h3 className="text-xl font-display font-bold text-stone-100 mt-0.5">
-                          {liturgy.serviceTitle}
+                          {linkedEventTitle || liturgy.serviceTitle}
                         </h3>
                         <p className="text-xs text-stone-400 flex items-center gap-1.5 mt-1">
                           <Calendar className="w-3.5 h-3.5 text-stone-500" />
-                          {new Date(liturgy.date + 'T00:00:00').toLocaleDateString('pt-BR', {
+                          {new Date((linkedEventDate || liturgy.date) + 'T00:00:00').toLocaleDateString('pt-BR', {
                             weekday: 'long',
                             day: '2-digit',
                             month: 'long',
@@ -292,7 +359,7 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                           setPresentingLiturgy(liturgy);
                           setCurrentSlideIndex(0);
                         }}
-                        className="p-1.5 bg-stone-800 hover:bg-emerald-500/20 text-emerald-300 rounded-button border border-stone-700 text-xs font-medium flex items-center gap-1 transition-colors"
+                        className="p-1.5 bg-stone-800 light:bg-emerald-50 hover:bg-emerald-500/20 light:hover:bg-emerald-100 text-emerald-300 light:text-emerald-800 rounded-button border border-stone-700 light:border-emerald-200 text-xs font-medium flex items-center gap-1 transition-colors"
                         title="Projetar Liturgia no Telão"
                       >
                         <Tv className="w-3.5 h-3.5" />
@@ -301,7 +368,7 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
 
                       <button
                         onClick={() => setPrintingLiturgy(liturgy)}
-                        className="p-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700"
+                        className="p-1.5 bg-stone-800 light:bg-stone-100 hover:bg-stone-700 light:hover:bg-stone-200 text-stone-300 light:text-stone-700 rounded-button border border-stone-700 light:border-stone-300"
                         title="Ver Boletim Impresso"
                       >
                         <Printer className="w-3.5 h-3.5" />
@@ -309,7 +376,7 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
 
                       <button
                         onClick={() => handleOpenEditModal(liturgy)}
-                        className="p-1.5 text-stone-400 hover:text-emerald-300 hover:bg-stone-800 rounded-button"
+                        className="p-1.5 text-stone-400 light:text-stone-600 hover:text-emerald-300 light:hover:text-emerald-700 hover:bg-stone-800 light:hover:bg-stone-100 rounded-button"
                         title="Editar Liturgia"
                       >
                         <Edit3 className="w-4 h-4" />
@@ -321,7 +388,7 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                             onDeleteLiturgy(liturgy.id);
                           }
                         }}
-                        className="p-1.5 text-stone-400 hover:text-rose-400 hover:bg-stone-800 rounded-button"
+                        className="p-1.5 text-stone-400 light:text-stone-600 hover:text-rose-400 light:hover:text-rose-700 hover:bg-stone-800 light:hover:bg-rose-50 rounded-button"
                         title="Excluir Liturgia"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -330,19 +397,24 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                   </div>
 
                   {/* Preacher & Leader Info */}
-                  <div className="grid grid-cols-2 gap-2 my-3 text-xs bg-stone-800/40 p-2.5 rounded-xl border border-stone-800">
+                  <div className="grid grid-cols-2 gap-2 my-3 text-xs bg-stone-800/40 light:bg-stone-100 p-2.5 rounded-xl border border-stone-800 light:border-stone-200">
                     {liturgy.preacher && (
-                      <span className="text-stone-300 truncate">
+                      <span className="text-stone-300 light:text-stone-700 truncate">
                         <strong>Pregador:</strong> {liturgy.preacher}
                       </span>
                     )}
                     {liturgy.leader && (
-                      <span className="text-stone-300 truncate">
+                      <span className="text-stone-300 light:text-stone-700 truncate">
                         <strong>Dirigente:</strong> {liturgy.leader}
                       </span>
                     )}
+                    {liturgy.theme && (
+                      <span className="col-span-2 text-stone-200 light:text-stone-800 truncate">
+                        <strong>Tema:</strong> {liturgy.theme}
+                      </span>
+                    )}
                     {liturgy.bibleVerse && (
-                      <span className="col-span-2 text-emerald-300/90 truncate font-serif">
+                      <span className="col-span-2 text-emerald-300 light:text-emerald-800 truncate font-serif">
                         📖 {liturgy.bibleVerse}
                       </span>
                     )}
@@ -355,7 +427,7 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                       Ordem do Culto ({liturgy.items.length} momentos)
                     </h4>
 
-                    <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                    <div className="space-y-1.5 pr-1">
                       {liturgy.items.map((item) => {
                         const badge = getItemBadge(item.type);
                         const linkedSong = item.songId ? songs.find(s => s.id === item.songId) : null;
@@ -404,95 +476,29 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
 
       {/* ================= EDIT / CREATE LITURGY MODAL ================= */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-4xl overflow-hidden shadow-2xl max-h-[92vh] flex flex-col">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-6xl xl:max-w-7xl overflow-hidden shadow-2xl max-h-[96vh] h-[96vh] sm:h-auto sm:max-h-[94vh] flex flex-col">
             
-            <div className="p-5 border-b border-stone-800 flex items-center justify-between shrink-0">
-              <h3 className="text-lg font-display font-bold text-stone-100 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-emerald-400" />
-                {editingLiturgy ? 'Editar Liturgia do Culto' : 'Cadastrar Liturgia do Culto'}
+            <div className="p-3 sm:p-5 border-b border-stone-800 flex items-center justify-between shrink-0 gap-2">
+              <h3 className="text-base sm:text-lg font-display font-bold text-stone-100 flex items-center gap-2 min-w-0 truncate">
+                <FileText className="w-5 h-5 text-emerald-400 shrink-0" />
+                <span className="truncate">
+                  {editingLiturgy ? 'Editar Liturgia' : 'Cadastrar Liturgia do Culto'}
+                </span>
               </h3>
               <button 
-                onClick={() => setIsModalOpen(false)}
-                className="text-stone-400 hover:text-stone-200 text-sm font-mono p-1 rounded-button"
+                onClick={() => !saving && setIsModalOpen(false)}
+                disabled={saving}
+                className="text-stone-400 hover:text-stone-200 text-sm font-mono p-1 rounded-button disabled:opacity-40 shrink-0"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSaveForm} className="p-6 space-y-5 overflow-y-auto flex-1">
+            <form onSubmit={handleSaveForm} className="p-3 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1 min-h-0">
               
-              {/* Church & Title */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Igreja / Congregação <span className="text-emerald-400">*</span>
-                  </label>
-                  {activeChurchId ? (
-                    <div className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-sm text-stone-200">
-                      {churches.find((c) => c.id === formChurchId)?.name ||
-                        churches[0]?.name ||
-                        'Igreja ativa'}
-                    </div>
-                  ) : (
-                    <select
-                      required
-                      value={formChurchId}
-                      onChange={(e) => setFormChurchId(e.target.value)}
-                      className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none"
-                    >
-                      {churches.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Título do Culto <span className="text-emerald-400">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: Culto Solene de Adoração"
-                    value={formServiceTitle}
-                    onChange={e => setFormServiceTitle(e.target.value)}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Date, Passage, Preacher */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Data do Culto <span className="text-emerald-400">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formDate}
-                    onChange={e => setFormDate(e.target.value)}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-1.5 text-xs text-stone-100 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Texto Bíblico Principal
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Salmo 95:1-7"
-                    value={formBibleVerse}
-                    onChange={e => setFormBibleVerse(e.target.value)}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-1.5 text-xs text-stone-100 focus:outline-none"
-                  />
-                </div>
-
+              {/* Meta */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-stone-300 mb-1">
                     Pregador
@@ -502,45 +508,154 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                     placeholder="Ex: Rev. Marcos Silva"
                     value={formPreacher}
                     onChange={e => setFormPreacher(e.target.value)}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-1.5 text-xs text-stone-100 focus:outline-none"
+                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-stone-300 mb-1">
+                    Tema principal
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: A soberania e a graça de Deus"
+                    value={formTheme}
+                    onChange={e => setFormTheme(e.target.value)}
+                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none"
+                  />
+                </div>
+
+                <div className="sm:col-span-2 lg:col-span-1">
+                  <label className="block text-xs font-semibold text-stone-300 mb-1">
+                    Texto Bíblico Principal
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Salmo 95:1-7"
+                    value={formBibleVerse}
+                    onChange={e => setFormBibleVerse(e.target.value)}
+                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Items Reorder Manager */}
               <div className="pt-2 border-t border-stone-800">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <label className="text-sm font-bold text-stone-200 flex items-center gap-2">
                     <Layers className="w-4 h-4 text-emerald-400" />
                     Ordem dos Momentos da Liturgia
                   </label>
-                  <button
-                    type="button"
-                    onClick={handleAddItemToForm}
-                    className="px-3 py-1 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30 rounded-button text-xs font-bold"
-                  >
-                    + Adicionar Momento
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMdHelpOpen((v) => !v);
+                        if (!mdImportOpen) setMdImportOpen(true);
+                      }}
+                      className="p-1.5 text-stone-400 hover:text-emerald-300 hover:bg-stone-800 rounded-button border border-transparent hover:border-stone-700"
+                      title="Ajuda do formato Markdown"
+                      aria-label="Ajuda do formato Markdown"
+                    >
+                      <HelpCircle className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMdImportOpen((v) => !v);
+                        setMdImportError('');
+                      }}
+                      className={`px-3 py-1 border rounded-button text-xs font-bold inline-flex items-center gap-1.5 ${
+                        mdImportOpen
+                          ? 'bg-emerald-500/25 text-emerald-200 border-emerald-500/40'
+                          : 'bg-stone-800 text-stone-300 hover:bg-stone-700 border-stone-700'
+                      }`}
+                    >
+                      <FileDown className="w-3.5 h-3.5" />
+                      Importar Markdown
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAddItemToForm}
+                      className="px-3 py-1 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30 rounded-button text-xs font-bold"
+                    >
+                      + Adicionar Momento
+                    </button>
+                  </div>
                 </div>
 
-                <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                {mdImportOpen && (
+                  <div className="mb-4 p-3 sm:p-4 bg-stone-950/80 border border-stone-800 rounded-xl space-y-3">
+                    {mdHelpOpen && (
+                      <div className="text-[11px] sm:text-xs text-stone-400 whitespace-pre-wrap leading-relaxed bg-stone-900/80 border border-stone-800 rounded-lg p-3">
+                        {LITURGY_MARKDOWN_HELP}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[11px] text-stone-500">
+                        Cole a ordem do culto abaixo. A importação substitui os momentos atuais.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMdImportText(LITURGY_MARKDOWN_EXAMPLE);
+                          setMdImportError('');
+                        }}
+                        className="text-[11px] text-emerald-400 hover:text-emerald-300 font-semibold shrink-0"
+                      >
+                        Usar modelo
+                      </button>
+                    </div>
+                    <textarea
+                      value={mdImportText}
+                      onChange={(e) => {
+                        setMdImportText(e.target.value);
+                        setMdImportError('');
+                      }}
+                      rows={9}
+                      spellCheck={false}
+                      className="w-full bg-stone-900 border border-stone-700 rounded-xl px-3 py-2 text-xs font-mono text-stone-200 focus:outline-none focus:border-emerald-600/50 resize-y min-h-[140px]"
+                      placeholder={LITURGY_MARKDOWN_EXAMPLE}
+                    />
+                    {mdImportError && (
+                      <p className="text-[11px] text-rose-400">{mdImportError}</p>
+                    )}
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setMdImportOpen(false)}
+                        className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold"
+                      >
+                        Fechar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleImportMarkdown}
+                        className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 rounded-button text-xs font-bold"
+                      >
+                        Aplicar importação
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-3 pr-1">
                   {formItems.map((item, idx) => (
                     <div 
                       key={item.id}
-                      className="p-3 bg-stone-800/80 rounded-xl border border-stone-700 space-y-2"
+                      className="p-2.5 sm:p-3 bg-stone-800/80 rounded-xl border border-stone-700 space-y-2"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-emerald-400 w-5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-mono text-xs font-bold text-emerald-400 w-5 shrink-0">
                           {idx + 1}.
                         </span>
 
-                        {/* Item Type */}
                         <select
                           value={item.type}
                           onChange={e => handleUpdateItemField(idx, 'type', e.target.value)}
-                          className="bg-stone-900 border border-stone-700 rounded-lg px-2 py-1 text-xs text-stone-100 focus:outline-none font-semibold"
+                          className="min-w-0 flex-1 sm:flex-none sm:w-auto max-w-[55%] sm:max-w-none bg-stone-900 border border-stone-700 rounded-lg px-2 py-1.5 text-xs text-stone-100 focus:outline-none font-semibold"
                         >
-                          <option value="hymn">🎵 Hino / Louvor</option>
+                          <option value="hymn">🎵 Música</option>
                           <option value="prayer">🙏 Oração</option>
                           <option value="reading">📖 Leitura Bíblica</option>
                           <option value="sermon">✝️ Pregação</option>
@@ -550,71 +665,78 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                           <option value="custom">📌 Outro Momento</option>
                         </select>
 
-                        {/* Title */}
-                        <input
-                          type="text"
-                          required
-                          placeholder="Título do Momento..."
-                          value={item.title}
-                          onChange={e => handleUpdateItemField(idx, 'title', e.target.value)}
-                          className="flex-1 bg-stone-900 border border-stone-700 rounded-lg px-2.5 py-1 text-xs text-stone-100 focus:outline-none"
-                        />
-
-                        {/* Reorder Buttons */}
-                        <button
-                          type="button"
-                          onClick={() => handleMoveItem(idx, 'up')}
-                          disabled={idx === 0}
-                          className="p-1 text-stone-400 hover:text-emerald-300 disabled:opacity-20 rounded-button"
-                        >
-                          <MoveUp className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleMoveItem(idx, 'down')}
-                          disabled={idx === formItems.length - 1}
-                          className="p-1 text-stone-400 hover:text-emerald-300 disabled:opacity-20 rounded-button"
-                        >
-                          <MoveDown className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveItemFromForm(item.id)}
-                          className="p-1 text-stone-400 hover:text-rose-400 rounded-button"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center gap-0.5 shrink-0 ml-auto">
+                          <button
+                            type="button"
+                            onClick={() => handleMoveItem(idx, 'up')}
+                            disabled={idx === 0}
+                            className="p-1.5 text-stone-400 hover:text-emerald-300 disabled:opacity-20 rounded-button"
+                            title="Mover para cima"
+                            aria-label="Mover para cima"
+                          >
+                            <MoveUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveItem(idx, 'down')}
+                            disabled={idx === formItems.length - 1}
+                            className="p-1.5 text-stone-400 hover:text-emerald-300 disabled:opacity-20 rounded-button"
+                            title="Mover para baixo"
+                            aria-label="Mover para baixo"
+                          >
+                            <MoveDown className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItemFromForm(item.id)}
+                            className="p-1.5 text-stone-400 hover:text-rose-400 rounded-button"
+                            title="Remover momento"
+                            aria-label="Remover momento"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
 
-                      {/* Item Details Row */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1 border-t border-stone-700/50">
+                      <input
+                        type="text"
+                        required
+                        placeholder="Título do Momento..."
+                        value={item.title}
+                        onChange={e => handleUpdateItemField(idx, 'title', e.target.value)}
+                        className="w-full min-w-0 bg-stone-900 border border-stone-700 rounded-lg px-2.5 py-1.5 text-xs text-stone-100 focus:outline-none"
+                      />
+
+                      <div className="grid grid-cols-1 gap-2 text-xs pt-1 border-t border-stone-700/50">
                         <input
                           type="text"
                           placeholder="Responsável (ex: Pr. Carlos / Presb. João)..."
                           value={item.responsible || ''}
                           onChange={e => handleUpdateItemField(idx, 'responsible', e.target.value)}
-                          className="bg-stone-900 border border-stone-700 rounded-lg px-2 py-1 text-xs text-stone-200"
+                          className="w-full min-w-0 bg-stone-900 border border-stone-700 rounded-lg px-2 py-1.5 text-xs text-stone-200"
                         />
 
-                        {/* Link Song Option if item type is 'hymn' */}
                         {item.type === 'hymn' ? (
-                          <select
+                          <SongSearchSelect
+                            songs={songs}
                             value={item.songId || ''}
-                            onChange={e => handleUpdateItemField(idx, 'songId', e.target.value)}
-                            className="bg-stone-900 border border-emerald-500/40 rounded-lg px-2 py-1 text-xs text-emerald-300 focus:outline-none"
-                          >
-                            <option value="">Sem hino vinculado</option>
-                            {songs.map(song => (
-                              <option key={song.id} value={song.id}>Hino #{song.number} - {song.title}</option>
-                            ))}
-                          </select>
+                            onChange={(songId) =>
+                              handleUpdateItemField(
+                                idx,
+                                'songId',
+                                songId.trim() ? songId : undefined,
+                              )
+                            }
+                            placeholder="Buscar por título, número ou artista…"
+                            className="w-full min-w-0"
+                          />
                         ) : (
                           <input
                             type="text"
                             placeholder="Detalhes (ex: Texto do Salmo 23)..."
                             value={item.details || ''}
                             onChange={e => handleUpdateItemField(idx, 'details', e.target.value)}
-                            className="bg-stone-900 border border-stone-700 rounded-lg px-2 py-1 text-xs text-stone-200"
+                            className="w-full min-w-0 bg-stone-900 border border-stone-700 rounded-lg px-2 py-1.5 text-xs text-stone-200"
                           />
                         )}
                       </div>
@@ -627,15 +749,18 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold"
+                  disabled={saving}
+                  className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold disabled:opacity-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs shadow-md shadow-emerald-500/20"
+                  disabled={saving}
+                  className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs shadow-md shadow-emerald-500/20 disabled:opacity-60 inline-flex items-center gap-1.5"
                 >
-                  Salvar Liturgia
+                  {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {saving ? 'Salvando…' : 'Salvar Liturgia'}
                 </button>
               </div>
 
@@ -656,7 +781,7 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                 PROJEÇÃO LITÚRGICA
               </span>
               <h3 className="text-sm font-serif text-stone-400 hidden sm:inline">
-                {presentingLiturgy.serviceTitle} • {presentingLiturgy.date}
+                {linkedEventTitle || presentingLiturgy.serviceTitle} • {linkedEventDate || presentingLiturgy.date}
               </h3>
             </div>
 
@@ -750,21 +875,21 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white text-stone-900 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl max-h-[92vh] flex flex-col">
             
-            <div className="p-4 bg-stone-100 border-b flex items-center justify-between shrink-0">
-              <span className="text-xs font-bold font-mono text-stone-600 uppercase">
+            <div className="p-4 bg-stone-100 border-b border-stone-200 flex items-center justify-between shrink-0">
+              <span className="text-xs font-bold font-mono text-stone-700 uppercase">
                 Boletim Litúrgico Impresso
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => window.print()}
-                  className="px-3 py-1.5 bg-stone-900 text-white font-bold rounded-button text-xs flex items-center gap-1"
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-button text-xs flex items-center gap-1 shadow-sm"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   Imprimir
                 </button>
                 <button
                   onClick={() => setPrintingLiturgy(null)}
-                  className="p-1 text-stone-500 hover:text-stone-900 rounded-button"
+                  className="p-1.5 text-stone-600 hover:text-stone-900 hover:bg-stone-200 rounded-button"
                 >
                   ✕
                 </button>
@@ -776,20 +901,34 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
               
               <div className="text-center border-b border-stone-300 pb-4">
                 <h2 className="text-2xl font-bold uppercase tracking-wider text-stone-900">
-                  {churches.find(c => c.id === printingLiturgy.churchId)?.name || 'Igreja Presbiteriana'}
+                  {churches.find(c => c.id === printingLiturgy.churchId)?.name || 'Igreja'}
                 </h2>
                 <h3 className="text-lg font-serif italic text-stone-700 mt-1">
-                  {printingLiturgy.serviceTitle}
+                  {linkedEventTitle || printingLiturgy.serviceTitle}
                 </h3>
                 <p className="text-xs font-sans text-stone-500 mt-1">
-                  Data: {new Date(printingLiturgy.date + 'T00:00:00').toLocaleDateString('pt-BR')}
+                  Data: {new Date((linkedEventDate || printingLiturgy.date) + 'T00:00:00').toLocaleDateString('pt-BR')}
                 </p>
               </div>
 
-              {printingLiturgy.bibleVerse && (
-                <div className="text-center italic text-stone-700 bg-stone-50 p-3 rounded-lg border border-stone-200">
-                  <p className="text-xs font-sans font-bold uppercase text-stone-500 mb-0.5">Versículo do Culto</p>
-                  "{printingLiturgy.bibleVerse}"
+              {(printingLiturgy.theme || printingLiturgy.bibleVerse) && (
+                <div className="text-center italic text-stone-700 bg-stone-50 p-3 rounded-lg border border-stone-200 space-y-1">
+                  {printingLiturgy.theme && (
+                    <div>
+                      <p className="text-xs font-sans font-bold uppercase text-stone-500 mb-0.5 not-italic">
+                        Tema principal
+                      </p>
+                      <p className="not-italic font-semibold text-stone-800">{printingLiturgy.theme}</p>
+                    </div>
+                  )}
+                  {printingLiturgy.bibleVerse && (
+                    <div>
+                      <p className="text-xs font-sans font-bold uppercase text-stone-500 mb-0.5 not-italic">
+                        Texto bíblico
+                      </p>
+                      "{printingLiturgy.bibleVerse}"
+                    </div>
+                  )}
                 </div>
               )}
 

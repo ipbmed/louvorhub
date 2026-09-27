@@ -581,13 +581,13 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
                               {musicGroup.members.map((member) => (
                                 <div 
                                   key={member.id}
-                                  className="flex items-center justify-between p-2 rounded-lg bg-stone-800/50 border border-stone-800/80 text-xs"
+                                  className="flex items-center justify-between p-2 rounded-lg bg-stone-800/50 light:bg-slate-50 border border-stone-800/80 light:border-stone-200 text-xs"
                                 >
                                   <div className="min-w-0">
                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                      <span className="font-semibold text-stone-200">{member.name}</span>
+                                      <span className="font-semibold text-stone-200 light:text-stone-900">{member.name}</span>
                                       {member.isLeader && (
-                                        <span className="text-[9px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-1.5 py-0.5 rounded font-mono inline-flex items-center gap-0.5">
+                                        <span className="text-[9px] bg-emerald-950 light:bg-emerald-50 text-emerald-300 light:text-emerald-800 border border-emerald-800 light:border-emerald-200 px-1.5 py-0.5 rounded font-mono inline-flex items-center gap-0.5">
                                           <ShieldCheck className="w-2.5 h-2.5" />
                                           Líder
                                         </span>
@@ -599,7 +599,7 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
                                         {profileSkillsByUserId.get(member.userId)!.map((s) => (
                                           <span
                                             key={`card-skill-${member.id}-${s}`}
-                                            className="text-[10px] text-stone-400 bg-stone-900/80 border border-stone-700/60 px-1.5 py-0.5 rounded-button"
+                                            className="text-[10px] text-stone-400 light:text-stone-700 bg-stone-900/80 light:bg-white border border-stone-700/60 light:border-stone-300 px-1.5 py-0.5 rounded-button"
                                           >
                                             {s}
                                           </span>

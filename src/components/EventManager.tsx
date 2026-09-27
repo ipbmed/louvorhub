@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   Calendar,
@@ -19,6 +19,19 @@ import { EVENT_TITLE_SUGGESTIONS } from '../constants/eventTitles';
 import { PageHeader, PageHeaderButton } from './PageHeader';
 
 type DisplayMode = 'calendar' | 'month' | 'week' | 'agenda';
+
+const DISPLAY_MODE_STORAGE_KEY = 'louvorhub_events_display_mode';
+const DISPLAY_MODES: DisplayMode[] = ['calendar', 'month', 'week', 'agenda'];
+
+function readStoredDisplayMode(): DisplayMode {
+  try {
+    const raw = localStorage.getItem(DISPLAY_MODE_STORAGE_KEY);
+    if (raw && DISPLAY_MODES.includes(raw as DisplayMode)) return raw as DisplayMode;
+  } catch {
+    /* ignore */
+  }
+  return 'calendar';
+}
 
 function toDateStr(d: Date): string {
   return [
@@ -83,8 +96,16 @@ export const EventManager: React.FC<EventManagerProps> = ({
   onDeleteEvent,
   onOpenEvent,
 }) => {
-  const [displayMode, setDisplayMode] = useState<DisplayMode>('calendar');
+  const [displayMode, setDisplayMode] = useState<DisplayMode>(readStoredDisplayMode);
   const [listScope, setListScope] = useState<'agenda' | 'all'>('agenda');
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DISPLAY_MODE_STORAGE_KEY, displayMode);
+    } catch {
+      /* ignore */
+    }
+  }, [displayMode]);
   const [calendarCursor, setCalendarCursor] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -258,11 +279,16 @@ export const EventManager: React.FC<EventManagerProps> = ({
     }
   };
 
-  const modeButtons: { id: DisplayMode; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { id: 'calendar', label: 'Calendário', icon: CalendarDays },
-    { id: 'month', label: 'Mensal', icon: Calendar },
-    { id: 'week', label: 'Semana', icon: CalendarRange },
-    { id: 'agenda', label: 'Programação', icon: LayoutList },
+  const modeButtons: {
+    id: DisplayMode;
+    label: string;
+    shortLabel: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }[] = [
+    { id: 'calendar', label: 'Calendário', shortLabel: 'Cal.', icon: CalendarDays },
+    { id: 'month', label: 'Mensal', shortLabel: 'Mês', icon: Calendar },
+    { id: 'week', label: 'Semana', shortLabel: 'Sem.', icon: CalendarRange },
+    { id: 'agenda', label: 'Programação', shortLabel: 'Prog.', icon: LayoutList },
   ];
 
   const emptyMessage =
@@ -433,19 +459,21 @@ export const EventManager: React.FC<EventManagerProps> = ({
       <div className="flex flex-col gap-2 mb-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
           <div className="flex items-center gap-1 overflow-x-auto -mx-0.5 px-0.5">
-            {modeButtons.map(({ id, label, icon: Icon }) => (
+            {modeButtons.map(({ id, label, shortLabel, icon: Icon }) => (
               <button
                 key={id}
                 type="button"
                 onClick={() => setDisplayMode(id)}
-                className={`px-2.5 sm:px-3 py-1.5 rounded-button text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
+                title={label}
+                className={`px-2 sm:px-3 py-1.5 rounded-button text-[11px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 transition-all whitespace-nowrap ${
                   displayMode === id
                     ? 'bg-emerald-500 text-stone-950 shadow-md shadow-emerald-500/20'
                     : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/60'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                {label}
+                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <span className="sm:hidden">{shortLabel}</span>
+                <span className="hidden sm:inline">{label}</span>
               </button>
             ))}
           </div>

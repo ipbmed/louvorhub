@@ -19,7 +19,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className = '', compac
       title={isDark ? 'Ativar tema claro' : 'Ativar tema escuro'}
       aria-label={isDark ? 'Ativar tema claro' : 'Ativar tema escuro'}
     >
-      {isDark ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-emerald-700" />}
+      {isDark ? <Sun className="w-5 h-5 text-amber-300" /> : <Moon className="w-5 h-5 text-emerald-700" />}
       {!compact && <span className="hidden sm:inline font-semibold">{isDark ? 'Claro' : 'Escuro'}</span>}
     </button>
   );

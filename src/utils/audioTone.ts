@@ -116,7 +116,8 @@ export async function playReferenceTone(note: string, durationSec = 3.0): Promis
     // Soft attack and decay (avoid 0 for exponentialRamp on iOS)
     const now = ctx.currentTime;
     gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.35, now + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.7, now + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.55, now + 0.2);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
 
     osc.connect(gain);

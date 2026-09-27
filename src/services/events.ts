@@ -223,7 +223,7 @@ export async function ensureEventLiturgy(
     .insert({
       org_id: event.churchId,
       event_id: event.id,
-      title: event.serviceType || event.title || 'Culto',
+      title: event.title || event.serviceType || 'Culto',
       service_date: event.date,
       theme: event.theme ?? null,
       created_by: userId ?? null,

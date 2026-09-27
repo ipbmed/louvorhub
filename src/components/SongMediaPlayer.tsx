@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Play, 
   ExternalLink, 
@@ -10,6 +10,10 @@ import {
   Volume2, 
   Link as LinkIcon,
   ChevronDown,
+  RectangleHorizontal,
+  Square,
+  Maximize2,
+  PictureInPicture2,
 } from 'lucide-react';
 import { Song, MediaLink } from '../types';
 import { 
@@ -18,6 +22,53 @@ import {
   getSpotifyEmbedUrl, 
   isDirectAudioUrl 
 } from '../utils/mediaUtils';
+
+type YoutubeViewMode = 'compact' | 'normal' | 'wide' | 'featured';
+
+const YT_VIEW_MODES: {
+  id: YoutubeViewMode;
+  label: string;
+  title: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    id: 'compact',
+    label: 'Pequeno',
+    title: 'Player compacto',
+    icon: <Square className="w-3.5 h-3.5" />,
+  },
+  {
+    id: 'normal',
+    label: 'Médio',
+    title: 'Tamanho médio',
+    icon: <RectangleHorizontal className="w-3.5 h-3.5" />,
+  },
+  {
+    id: 'wide',
+    label: 'Amplo',
+    title: 'Largura total',
+    icon: <Maximize2 className="w-3.5 h-3.5" />,
+  },
+  {
+    id: 'featured',
+    label: 'Destacado',
+    title: 'Sobrepor na tela',
+    icon: <PictureInPicture2 className="w-3.5 h-3.5" />,
+  },
+];
+
+function youtubeFrameClass(mode: YoutubeViewMode): string {
+  switch (mode) {
+    case 'compact':
+      return 'aspect-video w-full max-w-[16rem] sm:max-w-xs mx-auto';
+    case 'normal':
+      return 'aspect-video w-full max-w-xl sm:max-w-2xl mx-auto';
+    case 'wide':
+    case 'featured':
+    default:
+      return 'aspect-video w-full';
+  }
+}
 
 interface SongMediaPlayerProps {
   song?: Partial<Song>;
@@ -49,17 +100,70 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
 
   const [activeEmbedId, setActiveEmbedId] = useState<string | null>(null);
   const [internalExpanded, setInternalExpanded] = useState(false);
+  const [ytViewMode, setYtViewMode] = useState<YoutubeViewMode>('normal');
   const mediaExpanded = expanded ?? internalExpanded;
   const setMediaExpanded = (open: boolean) => {
     if (onExpandedChange) onExpandedChange(open);
     else setInternalExpanded(open);
   };
 
+  useEffect(() => {
+    if (!activeEmbedId) setYtViewMode('normal');
+  }, [activeEmbedId]);
+
   if (allLinks.length === 0) {
     return null;
   }
 
   const activeLink = allLinks.find(l => l.id === activeEmbedId);
+  const isYoutubeEmbed =
+    !!activeLink && (activeLink.type === 'youtube' || activeLink.type === 'ytmusic');
+
+  const renderYoutubeControls = () => (
+    <div
+      className="flex items-center gap-0.5 p-0.5 rounded-lg bg-stone-900 light:bg-stone-100 border border-stone-800 light:border-stone-200"
+      role="group"
+      aria-label="Tamanho do vídeo"
+    >
+      {YT_VIEW_MODES.map((mode) => {
+        const active = ytViewMode === mode.id;
+        return (
+          <button
+            key={mode.id}
+            type="button"
+            onClick={() => setYtViewMode(mode.id)}
+            className={`px-1.5 sm:px-2 py-1 rounded-md text-[10px] font-semibold inline-flex items-center gap-1 transition-colors ${
+              active
+                ? 'bg-emerald-500 text-stone-950'
+                : 'text-stone-400 light:text-stone-600 hover:text-stone-100 light:hover:text-stone-900 hover:bg-stone-800 light:hover:bg-white'
+            }`}
+            title={mode.title}
+            aria-pressed={active}
+          >
+            {mode.icon}
+            <span className="hidden sm:inline">{mode.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const renderYoutubePlayer = (mode: YoutubeViewMode, className = '') => {
+    if (!activeLink) return null;
+    const videoId = getYouTubeVideoId(activeLink.url);
+    if (!videoId) return null;
+    return (
+      <div className={`${youtubeFrameClass(mode)} rounded-xl overflow-hidden bg-black shadow-xl ${className}`}>
+        <iframe
+          src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+          title={title || 'YouTube Player'}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="w-full h-full border-0"
+        />
+      </div>
+    );
+  };
 
   // Helper for rendering link badge colors & icons
   const getLinkMeta = (link: MediaLink) => {
@@ -341,33 +445,70 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
         })}
       </div>
 
-      {activeEmbedId && activeLink && (
+      {activeEmbedId && activeLink && ytViewMode === 'featured' && isYoutubeEmbed && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6"
+          onClick={() => setYtViewMode('normal')}
+        >
+          <div
+            className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-5xl overflow-hidden shadow-2xl relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-3 bg-stone-950 border-b border-stone-800 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                {getLinkMeta(activeLink).icon}
+                <h4 className="font-serif font-bold text-stone-100 text-xs sm:text-sm truncate">
+                  {activeLink.title || title || 'YouTube'}
+                </h4>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {renderYoutubeControls()}
+                <a
+                  href={activeLink.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-emerald-400 hover:underline hidden sm:inline-flex items-center gap-1 font-semibold"
+                >
+                  <span>Abrir</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setActiveEmbedId(null)}
+                  className="p-1 text-stone-400 hover:text-stone-100 rounded-button bg-stone-800"
+                  title="Fechar player"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="p-3 bg-stone-950">{renderYoutubePlayer('featured')}</div>
+          </div>
+        </div>
+      )}
+
+      {activeEmbedId && activeLink && !(ytViewMode === 'featured' && isYoutubeEmbed) && (
         <div className="mt-1 rounded-xl overflow-hidden border border-emerald-800/60 light:border-emerald-300 bg-stone-950 light:bg-stone-50 p-3 space-y-2 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between text-xs px-1">
-            <span className="text-emerald-300 light:text-emerald-800 font-bold flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2 text-xs px-1">
+            <span className="text-emerald-300 light:text-emerald-800 font-bold flex items-center gap-2 min-w-0 truncate">
               {getLinkMeta(activeLink).icon}
-              Reproduzindo: {activeLink.title || getLinkMeta(activeLink).typeTitle}
+              <span className="truncate">
+                Reproduzindo: {activeLink.title || getLinkMeta(activeLink).typeTitle}
+              </span>
             </span>
-            <button
-              type="button"
-              onClick={() => setActiveEmbedId(null)}
-              className="text-stone-400 light:text-stone-600 hover:text-stone-100 light:hover:text-stone-900 p-1 rounded bg-stone-900 light:bg-white border border-stone-800 light:border-stone-200 rounded-button"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {isYoutubeEmbed && renderYoutubeControls()}
+              <button
+                type="button"
+                onClick={() => setActiveEmbedId(null)}
+                className="text-stone-400 light:text-stone-600 hover:text-stone-100 light:hover:text-stone-900 p-1 rounded bg-stone-900 light:bg-white border border-stone-800 light:border-stone-200 rounded-button"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
-          {(activeLink.type === 'youtube' || activeLink.type === 'ytmusic') && (
-            <div className="aspect-video w-full rounded-xl overflow-hidden bg-black shadow-xl">
-              <iframe
-                src={`https://www.youtube.com/embed/${getYouTubeVideoId(activeLink.url)}?autoplay=1`}
-                title={title || 'YouTube Player'}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full border-0"
-              />
-            </div>
-          )}
+          {isYoutubeEmbed && renderYoutubePlayer(ytViewMode)}
 
           {activeLink.type === 'spotify' && getSpotifyEmbedUrl(activeLink.url) && (
             <div className="rounded-xl overflow-hidden bg-stone-900 light:bg-white border border-stone-800 light:border-stone-200 shadow-xl">

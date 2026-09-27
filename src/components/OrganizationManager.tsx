@@ -101,6 +101,10 @@ export const OrganizationManager: React.FC<OrganizationManagerProps> = ({
       setErrorMsg('Nome e cidade são obrigatórios.');
       return;
     }
+    if (!form.sigla.trim()) {
+      setErrorMsg('A sigla da igreja é obrigatória.');
+      return;
+    }
     setSaving(true);
     setErrorMsg('');
     try {
@@ -111,7 +115,7 @@ export const OrganizationManager: React.FC<OrganizationManagerProps> = ({
         address: form.address.trim() || undefined,
         leader: form.leader.trim() || undefined,
         phone: form.phone.trim() || undefined,
-        sigla: form.sigla.trim() || undefined,
+        sigla: form.sigla.trim(),
         color: form.color,
         createdAt: editing?.createdAt || new Date().toISOString(),
       });
@@ -268,11 +272,16 @@ export const OrganizationManager: React.FC<OrganizationManagerProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-stone-400 font-semibold mb-1">Sigla</label>
+                  <label className="block text-stone-400 font-semibold mb-1">
+                    Sigla <span className="text-emerald-400">*</span>
+                  </label>
                   <input
+                    required
                     value={form.sigla}
                     onChange={(e) => setForm((p) => ({ ...p, sigla: e.target.value }))}
-                    className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-stone-100"
+                    placeholder="Ex: IPM"
+                    maxLength={20}
+                    className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-stone-100 uppercase"
                   />
                 </div>
               </div>

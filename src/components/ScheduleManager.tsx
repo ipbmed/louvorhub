@@ -849,7 +849,9 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
             return (
               <div
                 key={sched.id}
-                className={`bg-stone-900 border rounded-2xl p-6 shadow-md flex flex-col justify-between transition-all ${
+                className={`bg-stone-900 border rounded-2xl shadow-md flex flex-col justify-between transition-all ${
+                  embedded ? 'p-3 sm:p-4' : 'p-6'
+                } ${
                   sched.isFinalized 
                     ? 'border-emerald-700/60 shadow-emerald-950/20' 
                     : 'border-stone-800 hover:border-stone-700'
@@ -880,16 +882,16 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
                             Equipe:
                           </span>
                           <div className="flex items-center gap-1 text-[11px] font-mono">
-                            <span className="px-1.5 py-0.5 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-800/60 font-bold">
+                            <span className="px-1.5 py-0.5 rounded bg-emerald-950/90 light:bg-emerald-50 text-emerald-300 light:text-emerald-800 border border-emerald-800/60 light:border-emerald-200 font-bold">
                               {confirmedCount} Confirmados
                             </span>
                             {declinedCount > 0 && (
-                              <span className="px-1.5 py-0.5 rounded bg-rose-950/90 text-rose-300 border border-rose-800/60 font-bold">
+                              <span className="px-1.5 py-0.5 rounded bg-rose-950/90 light:bg-rose-50 text-rose-300 light:text-rose-800 border border-rose-800/60 light:border-rose-200 font-bold">
                                 {declinedCount} Indisponíveis
                               </span>
                             )}
                             {pendingCount > 0 && (
-                              <span className="px-1.5 py-0.5 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-800/60 font-bold">
+                              <span className="px-1.5 py-0.5 rounded bg-amber-950/40 light:bg-amber-50 text-amber-200 light:text-amber-800 border border-amber-800/60 light:border-amber-200 font-bold">
                                 {pendingCount} Pendentes
                               </span>
                             )}
@@ -1284,85 +1286,105 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
 
             <form onSubmit={handleSaveForm} className="p-6 space-y-5 overflow-y-auto flex-1">
               
-              {/* Church & MusicGroup Picker */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Igreja <span className="text-emerald-400">*</span>
-                  </label>
-                  {activeChurchId ? (
-                    <div className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-sm text-stone-200">
-                      {churches.find((c) => c.id === formChurchId)?.name ||
-                        churches[0]?.name ||
-                        'Igreja ativa'}
+              {/* Igreja / grupo / data / horário: no evento vêm da associação — só editar fora do embedded */}
+              {!embedded && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-stone-300 mb-1">
+                        Igreja <span className="text-emerald-400">*</span>
+                      </label>
+                      {activeChurchId ? (
+                        <div className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-sm text-stone-200">
+                          {churches.find((c) => c.id === formChurchId)?.name ||
+                            churches[0]?.name ||
+                            'Igreja ativa'}
+                        </div>
+                      ) : (
+                        <select
+                          required
+                          value={formChurchId}
+                          onChange={(e) => {
+                            const cId = e.target.value;
+                            setFormChurchId(cId);
+                            const churchMusicGroups = musicGroups.filter((g) => g.churchId === cId);
+                            if (churchMusicGroups.length > 0) {
+                              handlePopulateAssignmentsFromMusicGroup(churchMusicGroups[0].id);
+                            }
+                          }}
+                          className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none"
+                        >
+                          {churches.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
-                  ) : (
-                    <select
-                      required
-                      value={formChurchId}
-                      onChange={(e) => {
-                        const cId = e.target.value;
-                        setFormChurchId(cId);
-                        const churchMusicGroups = musicGroups.filter((g) => g.churchId === cId);
-                        if (churchMusicGroups.length > 0) {
-                          handlePopulateAssignmentsFromMusicGroup(churchMusicGroups[0].id);
-                        }
-                      }}
-                      className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none"
-                    >
-                      {churches.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Banda / Grupo
-                  </label>
-                  <select
-                    value={formMusicGroupId}
-                    onChange={e => handlePopulateAssignmentsFromMusicGroup(e.target.value)}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none"
-                  >
-                    <option value="">Selecione um grupo...</option>
-                    {musicGroups.filter(g => g.churchId === formChurchId).map(g => (
-                      <option key={g.id} value={g.id}>{g.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-stone-300 mb-1">
+                        Banda / Grupo
+                      </label>
+                      <select
+                        value={formMusicGroupId}
+                        onChange={e => handlePopulateAssignmentsFromMusicGroup(e.target.value)}
+                        className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none"
+                      >
+                        <option value="">Selecione um grupo...</option>
+                        {musicGroups.filter(g => g.churchId === formChurchId).map(g => (
+                          <option key={g.id} value={g.id}>{g.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
 
-              {/* Date & Service Type */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Data do Culto <span className="text-emerald-400">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formDate}
-                    onChange={e => setFormDate(e.target.value)}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100 focus:outline-none"
-                  />
-                </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-stone-300 mb-1">
+                        Data do Culto <span className="text-emerald-400">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={formDate}
+                        onChange={e => setFormDate(e.target.value)}
+                        className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100 focus:outline-none"
+                      />
+                    </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Horário
-                  </label>
-                  <input
-                    type="time"
-                    value={formTime}
-                    onChange={e => setFormTime(e.target.value)}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100 focus:outline-none"
-                  />
-                </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-stone-300 mb-1">
+                        Horário
+                      </label>
+                      <input
+                        type="time"
+                        value={formTime}
+                        onChange={e => setFormTime(e.target.value)}
+                        className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100 focus:outline-none"
+                      />
+                    </div>
 
+                    <div>
+                      <label className="block text-xs font-semibold text-stone-300 mb-1">
+                        Status Escala
+                      </label>
+                      <select
+                        value={formStatus}
+                        onChange={e => setFormStatus(e.target.value as any)}
+                        className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100 focus:outline-none"
+                      >
+                        <option value="confirmed">Confirmado</option>
+                        <option value="pending">Pendente</option>
+                        <option value="completed">Concluído</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {embedded && (
                 <div>
                   <label className="block text-xs font-semibold text-stone-300 mb-1">
                     Status Escala
@@ -1377,9 +1399,9 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
                     <option value="completed">Concluído</option>
                   </select>
                 </div>
-              </div>
+              )}
 
-              {!editingSchedule && (
+              {!editingSchedule && !embedded && (
                 <div className="rounded-xl border border-stone-800 bg-stone-950/50 p-3 space-y-3">
                   <label className="flex items-start gap-2.5 cursor-pointer">
                     <input

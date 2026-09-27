@@ -437,12 +437,20 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             onClick={onClose}
           />
           <aside className="absolute left-0 top-0 bottom-0 w-[min(18rem,85vw)] bg-stone-950 border-r border-stone-800 shadow-2xl flex flex-col animate-in slide-in-from-left duration-200">
-            <div className="flex items-center justify-between px-4 py-4 border-b border-stone-800 shrink-0">
-              <p className="text-sm font-serif font-bold text-emerald-200">Menu</p>
+            <div className="flex items-center justify-between px-4 py-4 border-b border-stone-800 light:border-stone-200 shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-stone-950 shadow-md shadow-emerald-500/20 ring-1 ring-emerald-400/30 shrink-0">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <p className="text-base font-display font-bold text-emerald-100 light:text-emerald-800 truncate">
+                  LouvorHub
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 rounded-button text-stone-400 hover:text-stone-100 hover:bg-stone-800"
+                className="p-2 rounded-button text-stone-400 hover:text-stone-100 light:hover:text-stone-800 hover:bg-stone-800 light:hover:bg-stone-100"
+                aria-label="Fechar menu"
               >
                 <X className="w-5 h-5" />
               </button>

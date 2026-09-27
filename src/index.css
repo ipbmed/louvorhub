@@ -78,12 +78,17 @@
   html.light .bg-stone-950\/40 {
     background-color: rgb(241 245 249 / 0.7);
   }
+  html.light .bg-stone-950\/50,
+  html.light .bg-stone-950\/60 {
+    background-color: #f8fafc;
+  }
   html.light .bg-stone-950\/70 {
     background-color: rgb(241 245 249 / 0.9);
   }
   html.light .bg-stone-950\/80 {
     background-color: rgb(255 255 255 / 0.92);
   }
+  html.light .bg-stone-950\/90,
   html.light .bg-stone-950\/95 {
     background-color: rgb(255 255 255 / 0.97);
   }
@@ -112,6 +117,9 @@
 
   html.light .bg-stone-800\/40 {
     background-color: rgb(226 232 240 / 0.75);
+  }
+  html.light .bg-stone-800\/50 {
+    background-color: #f1f5f9;
   }
   html.light .bg-stone-800\/60 {
     background-color: rgb(226 232 240 / 0.9);
@@ -192,6 +200,12 @@
   html.light .text-blue-300 {
     color: #1e40af;
   }
+  html.light .text-indigo-300 {
+    color: #3730a3;
+  }
+  html.light .text-purple-300 {
+    color: #6b21a8;
+  }
 
   /* Mantém text-stone-950 escuro em botões sólidos coloridos */
   html.light .text-stone-950 {
@@ -268,6 +282,8 @@
 
   /* ---------------- Badges, Chips & Cores Temáticas ---------------- */
   /* Chips Esmeralda */
+  html.light .bg-emerald-950,
+  html.light .bg-emerald-950\/90,
   html.light .bg-emerald-950\/80,
   html.light .bg-emerald-950\/60,
   html.light .bg-emerald-950\/40,
@@ -296,6 +312,8 @@
   }
 
   /* Chips Rose / Favoritos */
+  html.light .bg-rose-950\/90,
+  html.light .bg-rose-950\/80,
   html.light .bg-rose-950\/60,
   html.light .bg-rose-950\/40,
   html.light .bg-rose-900\/50 {
@@ -316,11 +334,28 @@
   }
 
   /* Chips Blue / Ações Admin */
+  html.light .bg-blue-950\/80,
   html.light .bg-blue-950\/60,
   html.light .bg-blue-900\/50 {
     background-color: #eff6ff;
     color: #1e40af;
     border-color: #bfdbfe;
+  }
+
+  /* Chips Indigo / Bênção */
+  html.light .bg-indigo-950\/80,
+  html.light .bg-indigo-950\/60 {
+    background-color: #eef2ff;
+    color: #3730a3;
+    border-color: #c7d2fe;
+  }
+
+  /* Chips Purple / Oração */
+  html.light .bg-purple-950\/80,
+  html.light .bg-purple-950\/60 {
+    background-color: #faf5ff;
+    color: #6b21a8;
+    border-color: #e9d5ff;
   }
 
   /* ---------------- Inputs, Formulários & Selects ---------------- */

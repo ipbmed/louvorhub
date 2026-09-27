@@ -57,21 +57,27 @@ export async function upsertLiturgy(
     liturgyId = data.id;
   }
 
-  await sb.from('liturgy_items').delete().eq('liturgy_id', liturgyId);
-  if (liturgy.items?.length) {
-    const { error } = await sb.from('liturgy_items').insert(
-      liturgy.items.map((item) => ({
-        liturgy_id: liturgyId,
-        item_type: toDbLiturgyItemType(item.type),
-        item_kind: item.type,
-        title: item.title,
-        body: item.details ?? null,
-        song_id: item.songId ?? null,
-        sort_order: item.order,
-        responsible: item.responsible ?? null,
-        duration: item.duration ?? null,
-      })),
-    );
+  const itemRows =
+    liturgy.items?.map((item) => ({
+      liturgy_id: liturgyId,
+      item_type: toDbLiturgyItemType(item.type),
+      item_kind: item.type,
+      title: item.title,
+      body: item.details ?? null,
+      song_id: isUuid(item.songId) ? item.songId : null,
+      sort_order: item.order,
+      responsible: item.responsible ?? null,
+      duration: item.duration ?? null,
+    })) ?? [];
+
+  const { error: deleteError } = await sb
+    .from('liturgy_items')
+    .delete()
+    .eq('liturgy_id', liturgyId);
+  if (deleteError) throw deleteError;
+
+  if (itemRows.length) {
+    const { error } = await sb.from('liturgy_items').insert(itemRows);
     if (error) throw error;
   }
 

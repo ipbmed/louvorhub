@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft,
   Calendar,
   Check,
   Copy,
@@ -13,13 +12,15 @@ import {
   ListMusic,
   Lock,
   MessageCircle,
-  Music,
   Plus,
   Share2,
   Sparkles,
   Trash2,
   Users,
   X,
+  ArrowUp,
+  ArrowDown,
+  AlertTriangle,
 } from 'lucide-react';
 import type {
   ChurchEvent,
@@ -32,6 +33,7 @@ import type {
   WorshipSchedule,
 } from '../types';
 import { useToast } from '@/contexts/ToastProvider';
+import { useApiBusy } from '@/contexts/ApiBusyProvider';
 import { normalizeShareSlug, validateShareSlug } from '@/lib/shareSlug';
 import {
   eventShareUrl,
@@ -39,6 +41,7 @@ import {
 } from '@/services/eventShare';
 import { ScheduleManager } from './ScheduleManager';
 import { LiturgyManager } from './LiturgyManager';
+import { EventLiturgySetlistSync, getLiturgySetlistDiff } from './EventLiturgySetlistSync';
 import { AddSongsToEventSetlistModal } from './AddSongsToEventSetlistModal';
 import { ScheduleSongEditorModal } from './ScheduleSongEditorModal';
 import { EVENT_TITLE_SUGGESTIONS } from '../constants/eventTitles';
@@ -73,10 +76,11 @@ interface EventDetailProps {
   songs: Song[];
   musicGroups: MusicGroup[];
   systemUsers?: SystemUser[];
+  /** Nome da igreja do evento (boletim / cabeçalhos) */
+  churchName?: string;
   canManageTeam: boolean;
   canManageLiturgy: boolean;
   canManageSetlist: boolean;
-  onBack: () => void;
   onSaveSchedule: (schedule: WorshipSchedule | WorshipSchedule[]) => void | Promise<void>;
   onDeleteSchedule: (id: string) => void | Promise<void>;
   onSaveLiturgy: (liturgy: Liturgy) => void | Promise<void>;
@@ -98,10 +102,10 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   songs,
   musicGroups,
   systemUsers = [],
+  churchName,
   canManageTeam,
   canManageLiturgy,
   canManageSetlist,
-  onBack,
   onSaveSchedule,
   onDeleteSchedule,
   onSaveLiturgy,
@@ -115,6 +119,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   onShareUpdated,
 }) => {
   const { showToast } = useToast();
+  const { withBusy } = useApiBusy();
   const [tab, setTab] = useState<EventTab>('team');
   const [addSongsOpen, setAddSongsOpen] = useState(false);
   const [savingSetlist, setSavingSetlist] = useState(false);
@@ -200,34 +205,36 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     shareCode?: string;
     expiresAt?: string | null;
   }) => {
-    try {
-      setShareSaving(true);
-      const result = await updateEventShareSettings(event.id, next);
-      setShareCodeDraft(result.shareCode);
-      setShareExpiresLocal(
-        result.shareExpiresAt
-          ? toDatetimeLocalValue(result.shareExpiresAt)
-          : suggestedShareExpiryLocal(event.date, event.time),
-      );
-      await onShareUpdated?.();
-      showToast(
-        next.enabled ? 'Compartilhamento atualizado.' : 'Link público desativado.',
-      );
-    } catch (err) {
-      showToast((err as Error).message || 'Falha ao atualizar compartilhamento.');
-      setShareEnabled(Boolean(event.shareEnabled));
-      setShareIncludeSongs(event.shareIncludeSongs !== false);
-      setShareIncludeLiturgy(event.shareIncludeLiturgy !== false);
-      setShareIncludeTeam(Boolean(event.shareIncludeTeam));
-      setShareCodeDraft(event.shareCode || '');
-      setShareExpiresLocal(
-        event.shareExpiresAt
-          ? toDatetimeLocalValue(event.shareExpiresAt)
-          : suggestedShareExpiryLocal(event.date, event.time),
-      );
-    } finally {
-      setShareSaving(false);
-    }
+    return withBusy(async () => {
+      try {
+        setShareSaving(true);
+        const result = await updateEventShareSettings(event.id, next);
+        setShareCodeDraft(result.shareCode);
+        setShareExpiresLocal(
+          result.shareExpiresAt
+            ? toDatetimeLocalValue(result.shareExpiresAt)
+            : suggestedShareExpiryLocal(event.date, event.time),
+        );
+        await onShareUpdated?.();
+        showToast(
+          next.enabled ? 'Compartilhamento atualizado.' : 'Link público desativado.',
+        );
+      } catch (err) {
+        showToast((err as Error).message || 'Falha ao atualizar compartilhamento.');
+        setShareEnabled(Boolean(event.shareEnabled));
+        setShareIncludeSongs(event.shareIncludeSongs !== false);
+        setShareIncludeLiturgy(event.shareIncludeLiturgy !== false);
+        setShareIncludeTeam(Boolean(event.shareIncludeTeam));
+        setShareCodeDraft(event.shareCode || '');
+        setShareExpiresLocal(
+          event.shareExpiresAt
+            ? toDatetimeLocalValue(event.shareExpiresAt)
+            : suggestedShareExpiryLocal(event.date, event.time),
+        );
+      } finally {
+        setShareSaving(false);
+      }
+    });
   };
 
   const saveShareLinkDetails = () => {
@@ -300,12 +307,12 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     () => [
       {
         id: event.churchId,
-        name: 'Igreja ativa',
+        name: churchName?.trim() || 'Igreja',
         city: '',
         createdAt: event.createdAt,
       },
     ],
-    [event.churchId, event.createdAt],
+    [event.churchId, event.createdAt, churchName],
   );
 
   const scheduleForEvent: WorshipSchedule | null = schedule
@@ -375,6 +382,27 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     });
   };
 
+  const moveItem = async (index: number, direction: 'up' | 'down') => {
+    if (!setlist || !canManageSetlist || savingSetlist) return;
+    const targetIdx = direction === 'up' ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= setlistItems.length) return;
+    const items = [...setlistItems];
+    const temp = items[index];
+    items[index] = items[targetIdx];
+    items[targetIdx] = temp;
+    try {
+      setSavingSetlist(true);
+      await onSaveSetlist({
+        ...setlist,
+        eventId: event.id,
+        kind: 'group_schedule',
+        items,
+      });
+    } finally {
+      setSavingSetlist(false);
+    }
+  };
+
   const repertoireSongIds = setlistItems.map((i) => i.songId);
 
   const openVersionEditor = (song: Song) => {
@@ -411,69 +439,100 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     });
   };
 
-  const tabs: { id: EventTab; label: string; icon: React.ComponentType<{ className?: string }>; show: boolean }[] = [
+  const syncDiff = useMemo(
+    () => getLiturgySetlistDiff(liturgy, setlist),
+    [liturgy, setlist],
+  );
+  const liturgyTabAlert =
+    syncDiff.missingInLiturgy.length > 0 ||
+    Boolean(!liturgy && syncDiff.setlistSongIds.length > 0);
+  const setlistTabAlert = syncDiff.missingInSetlist.length > 0;
+
+  const tabs: {
+    id: EventTab;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    show: boolean;
+    alert?: boolean;
+  }[] = [
     { id: 'team', label: 'Equipe de louvor', icon: Users, show: canManageTeam },
-    { id: 'liturgy', label: 'Liturgia', icon: FileText, show: canManageLiturgy },
-    { id: 'setlist', label: 'Repertório', icon: ListMusic, show: true },
+    {
+      id: 'liturgy',
+      label: 'Liturgia',
+      icon: FileText,
+      show: canManageLiturgy,
+      alert: liturgyTabAlert,
+    },
+    {
+      id: 'setlist',
+      label: 'Repertório',
+      icon: ListMusic,
+      show: true,
+      alert: setlistTabAlert,
+    },
   ];
 
   return (
-    <div className="w-full max-w-[1600px] mx-auto space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-400 hover:text-emerald-300 mb-2"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Voltar ao calendário
-          </button>
-          <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-            <Calendar className="w-4 h-4 shrink-0" />
-            <span className="truncate">
+    <div className="w-full max-w-[1600px] mx-auto space-y-4 sm:space-y-5">
+      <div className="min-w-0">
+        <div className="flex items-start gap-2 text-emerald-400 text-[11px] sm:text-xs font-bold uppercase tracking-wider">
+          <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 mt-0.5" />
+          <span className="leading-snug">
+            <span className="sm:hidden">
+              {new Date(event.date + 'T00:00:00').toLocaleDateString('pt-BR', {
+                weekday: 'short',
+                day: '2-digit',
+                month: 'short',
+                year: '2-digit',
+              })}
+            </span>
+            <span className="hidden sm:inline">
               {new Date(event.date + 'T00:00:00').toLocaleDateString('pt-BR', {
                 weekday: 'long',
                 day: '2-digit',
                 month: 'long',
                 year: 'numeric',
               })}
-              {event.time ? ` · ${event.time}` : ''}
             </span>
-          </div>
-          <h1 className="text-2xl xl:text-3xl font-display font-bold text-stone-100 mt-1">
-            {event.title}
-          </h1>
-          {event.theme && (
-            <p className="text-sm text-stone-400 mt-1">Tema: {event.theme}</p>
-          )}
+            {event.time ? ` · ${event.time}` : ''}
+          </span>
         </div>
-        <div className="shrink-0 self-start sm:mt-8 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setSharePanelOpen((v) => !v)}
-            className={`px-3 py-2 rounded-button text-xs font-semibold border inline-flex items-center gap-1.5 ${
-              shareEnabled
-                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-700/50'
-                : 'bg-stone-800 hover:bg-stone-700 text-stone-200 border-stone-700'
-            }`}
-            title="Compartilhar evento"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            Compartilhar
-          </button>
-          {onSaveEvent && (
+        <div className="mt-1 flex items-center gap-1.5 min-w-0">
+          {onSaveEvent ? (
             <button
               type="button"
               onClick={openEditEvent}
-              className="px-3 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-button text-xs font-semibold border border-stone-700 inline-flex items-center gap-1.5"
               title="Editar evento"
+              className="group inline-flex items-center gap-2 min-w-0 max-w-full text-left rounded-button hover:opacity-90 transition-opacity"
             >
-              <Edit3 className="w-3.5 h-3.5 text-emerald-400" />
-              Editar evento
+              <h1 className="text-xl sm:text-2xl xl:text-3xl font-display font-bold text-stone-100 leading-tight truncate">
+                {event.title}
+              </h1>
+              <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-500 group-hover:text-emerald-400 shrink-0 transition-colors" />
             </button>
+          ) : (
+            <h1 className="text-xl sm:text-2xl xl:text-3xl font-display font-bold text-stone-100 leading-tight truncate">
+              {event.title}
+            </h1>
           )}
+          <button
+            type="button"
+            onClick={() => setSharePanelOpen((v) => !v)}
+            title={shareEnabled ? 'Compartilhamento ativo' : 'Compartilhar evento'}
+            aria-label="Compartilhar evento"
+            aria-pressed={sharePanelOpen}
+            className={`shrink-0 p-1.5 rounded-button transition-colors ${
+              sharePanelOpen || shareEnabled
+                ? 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10'
+                : 'text-stone-500 hover:text-stone-300 hover:bg-stone-800/80'
+            }`}
+          >
+            <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </button>
         </div>
+        {event.theme && (
+          <p className="text-sm text-stone-400 mt-1">Tema: {event.theme}</p>
+        )}
       </div>
 
       {sharePanelOpen && (
@@ -719,7 +778,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
         </div>
       )}
 
-      <div className="flex flex-wrap gap-1 bg-stone-950 border border-stone-800 p-1 rounded-xl w-fit">
+      <div className="flex flex-row gap-1 bg-stone-950 border border-stone-800 p-1 rounded-xl w-full">
         {tabs
           .filter((t) => t.show)
           .map((t) => {
@@ -729,14 +788,23 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
-                className={`px-4 py-2 rounded-button text-xs font-bold flex items-center gap-2 transition-all ${
+                title={t.alert ? `${t.label} — há pendências de sincronização` : t.label}
+                className={`relative flex-1 min-w-0 px-2 sm:px-4 py-2.5 sm:py-2 rounded-button text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all ${
                   tab === t.id
                     ? 'bg-emerald-500 text-stone-950'
                     : 'text-stone-400 hover:text-stone-200'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                {t.label}
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="truncate">{t.label}</span>
+                {t.alert && (
+                  <AlertTriangle
+                    className={`w-3.5 h-3.5 shrink-0 ${
+                      tab === t.id ? 'text-amber-900' : 'text-amber-400'
+                    }`}
+                    aria-label="Pendências"
+                  />
+                )}
               </button>
             );
           })}
@@ -777,7 +845,21 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       )}
 
       {tab === 'liturgy' && canManageLiturgy && (
-        <div className="w-full space-y-4">
+        <div className="w-full space-y-3 sm:space-y-4">
+          <EventLiturgySetlistSync
+            scope="liturgy"
+            liturgy={liturgy}
+            setlist={setlist}
+            songs={songs}
+            canManageLiturgy={canManageLiturgy}
+            canManageSetlist={canManageSetlist}
+            onSaveLiturgy={onSaveLiturgy}
+            onSaveSetlist={onSaveSetlist}
+            onEnsureLiturgy={onEnsureLiturgy}
+            eventId={event.id}
+            eventTitle={event.title}
+            eventDate={event.date}
+          />
           {!liturgy ? (
             <div className="text-center py-10 bg-stone-900/40 rounded-2xl border border-dashed border-stone-800">
               <FileText className="w-10 h-10 text-stone-600 mx-auto mb-3" />
@@ -801,11 +883,14 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   eventId: event.id,
                   churchId: event.churchId,
                   date: liturgy.date || event.date,
+                  serviceTitle: event.title || liturgy.serviceTitle,
                 },
               ]}
               churches={churchStub}
               songs={songs}
               activeChurchId={event.churchId}
+              linkedEventTitle={event.title}
+              linkedEventDate={event.date}
               embedded
               canManageLiturgies={() => true}
               onSaveLiturgy={onSaveLiturgy}
@@ -817,23 +902,34 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       )}
 
       {tab === 'setlist' && (
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-6 shadow-md w-full">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <h3 className="text-sm font-bold text-stone-100 flex items-center gap-2">
-              <Music className="w-4 h-4 text-emerald-400" />
-              Músicas do evento ({setlistItems.length})
-            </h3>
-            {canManageSetlist && setlist && (
+        <div className="w-full space-y-3 sm:space-y-4">
+          <EventLiturgySetlistSync
+            scope="setlist"
+            liturgy={liturgy}
+            setlist={setlist}
+            songs={songs}
+            canManageLiturgy={canManageLiturgy}
+            canManageSetlist={canManageSetlist}
+            onSaveLiturgy={onSaveLiturgy}
+            onSaveSetlist={onSaveSetlist}
+            onEnsureLiturgy={onEnsureLiturgy}
+            eventId={event.id}
+            eventTitle={event.title}
+            eventDate={event.date}
+          />
+          <div className="bg-stone-900 border border-stone-800 rounded-2xl p-3 sm:p-4 shadow-md w-full">
+          {canManageSetlist && setlist && (
+            <div className="mb-3">
               <button
                 type="button"
                 onClick={() => setAddSongsOpen(true)}
                 className="px-3 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs inline-flex items-center gap-1.5"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Adicionar ao repertório
+                Selecionar músicas
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {!setlist ? (
             <p className="text-xs text-stone-500">
@@ -851,7 +947,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   className="px-3 py-2 bg-stone-800 hover:bg-stone-700 text-emerald-300 font-semibold rounded-button text-xs inline-flex items-center gap-1.5 border border-stone-700"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Adicionar músicas
+                  Selecionar músicas
                 </button>
               )}
             </div>
@@ -877,8 +973,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                     key={item.id}
                     className={`flex items-center justify-between gap-2 border rounded-xl px-3 py-2 ${
                       isCustomized
-                        ? 'bg-emerald-950/30 border-emerald-800/50'
-                        : 'bg-stone-950/60 border-stone-800'
+                        ? 'bg-emerald-950/30 light:bg-emerald-50 border-emerald-800/50 light:border-emerald-200'
+                        : 'bg-stone-950/60 light:bg-slate-50 border-stone-800 light:border-stone-200'
                     }`}
                   >
                     <button
@@ -890,9 +986,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                           versionId ? { eventSongId: versionId } : undefined,
                         )
                       }
-                      className="text-left text-xs text-stone-200 truncate flex-1 min-w-0"
+                      className="text-left text-xs text-stone-200 light:text-stone-900 truncate flex-1 min-w-0"
                     >
-                      <span className="text-emerald-400 font-mono mr-1.5">
+                      <span className="text-emerald-400 light:text-emerald-700 font-mono mr-1.5">
                         {index + 1}.
                       </span>
                       {song
@@ -910,6 +1006,30 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                       )}
                     </button>
                     <div className="flex items-center gap-1 shrink-0">
+                      {canManageSetlist && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => void moveItem(index, 'up')}
+                            disabled={index === 0 || savingSetlist}
+                            className="p-1.5 text-stone-500 light:text-stone-600 hover:text-stone-200 light:hover:text-stone-900 border border-transparent hover:border-stone-700 light:hover:border-stone-300 rounded-button disabled:opacity-25"
+                            title="Mover para cima"
+                            aria-label="Mover para cima"
+                          >
+                            <ArrowUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void moveItem(index, 'down')}
+                            disabled={index === setlistItems.length - 1 || savingSetlist}
+                            className="p-1.5 text-stone-500 light:text-stone-600 hover:text-stone-200 light:hover:text-stone-900 border border-transparent hover:border-stone-700 light:hover:border-stone-300 rounded-button disabled:opacity-25"
+                            title="Mover para baixo"
+                            aria-label="Mover para baixo"
+                          >
+                            <ArrowDown className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      )}
                       {canManageSetlist && song && (
                         <button
                           type="button"
@@ -930,7 +1050,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                           ) : (
                             <CopyPlus className="w-3.5 h-3.5" />
                           )}
-                          <span>
+                          <span className="hidden sm:inline">
                             {isCustomized ? 'Editar versão' : 'Criar versão'}
                           </span>
                         </button>
@@ -939,7 +1059,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                         <button
                           type="button"
                           onClick={() => removeItem(item.id)}
-                          className="p-1.5 text-stone-500 hover:text-rose-400 rounded-button"
+                          className="p-1.5 text-stone-500 light:text-stone-600 hover:text-rose-400 light:hover:text-rose-600 rounded-button"
                           title="Remover do repertório"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -951,6 +1071,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               })}
             </ul>
           )}
+          </div>
         </div>
       )}
 

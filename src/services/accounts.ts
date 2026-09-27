@@ -32,6 +32,9 @@ export async function listRegisteredUsers(status?: AccountStatus): Promise<Regis
     ...row,
     name: row.display_name,
     status: row.account_status,
+    avatar_path: row.avatar_path ?? null,
+    birth_date: row.birth_date ?? null,
+    skills: row.skills ?? [],
   }));
 }
 
@@ -81,6 +84,8 @@ export async function adminUpdateUser(input: {
   phone?: string;
   isAdmin?: boolean;
   accountStatus?: AccountStatus;
+  birthDate?: string | null;
+  skills?: string[];
 }): Promise<void> {
   const sb = requireSupabase();
   const { error } = await sb.rpc('admin_update_user_account', {
@@ -90,6 +95,53 @@ export async function adminUpdateUser(input: {
     p_phone: input.phone?.trim() || null,
     p_is_admin: Boolean(input.isAdmin),
     p_account_status: input.accountStatus ?? null,
+    p_birth_date: input.birthDate?.trim() || null,
+    p_skills: input.skills ?? [],
+  });
+  if (error) throw error;
+}
+
+export async function adminSetUserAvatar(
+  userId: string,
+  avatarPath: string | null,
+): Promise<void> {
+  const sb = requireSupabase();
+  const { error } = await sb.rpc('admin_set_user_avatar', {
+    p_user_id: userId,
+    p_avatar_path: avatarPath,
+  });
+  if (error) throw error;
+}
+
+export async function adminUploadUserAvatar(
+  userId: string,
+  blob: Blob,
+): Promise<string> {
+  const sb = requireSupabase();
+  const path = `${userId}/avatar.jpg`;
+  const { error: uploadErr } = await sb.storage
+    .from('avatars')
+    .upload(path, blob, { upsert: true, contentType: 'image/jpeg' });
+  if (uploadErr) throw uploadErr;
+  await adminSetUserAvatar(userId, path);
+  return path;
+}
+
+export async function adminRemoveUserAvatar(
+  userId: string,
+  currentPath?: string | null,
+): Promise<void> {
+  const sb = requireSupabase();
+  if (currentPath) {
+    await sb.storage.from('avatars').remove([currentPath]);
+  }
+  await adminSetUserAvatar(userId, null);
+}
+
+export async function adminDeleteUser(userId: string): Promise<void> {
+  const sb = requireSupabase();
+  const { error } = await sb.rpc('admin_delete_user_account', {
+    p_user_id: userId,
   });
   if (error) throw error;
 }

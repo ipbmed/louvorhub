@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Song } from '../types';
 import { 
   X, 
@@ -24,10 +24,19 @@ import {
   Maximize2,
   Radio,
 } from 'lucide-react';
-import { transposeLyrics, parseLyricSections, filterSectionsForView, stripChords } from '../utils/chordTransposer';
+import { transposeLyrics, transposeNote, parseLyricSections, filterSectionsForView, stripChords } from '../utils/chordTransposer';
 import { isManualSlideBreak } from '../utils/projectionSlides';
 import { playReferenceTone, stopReferenceTone } from '../utils/audioTone';
 import { MetronomeTool } from './MetronomeTool';
+
+function transposeSongKey(key: string, semitones: number): string {
+  const trimmed = (key || 'C').trim() || 'C';
+  if (semitones === 0) return trimmed;
+  const isMinor = /m$/i.test(trimmed) && !/maj/i.test(trimmed);
+  const root = trimmed.replace(/m$/i, '');
+  const newRoot = transposeNote(root, semitones, root.includes('b'));
+  return isMinor ? `${newRoot}m` : newRoot;
+}
 import { SongMediaPlayer } from './SongMediaPlayer';
 import { ChordLyricLine } from './ChordLyricLine';
 import { LyricSectionHeading } from './LyricSectionHeading';
@@ -76,6 +85,27 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
   const [showUnreviewedDialog, setShowUnreviewedDialog] = useState(false);
   const [unreviewedAckSongId, setUnreviewedAckSongId] = useState<string | null>(null);
   const [showMedia, setShowMedia] = useState(false);
+  const lyricsScrollRef = useRef<HTMLDivElement>(null);
+  const mediaLinksRef = useRef<HTMLDivElement>(null);
+  const mediaCount = song ? getCombinedMediaLinks(song).length : 0;
+
+  useEffect(() => {
+    if (!showMedia || mediaCount <= 0) return;
+    // Aguarda o painel montar no DOM e então rola até ele
+    const id = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const panel = mediaLinksRef.current;
+        const scroller = lyricsScrollRef.current;
+        if (!panel || !scroller) return;
+        const top =
+          panel.getBoundingClientRect().top -
+          scroller.getBoundingClientRect().top +
+          scroller.scrollTop;
+        scroller.scrollTo({ top: Math.max(0, top - 4), behavior: 'smooth' });
+      });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [showMedia, mediaCount]);
 
   useEffect(() => {
     setSemitones(0);
@@ -143,6 +173,14 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
     ? transposeLyrics(song.lyrics, semitones) 
     : song.lyrics;
 
+  const currentKey = transposeSongKey(song.originalKey || 'C', semitones);
+
+  const changeSemitones = (delta: number) => {
+    const next = semitones + delta;
+    setSemitones(next);
+    void playReferenceTone(transposeSongKey(song.originalKey || 'C', next));
+  };
+
   const sections = filterSectionsForView(
     parseLyricSections(processedLyrics),
     showChords ? 'chords' : 'lyrics',
@@ -169,7 +207,6 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
   };
 
   const isHino = (song.songType || (song.number ? 'hino' : 'cantico')) === 'hino';
-  const mediaCount = getCombinedMediaLinks(song).length;
 
   return (
     <div className="fixed inset-0 z-50 bg-stone-900 flex flex-col overflow-hidden animate-in fade-in duration-200 text-stone-100">
@@ -311,7 +348,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
               <div className="flex items-center bg-stone-900 border border-stone-800 rounded-xl p-1 gap-1">
                 <span className="text-stone-400 px-1 font-mono text-[10px] uppercase">Tom</span>
                 <button
-                  onClick={() => setSemitones(prev => prev - 1)}
+                  onClick={() => changeSemitones(-1)}
                   className="px-2 py-1 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded font-bold rounded-button"
                   title="Abaixar meio tom"
                 >
@@ -321,7 +358,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
                   {semitones > 0 ? `+${semitones}` : semitones}
                 </span>
                 <button
-                  onClick={() => setSemitones(prev => prev + 1)}
+                  onClick={() => changeSemitones(1)}
                   className="px-2 py-1 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded font-bold rounded-button"
                   title="Aumentar meio tom"
                 >
@@ -329,7 +366,10 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
                 </button>
                 {semitones !== 0 && (
                   <button
-                    onClick={() => setSemitones(0)}
+                    onClick={() => {
+                      setSemitones(0);
+                      void playReferenceTone(song.originalKey || 'C');
+                    }}
                     className="p-1 text-emerald-400 hover:text-emerald-200 rounded-button"
                     title="Restaurar Tom Original"
                   >
@@ -346,12 +386,12 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
             
             {/* Tone Pitch Sound */}
             <button
-              onClick={() => void playReferenceTone(song.originalKey || 'C')}
+              onClick={() => void playReferenceTone(currentKey)}
               className="px-2.5 py-1.5 bg-stone-900 hover:bg-emerald-900/40 text-stone-300 hover:text-emerald-300 border border-stone-800 rounded-button flex items-center gap-1 font-mono transition-colors"
               title="Ouvir Nota de Afinação para o Tom"
             >
               <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Som ({song.originalKey || 'C'})</span>
+              <span>Som ({currentKey})</span>
             </button>
 
             {mediaCount > 0 && (
@@ -464,9 +504,12 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
         )}
 
         {/* Lyrics Content Area */}
-        <div className="overflow-y-auto flex-1">
+        <div ref={lyricsScrollRef} className="overflow-y-auto flex-1">
           {showMedia && mediaCount > 0 && (
-            <div className="w-full bg-stone-950 border-b border-stone-800 p-4 animate-in slide-in-from-top duration-200">
+            <div
+              ref={mediaLinksRef}
+              className="w-full bg-stone-950 border-b border-stone-800 p-4 animate-in slide-in-from-top duration-200"
+            >
               <SongMediaPlayer
                 key={song.id}
                 song={song}

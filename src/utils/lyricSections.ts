@@ -174,6 +174,7 @@ function matchMarkerLine(
 /**
  * Divide a letra em seções por marcadores `[TAG]`, blocos sem tag e comentários `###`.
  * Anotações: `[REFRAO]:2x` → label "Refrão" + annotation "2x".
+ * Estrofe com texto ao lado: `[ESTROFE] 1` → label "Estrofe 1" (sem numeração automática).
  */
 export function parseLyricSections(lyrics: string): LyricSection[] {
   const lines = (lyrics || '').replace(/\r\n/g, '\n').split('\n');
@@ -244,11 +245,32 @@ export function parseLyricSections(lyrics: string): LyricSection[] {
     const marker = matchMarkerLine(trimmed);
     if (marker) {
       flush();
+      const sideText = marker.annotation;
+      let label: string;
+      let annotation = sideText;
+
+      // [ESTROFE] 1 → "Estrofe 1" (sem numerar de novo; o texto ao lado é o rótulo)
+      if (marker.def.type === 'verse' && sideText) {
+        label = `${marker.def.name} ${sideText}`;
+        annotation = '';
+        const explicitNum = Number.parseInt(sideText, 10);
+        if (!Number.isNaN(explicitNum)) {
+          verseCount = Math.max(verseCount, explicitNum);
+          typeCounts.set('verse', Math.max(typeCounts.get('verse') || 0, explicitNum));
+        } else {
+          const n = (typeCounts.get('verse') || 0) + 1;
+          typeCounts.set('verse', n);
+          verseCount = Math.max(verseCount, n);
+        }
+      } else {
+        label = bumpLabel(marker.def);
+      }
+
       current = {
         type: marker.def.type,
         key: marker.def.key,
-        label: bumpLabel(marker.def),
-        annotation: marker.annotation,
+        label,
+        annotation,
         lines: [],
         tagged: true,
       };
@@ -281,16 +303,27 @@ const LYRICS_VISIBLE = new Set(
 // Blocos sem tag (legado) também aparecem no modo letra
 LYRICS_VISIBLE.add('verse');
 
+/** Há texto cantado além de cifras `[C]` / marcadores. */
+function sectionHasSungText(section: LyricSection): boolean {
+  return section.lines.some((line) => line.replace(/\[[^\]]*\]/g, '').trim().length > 0);
+}
+
 /**
  * Modo cifra: todas as seções (inclui intro, solo, comentários…).
- * Modo letra: só trechos cantados (estrofe, pré/pós-refrão, refrão, ponte, outro).
+ * Modo letra: trechos cantados (estrofe, pré/pós-refrão, refrão, ponte, outro).
+ * Também inclui seções “instrumentais” (intro/solo/…) que na prática têm letra —
+ * comum em cifras importadas onde a letra fica sob [INTRO].
  */
 export function filterSectionsForView(
   sections: LyricSection[],
   mode: 'chords' | 'lyrics',
 ): LyricSection[] {
   if (mode === 'chords') return sections;
-  return sections.filter((s) => LYRICS_VISIBLE.has(s.type) && s.type !== 'comment');
+  return sections.filter((s) => {
+    if (s.type === 'comment') return false;
+    if (LYRICS_VISIBLE.has(s.type)) return true;
+    return sectionHasSungText(s);
+  });
 }
 
 export function sectionMarkerToken(key: string): string {

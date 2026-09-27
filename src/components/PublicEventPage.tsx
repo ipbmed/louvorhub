@@ -204,8 +204,9 @@ export const PublicEventPage: React.FC<PublicEventPageProps> = ({ shareCode: sha
                   <FileText className="w-4 h-4 text-emerald-400" />
                   Liturgia
                 </h2>
-                {(data.liturgy.preacher || data.liturgy.leader || data.liturgy.bibleVerse) && (
+                {(data.liturgy.preacher || data.liturgy.leader || data.liturgy.bibleVerse || data.liturgy.theme) && (
                   <div className="text-xs text-stone-400 space-y-0.5 bg-stone-900/60 border border-stone-800 rounded-xl px-3 py-2">
+                    {data.liturgy.theme && <p>Tema: {data.liturgy.theme}</p>}
                     {data.liturgy.bibleVerse && <p>Texto: {data.liturgy.bibleVerse}</p>}
                     {data.liturgy.preacher && <p>Pregador: {data.liturgy.preacher}</p>}
                     {data.liturgy.leader && <p>Liturgo: {data.liturgy.leader}</p>}
