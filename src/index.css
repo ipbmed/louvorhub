@@ -158,6 +158,12 @@ html.light {
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+@utility top-safe {
+  top: env(safe-area-inset-top, 0px);
+}
+@utility h-safe {
+  height: env(safe-area-inset-top, 0px);
+}
 @utility pb-nav {
   /* Espaço para a barra de navegação inferior no mobile */
   padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));

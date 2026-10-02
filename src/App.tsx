@@ -63,6 +63,7 @@ import { AlphabetFilter, AlphabetFilterToggle } from './components/AlphabetFilte
 import { SongTypeFilter, matchesSongTypeFilter } from './components/SongTypeFilter';
 import { AppSidebar } from './components/AppSidebar';
 import { MobileNav } from './components/MobileNav';
+import { CatalogSearchBar } from './components/CatalogSearchBar';
 import { ProfilePage } from './components/ProfilePage';
 import {
   Music,
@@ -1180,11 +1181,16 @@ export default function App() {
   }
 
   const showMobileNav = Boolean(user) && !songMatch && !songVersionMatch;
+  const hideHeaderOnMobile = Boolean(user);
 
   return (
     <div className="min-h-[100dvh] bg-app text-fg flex flex-col font-sans">
+      {hideHeaderOnMobile && !songMatch && (
+        <div className="md:hidden fixed top-0 inset-x-0 h-safe z-40 bg-app" aria-hidden />
+      )}
       {!songMatch && (
         <Header
+          hideOnMobile={hideHeaderOnMobile}
           onViewChange={handleViewChange}
           quickNumberQuery={quickQuery}
           onQuickNumberChange={handleQuickQueryChange}
@@ -1228,7 +1234,7 @@ export default function App() {
       )}
 
       {!songMatch && (
-      <div className="flex flex-1 w-full min-h-0">
+      <div className={cn('flex flex-1 w-full min-h-0', hideHeaderOnMobile && 'pt-safe md:pt-0')}>
         {user && (
           <AppSidebar
             currentView={currentView}
@@ -1494,6 +1500,18 @@ export default function App() {
           <CatalogSongsLoading layout={songsLayout} />
         ) : (
           <div className="w-full space-y-4 sm:space-y-5">
+            {hideHeaderOnMobile && (
+              <div className="md:hidden sticky top-safe z-20 -mx-3 -mt-3 px-3 py-2.5 bg-app/95 backdrop-blur-md border-b border-line">
+                <CatalogSearchBar
+                  value={quickQuery}
+                  onChange={handleQuickQueryChange}
+                  onOpenKeypad={() => setShowKeypad(true)}
+                  onOpenAdvancedSearch={() => setShowAdvancedSearch(true)}
+                  showFavoritesOnly={showFavoritesOnly}
+                  onToggleFavoritesOnly={() => void handleToggleFavoritesOnly()}
+                />
+              </div>
+            )}
             <div className="flex flex-col gap-3 ui-card p-3 sm:p-4 rounded-2xl sm:rounded-3xl">
               {categories.length > 0 && (
                 <div

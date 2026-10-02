@@ -229,8 +229,8 @@ export const ChurchWorkspace: React.FC<ChurchWorkspaceProps> = ({
 
   return (
     <div className="w-full animate-in fade-in duration-300">
-      {/* Desktop / tablet: cabeçalho completo (rola junto com a página) */}
-      <div className="hidden sm:block">
+      {/* Cabeçalho da igreja (rola junto com a página) */}
+      <div>
         <PageHeader
           icon={Church}
           title={church.name}
@@ -243,7 +243,13 @@ export const ChurchWorkspace: React.FC<ChurchWorkspaceProps> = ({
           actions={
             <>
               {canEdit && (
-                <Button variant="secondary" size="sm" icon={Edit3} onClick={openEdit}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={Edit3}
+                  onClick={openEdit}
+                  className="hidden sm:inline-flex"
+                >
                   Editar
                 </Button>
               )}
@@ -259,7 +265,7 @@ export const ChurchWorkspace: React.FC<ChurchWorkspaceProps> = ({
 
       {tabs.length > 1 && (
         <div
-          className="sticky top-14 sm:top-16 z-20 w-full border-b border-line bg-surface/95 backdrop-blur-md"
+          className="sticky top-safe md:top-16 z-20 w-full border-b border-line bg-surface/95 backdrop-blur-md"
           role="tablist"
           aria-label="Navegação da igreja"
         >
@@ -305,20 +311,11 @@ export const ChurchWorkspace: React.FC<ChurchWorkspaceProps> = ({
             />
           ) : (
             <div className="space-y-3 sm:space-y-4">
-              {/* Mobile: título + contato */}
-              <div className="sm:hidden flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="font-display text-xl font-bold text-fg tracking-tight leading-tight">
-                    {church.name}
-                  </h2>
-                  {(address || leader) && (
-                    <p className="text-[11px] text-fg-subtle mt-0.5 truncate">
-                      {[address, leader && `Líder: ${leader}`].filter(Boolean).join(' · ')}
-                    </p>
-                  )}
-                </div>
-                {canEdit && <IconButton icon={Edit3} label="Editar igreja" size="sm" onClick={openEdit} />}
-              </div>
+              {(address || leader) && (
+                <p className="sm:hidden text-[11px] text-fg-subtle truncate">
+                  {[address, leader && `Líder: ${leader}`].filter(Boolean).join(' · ')}
+                </p>
+              )}
 
               {/* Atalhos dos módulos */}
               <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">

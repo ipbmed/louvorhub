@@ -14,7 +14,10 @@ import {
   HelpCircle,
   Download,
   Check,
+  Sun,
+  Moon,
 } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeProvider';
 import { ViewMode } from '../types';
 import { getAvatarPublicUrl } from '@/utils/avatarUrl';
 import { WORKSPACE_VIEWS } from './ChurchWorkspace';
@@ -110,6 +113,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const hasWorkspace = orgOptions.length > 0;
   const multiOrg = orgOptions.length > 1;
   const { canInstall, promptInstall } = usePwa();
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     if (!orgMenuOpen) return;
@@ -384,7 +388,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       {/* Desktop */}
       <aside
         className={cn(
-          'hidden lg:flex shrink-0 flex-col border-r border-line bg-surface h-[calc(100vh-4.5rem)] sticky top-[4.5rem] self-start transition-[width] duration-200 ease-out',
+          'hidden lg:flex shrink-0 flex-col border-r border-line bg-surface h-[calc(100vh-4rem)] sticky top-16 self-start transition-[width] duration-200 ease-out',
           desktopExpanded ? 'w-64' : 'w-[4.25rem]',
         )}
       >
@@ -435,6 +439,42 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               </button>
             </div>
             <div className="pt-3 flex-1 min-h-0 flex flex-col">{renderNav(false)}</div>
+            <div className="px-3 pb-3 shrink-0">
+              <p className="px-2 mb-1.5 text-[10px] uppercase tracking-wider text-fg-subtle font-bold">
+                Aparência
+              </p>
+              <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-muted border border-line" role="radiogroup" aria-label="Tema">
+                {(
+                  [
+                    { value: 'light', label: 'Claro', Icon: Sun },
+                    { value: 'dark', label: 'Escuro', Icon: Moon },
+                  ] as const
+                ).map(({ value, label, Icon }) => {
+                  const selected = theme === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => setTheme(value)}
+                      className={cn(
+                        'flex items-center justify-center gap-2 min-h-10 rounded-lg text-sm font-semibold transition-all touch-manipulation',
+                        selected ? 'bg-surface text-fg shadow-sm' : 'text-fg-subtle hover:text-fg',
+                      )}
+                    >
+                      <Icon
+                        className={cn(
+                          'w-4 h-4',
+                          selected && (value === 'light' ? 'text-amber-500' : 'text-brand-text'),
+                        )}
+                      />
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             {renderUserBlock(false)}
             {onSignOut && (
               <div className="px-3 pb-4 shrink-0">

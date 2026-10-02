@@ -44,6 +44,8 @@ interface HeaderProps {
   /** Mobile: editar igreja (lápis no ícone). */
   canEditActiveChurch?: boolean;
   onEditActiveChurch?: () => void;
+  /** Oculta o cabeçalho no celular (navegação fica no menu e na barra inferior). */
+  hideOnMobile?: boolean;
 }
 
 const iconBtn =
@@ -68,6 +70,7 @@ export const Header: React.FC<HeaderProps> = ({
   activeChurchName,
   canEditActiveChurch = false,
   onEditActiveChurch,
+  hideOnMobile = false,
 }) => {
   const [inputVal, setInputVal] = useState(quickNumberQuery);
   const { canInstall, install } = usePwa();
@@ -149,7 +152,12 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-surface/92 backdrop-blur-md text-fg border-b border-line shadow-[0_1px_0_0_var(--line)] pt-safe">
+    <header
+      className={cn(
+        'sticky top-0 z-30 w-full bg-surface/92 backdrop-blur-md text-fg border-b border-line shadow-[0_1px_0_0_var(--line)] pt-safe',
+        hideOnMobile && 'hidden md:block',
+      )}
+    >
       <div className="w-full px-3 sm:px-5 lg:px-6">
         <div className="flex items-center gap-2 sm:gap-3 h-14 sm:h-16 w-full">
           {/* Esquerda — menu + marca */}
