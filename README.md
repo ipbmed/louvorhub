@@ -27,8 +27,18 @@ Ou execute manualmente os SQL em:
 - `supabase/migrations/20260801210000_org_sigla.sql`
 - `supabase/migrations/20260808220000_louvorhub_extensions.sql`
 
-3. Em **Authentication → URL Configuration**, inclua os redirects do app (ex.: `http://localhost:3000/**`).
-4. Habilite o provider **Email** com magic link / OTP.
+3. Em **Authentication → URL Configuration**:
+   - **Site URL**: o domínio de produção (ex.: `https://louvorhub.seudominio.com.br`).
+   - **Redirect URLs**: todos os domínios onde o app roda, com `/**` no final, por exemplo:
+     - `https://louvorhub.seudominio.com.br/**`
+     - `http://localhost:3000/**`
+     - domínios de preview, se houver (ex.: `https://*.vercel.app/**`)
+
+   O app pede o magic link com o domínio em que foi aberto (`window.location.origin`).
+   Se esse domínio não estiver em **Redirect URLs**, o Supabase o ignora sem avisar e usa o
+   **Site URL**. É por isso que o link pode voltar para `localhost` mesmo em produção.
+4. Habilite o provider **Email** com magic link / OTP. Em **Authentication → Email Templates → Magic Link**,
+   o link deve usar `{{ .ConfirmationURL }}` (e não `{{ .SiteURL }}`), senão o destino é sempre o Site URL.
 
 ## App local
 
