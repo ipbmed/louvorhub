@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton } from './PageHeader';
 import { getProfileSkills } from '@/constants/skills';
+import { useConfirm } from '@/contexts/ConfirmProvider';
 
 interface ChurchManagerProps {
   churches: Church[];
@@ -60,6 +61,7 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
   lockedChurchId = null,
   embedded = false,
 }) => {
+  const confirm = useConfirm();
   const churches = useMemo(() => {
     let list = churchesProp;
     if (lockedChurchId) {
@@ -457,9 +459,13 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
                       </button>
                       <button
                         onClick={() => {
-                          if (confirm(`Deseja excluir a igreja "${activeChurch.name}" e seus dados?`)) {
-                            onDeleteChurch(activeChurch.id);
-                          }
+                          void confirm({
+                            title: 'Excluir igreja',
+                            message: `A igreja "${activeChurch.name}" e todos os seus dados (eventos, grupos, membros) serão removidos.`,
+                            confirmLabel: 'Excluir igreja',
+                          }).then((ok) => {
+                            if (ok) onDeleteChurch(activeChurch.id);
+                          });
                         }}
                         className="p-2 bg-stone-800 hover:bg-rose-950/80 text-stone-400 hover:text-rose-300 rounded-button border border-stone-700 transition-colors"
                         title="Excluir Igreja"
@@ -545,9 +551,13 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
                                 </button>
                                 <button
                                   onClick={() => {
-                                    if (confirm(`Remover o grupo "${musicGroup.name}"?`)) {
-                                      onDeleteMusicGroup(musicGroup.id);
-                                    }
+                                    void confirm({
+                                      title: 'Remover grupo',
+                                      message: `O grupo "${musicGroup.name}" e sua lista de integrantes serão removidos.`,
+                                      confirmLabel: 'Remover grupo',
+                                    }).then((ok) => {
+                                      if (ok) onDeleteMusicGroup(musicGroup.id);
+                                    });
                                   }}
                                   className="p-1.5 text-stone-400 hover:text-rose-400 hover:bg-stone-800 rounded-button transition-colors"
                                   title="Excluir Grupo"

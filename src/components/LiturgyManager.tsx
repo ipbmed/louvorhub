@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton } from './PageHeader';
 import { SongSearchSelect } from './SongSearchSelect';
+import { useConfirm } from '@/contexts/ConfirmProvider';
 import {
   LITURGY_MARKDOWN_EXAMPLE,
   LITURGY_MARKDOWN_HELP,
@@ -67,6 +68,7 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
   embedded = false,
   canManageLiturgies = (_orgId?: string | null) => true,
 }) => {
+  const confirm = useConfirm();
   const churches =
     allowedChurchIds === null
       ? churchesProp
@@ -384,9 +386,13 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
 
                       <button
                         onClick={() => {
-                          if (confirm('Excluir esta liturgia?')) {
-                            onDeleteLiturgy(liturgy.id);
-                          }
+                          void confirm({
+                            title: 'Excluir liturgia',
+                            message: `A ordem do culto "${liturgy.serviceTitle}" e seus itens serão removidos.`,
+                            confirmLabel: 'Excluir liturgia',
+                          }).then((ok) => {
+                            if (ok) onDeleteLiturgy(liturgy.id);
+                          });
                         }}
                         className="p-1.5 text-stone-400 light:text-stone-600 hover:text-rose-400 light:hover:text-rose-700 hover:bg-stone-800 light:hover:bg-rose-50 rounded-button"
                         title="Excluir Liturgia"

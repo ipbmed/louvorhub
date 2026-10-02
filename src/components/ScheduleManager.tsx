@@ -10,6 +10,7 @@ import {
   SystemUser
 } from '../types';
 import { ScheduleSongEditorModal } from './ScheduleSongEditorModal';
+import { useConfirm } from '@/contexts/ConfirmProvider';
 import { 
   Calendar, 
   Clock, 
@@ -92,6 +93,7 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
   onSelectSong,
   onOpenSetlist,
 }) => {
+  const confirm = useConfirm();
   const [displayMode, setDisplayMode] = useState<'month' | 'list'>(embedded ? 'list' : 'month');
   const [listScope, setListScope] = useState<'agenda' | 'all'>(embedded ? 'all' : 'agenda');
   const [filterChurchId, setFilterChurchId] = useState<string>(activeChurchId || 'all');
@@ -985,9 +987,13 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
 
                       <button
                         onClick={() => {
-                          if (confirm('Deseja excluir esta escala?')) {
-                            onDeleteSchedule(sched.id);
-                          }
+                          void confirm({
+                            title: 'Excluir escala',
+                            message: 'A equipe e as confirmações desta escala serão removidas.',
+                            confirmLabel: 'Excluir escala',
+                          }).then((ok) => {
+                            if (ok) onDeleteSchedule(sched.id);
+                          });
                         }}
                         className="p-1.5 text-stone-400 hover:text-rose-400 hover:bg-stone-800 rounded-button"
                         title="Excluir Escala"

@@ -35,6 +35,7 @@ import { PageHeader, PageHeaderButton } from './PageHeader';
 import { KNOWN_SKILLS } from '@/constants/skills';
 import { getAvatarPublicUrl } from '@/utils/avatarUrl';
 import { AvatarCropDialog } from './AvatarCropDialog';
+import { useConfirm } from '@/contexts/ConfirmProvider';
 
 interface AccountManagerProps {
   onAccountsChanged?: () => void;
@@ -77,6 +78,7 @@ function normalizeSkill(value: string): string {
 }
 
 export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChanged }) => {
+  const confirm = useConfirm();
   const [accounts, setAccounts] = useState<RegisteredUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<'all' | AccountStatus>('all');
@@ -258,13 +260,12 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
 
   const handleDelete = async (account: RegisteredUser) => {
     setMenuOpenId(null);
-    if (
-      !confirm(
-        `Excluir a conta de ${account.display_name}?\n\nEsta ação remove o acesso e não pode ser desfeita.`,
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: 'Excluir conta',
+      message: `A conta de ${account.display_name} (${account.email}) será excluída e o acesso ao LouvorHub removido.`,
+      confirmLabel: 'Excluir conta',
+    });
+    if (!ok) return;
     setActionId(account.id);
     setErrorMsg('');
     try {

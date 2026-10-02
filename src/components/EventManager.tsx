@@ -17,6 +17,7 @@ import {
 import type { ChurchEvent, MusicGroup } from '../types';
 import { EVENT_TITLE_SUGGESTIONS } from '../constants/eventTitles';
 import { PageHeader, PageHeaderButton } from './PageHeader';
+import { useConfirm } from '@/contexts/ConfirmProvider';
 
 type DisplayMode = 'calendar' | 'month' | 'week' | 'agenda';
 
@@ -96,6 +97,7 @@ export const EventManager: React.FC<EventManagerProps> = ({
   onDeleteEvent,
   onOpenEvent,
 }) => {
+  const confirm = useConfirm();
   const [displayMode, setDisplayMode] = useState<DisplayMode>(readStoredDisplayMode);
   const [listScope, setListScope] = useState<'agenda' | 'all'>('agenda');
 
@@ -349,9 +351,13 @@ export const EventManager: React.FC<EventManagerProps> = ({
             <button
               type="button"
               onClick={() => {
-                if (confirm('Excluir este evento e a escala vinculada?')) {
-                  onDeleteEvent(ev.id);
-                }
+                void confirm({
+                  title: 'Excluir evento',
+                  message: `"${ev.title}" será removido junto com a escala, a liturgia e o repertório vinculados.`,
+                  confirmLabel: 'Excluir evento',
+                }).then((ok) => {
+                  if (ok) onDeleteEvent(ev.id);
+                });
               }}
               className="p-1.5 text-stone-500 hover:text-rose-400 rounded-button"
               title="Excluir"

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Category } from '../types';
-import { X, Plus, Trash2, Edit2, Check, Tag } from 'lucide-react';
+import { Plus, Tag, Trash2 } from 'lucide-react';
+import { useConfirm } from '@/contexts/ConfirmProvider';
+import { Button, EmptyState, IconButton, Input, Modal } from './ui';
 
 interface CategoryManagerModalProps {
   categories: Category[];
@@ -13,19 +15,24 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
   onSaveCategories,
   onClose,
 }) => {
+  const confirm = useConfirm();
   const [catList, setCatList] = useState<Category[]>(categories);
   const [newCatName, setNewCatName] = useState<string>('');
   const [newCatDesc, setNewCatDesc] = useState<string>('');
 
   const handleAddCategory = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCatName.trim()) return;
+    const name = newCatName.trim();
+    if (!name) return;
+    if (catList.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+      return;
+    }
 
     const newCatObj: Category = {
       id: `cat-${Date.now()}`,
-      name: newCatName.trim(),
+      name,
       description: newCatDesc.trim() || undefined,
-      color: 'amber'
+      color: 'amber',
     };
 
     const updated = [...catList, newCatObj];
@@ -36,88 +43,98 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
     setNewCatDesc('');
   };
 
-  const handleDeleteCategory = (id: string) => {
-    const updated = catList.filter(c => c.id !== id);
+  const handleDeleteCategory = async (cat: Category) => {
+    const ok = await confirm({
+      title: 'Excluir categoria',
+      message: `As músicas em "${cat.name}" ficarão sem categoria. Deseja continuar?`,
+      confirmLabel: 'Excluir',
+    });
+    if (!ok) return;
+    const updated = catList.filter((c) => c.id !== cat.id);
     setCatList(updated);
     onSaveCategories(updated);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl text-stone-100 relative">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-stone-800 mb-5">
-          <div className="flex items-center gap-2">
-            <Tag className="w-5 h-5 text-emerald-400 light:text-emerald-600" />
-            <h3 className="text-xl font-display font-bold text-emerald-100 light:text-stone-900 tracking-tight">
-              Gerenciar Categorias de Hinos
-            </h3>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+  const duplicate =
+    newCatName.trim() !== '' &&
+    catList.some((c) => c.name.toLowerCase() === newCatName.trim().toLowerCase());
 
-        {/* Form to add new category */}
-        <form onSubmit={handleAddCategory} className="space-y-3 mb-6 bg-stone-950 light:bg-stone-50 p-4 rounded-2xl border border-stone-800 light:border-stone-200">
-          <h4 className="text-xs font-mono font-bold uppercase text-emerald-400 light:text-emerald-700">
-            Nova Categoria
-          </h4>
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      icon={Tag}
+      title="Categorias de músicas"
+      subtitle="Agrupe hinos e cânticos para facilitar a busca no catálogo."
+      size="md"
+      footer={<Button onClick={onClose}>Concluir</Button>}
+    >
+      <div className="space-y-5">
+        <form
+          onSubmit={handleAddCategory}
+          className="rounded-2xl border border-line bg-surface-2/60 p-3.5 space-y-2.5"
+        >
+          <p className="text-[10px] font-bold uppercase tracking-wider text-brand-text">
+            Nova categoria
+          </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <input
-              type="text"
+            <Input
               required
               value={newCatName}
               onChange={(e) => setNewCatName(e.target.value)}
-              placeholder="Nome da categoria (ex: Infantil)"
-              className="w-full bg-stone-900 border border-stone-800 rounded-xl p-2.5 text-xs text-stone-100 placeholder-stone-500 focus:outline-none"
+              placeholder="Nome (ex.: Infantil)"
+              invalid={duplicate}
+              aria-label="Nome da categoria"
             />
-            <input
-              type="text"
+            <Input
               value={newCatDesc}
               onChange={(e) => setNewCatDesc(e.target.value)}
               placeholder="Descrição curta (opcional)"
-              className="w-full bg-stone-900 border border-stone-800 rounded-xl p-2.5 text-xs text-stone-100 placeholder-stone-500 focus:outline-none"
+              aria-label="Descrição da categoria"
             />
           </div>
-          <button
-            type="submit"
-            className="w-full py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs flex items-center justify-center gap-1.5 transition-all shadow-md"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Adicionar Categoria</span>
-          </button>
+          {duplicate && (
+            <p className="text-[11px] text-danger-text font-medium">Já existe uma categoria com este nome.</p>
+          )}
+          <Button type="submit" icon={Plus} block size="sm" disabled={!newCatName.trim() || duplicate}>
+            Adicionar categoria
+          </Button>
         </form>
 
-        {/* Current Categories List */}
-        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-          {catList.map((cat) => (
-            <div
-              key={cat.id}
-              className="p-3 bg-stone-950 border border-stone-800/80 rounded-xl flex items-center justify-between gap-2 text-xs"
-            >
-              <div>
-                <p className="font-bold text-stone-100">{cat.name}</p>
-                {cat.description && (
-                  <p className="text-[11px] text-stone-400">{cat.description}</p>
-                )}
-              </div>
-              <button
-                onClick={() => handleDeleteCategory(cat.id)}
-                className="p-1.5 text-rose-400 hover:bg-rose-950/60 rounded-button"
-                title="Excluir Categoria"
+        {catList.length === 0 ? (
+          <EmptyState
+            compact
+            icon={Tag}
+            title="Nenhuma categoria"
+            description="Adicione a primeira categoria acima."
+            className="!shadow-none !border-dashed"
+          />
+        ) : (
+          <ul className="space-y-1.5">
+            {catList.map((cat) => (
+              <li
+                key={cat.id}
+                className="px-3 py-2.5 rounded-xl border border-line bg-surface flex items-center justify-between gap-3 text-xs"
               >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-        </div>
-
+                <div className="min-w-0">
+                  <p className="font-bold text-fg truncate">{cat.name}</p>
+                  {cat.description && (
+                    <p className="text-[11px] text-fg-muted truncate">{cat.description}</p>
+                  )}
+                </div>
+                <IconButton
+                  icon={Trash2}
+                  label={`Excluir categoria ${cat.name}`}
+                  size="sm"
+                  variant="ghost"
+                  className="hover:!bg-danger-soft hover:!text-danger-text"
+                  onClick={() => void handleDeleteCategory(cat)}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 };

@@ -20,6 +20,7 @@ import { validateSongVersionFields, type SongVersionFieldErrors } from '@/lib/so
 import { transposeLyrics, transposeNote, parseLyricSections } from '../utils/chordTransposer';
 import { LyricSectionHeading } from './LyricSectionHeading';
 import { ChordLyricLine } from './ChordLyricLine';
+import { useConfirm } from '@/contexts/ConfirmProvider';
 
 interface ScheduleSongEditorModalProps {
   schedule: WorshipSchedule;
@@ -43,6 +44,7 @@ export const ScheduleSongEditorModal: React.FC<ScheduleSongEditorModalProps> = (
   onResetToOriginal,
   onClose,
 }) => {
+  const confirm = useConfirm();
   const [key, setKey] = useState<string>(
     customization?.originalKey || song.originalKey || 'C'
   );
@@ -213,10 +215,17 @@ export const ScheduleSongEditorModal: React.FC<ScheduleSongEditorModalProps> = (
             <button
               type="button"
               onClick={() => {
-                if (confirm('Deseja descartar a versão própria desta escala e restaurar a versão original do acervo?')) {
+                void confirm({
+                  title: 'Restaurar versão original',
+                  message:
+                    'A versão própria desta escala (tom, letra e observações) será descartada e a música voltará à versão do catálogo.',
+                  confirmLabel: 'Restaurar original',
+                  tone: 'warning',
+                }).then((ok) => {
+                  if (!ok) return;
                   onResetToOriginal(song.id);
                   onClose();
-                }
+                });
               }}
               className="text-[11px] text-rose-400 hover:text-rose-300 hover:underline flex items-center gap-1 font-semibold pb-1 rounded-button"
             >

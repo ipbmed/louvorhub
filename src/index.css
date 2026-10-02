@@ -1,16 +1,145 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant light (&:where(.light, .light *));
 @custom-variant dark (&:where(.dark, .dark *));
+/* Modo app instalado (PWA standalone) */
+@custom-variant standalone (@media (display-mode: standalone));
 
 /*
-  Design tokens
-  --radius-button: botões, CTAs, controles clicáveis
-  --font-display: títulos de UI (páginas, dialogs) — sans distinta do texto
+  =============================================================================
+  DESIGN TOKENS SEMÂNTICOS
+  Use estas classes nos componentes novos/migrados:
+    bg-app · bg-surface · bg-surface-2 · bg-muted
+    text-fg · text-fg-muted · text-fg-subtle
+    border-line · border-line-strong
+    bg-brand · text-brand-fg · bg-brand-soft · text-brand-text · border-brand-line
+    bg-danger-soft · text-danger-text · border-danger-line (idem warning/info)
+  Elas trocam automaticamente entre tema escuro e claro via variáveis CSS.
+  =============================================================================
 */
+:root,
+html.dark {
+  --app: #0c0a09;
+  --surface: #1c1917;
+  --surface-2: #171412;
+  --muted: #292524;
+  --muted-hover: #3b3634;
+  --line: rgb(68 64 60 / 0.7);
+  --line-strong: #57534e;
+  --fg: #f5f5f4;
+  --fg-muted: #a8a29e;
+  --fg-subtle: #78716c;
+
+  --brand: #10b981;
+  --brand-hover: #34d399;
+  --brand-fg: #052e16;
+  --brand-soft: rgb(16 185 129 / 0.14);
+  --brand-text: #6ee7b7;
+  --brand-line: rgb(16 185 129 / 0.35);
+
+  --danger: #f43f5e;
+  --danger-soft: rgb(244 63 94 / 0.14);
+  --danger-text: #fda4af;
+  --danger-line: rgb(244 63 94 / 0.4);
+
+  --warning: #f59e0b;
+  --warning-soft: rgb(245 158 11 / 0.14);
+  --warning-text: #fcd34d;
+  --warning-line: rgb(245 158 11 / 0.4);
+
+  --info: #3b82f6;
+  --info-soft: rgb(59 130 246 / 0.14);
+  --info-text: #93c5fd;
+  --info-line: rgb(59 130 246 / 0.4);
+
+  --overlay: rgb(12 10 9 / 0.78);
+  --shadow-color: 0 0 0;
+  --ring: rgb(16 185 129 / 0.55);
+}
+
+html.light {
+  --app: #f1f5f9;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --muted: #e2e8f0;
+  --muted-hover: #cbd5e1;
+  --line: #e2e8f0;
+  --line-strong: #94a3b8;
+  --fg: #0f172a;
+  --fg-muted: #475569;
+  --fg-subtle: #64748b;
+
+  --brand: #059669;
+  --brand-hover: #047857;
+  --brand-fg: #ffffff;
+  --brand-soft: #ecfdf5;
+  --brand-text: #047857;
+  --brand-line: #a7f3d0;
+
+  --danger: #e11d48;
+  --danger-soft: #fff1f2;
+  --danger-text: #be123c;
+  --danger-line: #fecdd3;
+
+  --warning: #d97706;
+  --warning-soft: #fffbeb;
+  --warning-text: #92400e;
+  --warning-line: #fde68a;
+
+  --info: #2563eb;
+  --info-soft: #eff6ff;
+  --info-text: #1d4ed8;
+  --info-line: #bfdbfe;
+
+  --overlay: rgb(15 23 42 / 0.5);
+  --shadow-color: 15 23 42;
+  --ring: rgb(5 150 105 / 0.45);
+}
+
 @theme {
+  /* Breakpoint extra para celulares maiores em modo retrato. */
+  --breakpoint-xs: 30rem;
+}
+
+@theme inline {
   --radius-button: 0.5rem; /* 8px */
   --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --color-app: var(--app);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-muted: var(--muted);
+  --color-muted-hover: var(--muted-hover);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-fg: var(--brand-fg);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-text: var(--brand-text);
+  --color-brand-line: var(--brand-line);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-text: var(--danger-text);
+  --color-danger-line: var(--danger-line);
+
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-text: var(--warning-text);
+  --color-warning-line: var(--warning-line);
+
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-text: var(--info-text);
+  --color-info-line: var(--info-line);
+
+  --color-overlay: var(--overlay);
 }
 
 @utility rounded-button {
@@ -22,8 +151,46 @@
   border-top-right-radius: var(--radius-button);
 }
 
+/* Áreas seguras (notch / barra inferior) para o app instalado. */
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@utility pb-nav {
+  /* Espaço para a barra de navegação inferior no mobile */
+  padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px));
+}
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+@utility focus-ring {
+  outline: none;
+  &:focus-visible {
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--ring);
+  }
+}
+
 /* Garante o raio padrão mesmo sem utility explícita. */
 @layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior-y: none;
+  }
+
   button:not(.rounded-full):not(.rounded-none),
   input[type="button"]:not(.rounded-full):not(.rounded-none),
   input[type="submit"]:not(.rounded-full):not(.rounded-none),
@@ -36,6 +203,59 @@
     cursor: pointer;
   }
 
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  /* Foco visível consistente em toda a aplicação (teclado). */
+  :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Evita zoom automático do iOS ao focar inputs (fonte mínima 16px no mobile). */
+  @media (max-width: 640px) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    select,
+    textarea {
+      font-size: max(16px, 1em);
+    }
+  }
+
+  ::selection {
+    background-color: rgb(16 185 129 / 0.35);
+  }
+
+  /* Scrollbar discreta */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--line-strong);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   html.dark body {
     background-color: #0c0a09;
     color: #f5f5f4;
@@ -44,6 +264,71 @@
   html.light body {
     background-color: #f1f5f9;
     color: #020617;
+  }
+}
+
+/*
+  Componentes base compartilhados (classes utilitárias de alto nível).
+  Preferir os componentes React em src/components/ui; estas classes existem
+  para inputs/áreas onde um componente seria excessivo.
+*/
+@layer components {
+  .ui-input {
+    width: 100%;
+    min-height: 2.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--line-strong);
+    background-color: var(--surface-2);
+    color: var(--fg);
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      background-color 150ms ease;
+  }
+  .ui-input::placeholder {
+    color: var(--fg-subtle);
+  }
+  .ui-input:focus {
+    outline: none;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px var(--brand-soft);
+  }
+  .ui-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .ui-input[aria-invalid="true"] {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px var(--danger-soft);
+  }
+  html.light .ui-input,
+  html.light select.ui-input,
+  html.light textarea.ui-input {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+  }
+  html.light .ui-input:focus {
+    border-color: #059669 !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+  }
+
+  .ui-card {
+    background-color: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgb(var(--shadow-color) / 0.06);
+  }
+
+  .ui-label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--fg-muted);
+    letter-spacing: 0.01em;
   }
 }
 

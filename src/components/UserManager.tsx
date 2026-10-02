@@ -41,6 +41,7 @@ import {
   revokeOrgInvitation,
 } from '@/services/invitations';
 import { useToast } from '@/contexts/ToastProvider';
+import { useConfirm } from '@/contexts/ConfirmProvider';
 import type { RegisteredUser } from '@/types';
 import { getAvatarPublicUrl } from '@/utils/avatarUrl';
 
@@ -110,6 +111,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
   onDeleteUser,
 }) => {
   const { showToast } = useToast();
+  const confirm = useConfirm();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -374,7 +376,14 @@ export const UserManager: React.FC<UserManagerProps> = ({
   };
 
   const handleRevokeInvitation = async (id: string) => {
-    if (!confirm('Cancelar este convite pendente?')) return;
+    const ok = await confirm({
+      title: 'Cancelar convite',
+      message: 'O link enviado deixará de funcionar. Você poderá convidar novamente depois.',
+      confirmLabel: 'Cancelar convite',
+      cancelLabel: 'Manter',
+      tone: 'warning',
+    });
+    if (!ok) return;
     setRevokingId(id);
     try {
       await revokeOrgInvitation(id);
@@ -702,9 +711,13 @@ export const UserManager: React.FC<UserManagerProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      if (confirm(`Deseja remover o membro ${user.name}?`)) {
-                        onDeleteUser(user.id);
-                      }
+                      void confirm({
+                        title: 'Remover membro',
+                        message: `${user.name} deixará de fazer parte desta igreja. A conta continua existindo.`,
+                        confirmLabel: 'Remover',
+                      }).then((ok) => {
+                        if (ok) onDeleteUser(user.id);
+                      });
                     }}
                     className="p-1.5 text-stone-400 hover:text-rose-400 hover:bg-stone-800 rounded-button transition-colors"
                     title="Remover membro"
@@ -823,9 +836,13 @@ export const UserManager: React.FC<UserManagerProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        if (confirm(`Deseja remover o membro ${user.name}?`)) {
-                          onDeleteUser(user.id);
-                        }
+                        void confirm({
+                          title: 'Remover membro',
+                          message: `${user.name} deixará de fazer parte desta igreja. A conta continua existindo.`,
+                          confirmLabel: 'Remover',
+                        }).then((ok) => {
+                          if (ok) onDeleteUser(user.id);
+                        });
                       }}
                       className="p-1.5 text-stone-400 hover:text-rose-400 hover:bg-stone-800 rounded-button transition-colors"
                       title="Remover membro"

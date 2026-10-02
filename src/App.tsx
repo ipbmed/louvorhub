@@ -62,13 +62,56 @@ import { InviteAcceptPage } from './components/InviteAcceptPage';
 import { AlphabetFilter, AlphabetFilterToggle } from './components/AlphabetFilter';
 import { SongTypeFilter, matchesSongTypeFilter } from './components/SongTypeFilter';
 import { AppSidebar } from './components/AppSidebar';
+import { MobileNav } from './components/MobileNav';
 import { ProfilePage } from './components/ProfilePage';
-import { Music, ArrowUpDown, AlertCircle, LayoutGrid, List, Loader2 } from 'lucide-react';
+import {
+  Music,
+  ArrowUpDown,
+  AlertCircle,
+  LayoutGrid,
+  List,
+  Loader2,
+  BookOpen,
+  Church as ChurchIcon,
+  KeyRound,
+  SearchX,
+  FilterX,
+} from 'lucide-react';
 import { CatalogSongsLoading } from './components/CatalogSongsLoading';
 import { HelpModal } from './components/HelpModal';
+import { useConfirm } from '@/contexts/ConfirmProvider';
+import { Alert, Button, EmptyState, Input, Select, cn } from './components/ui';
 
 type SongsLayoutMode = 'cards' | 'list';
 const SONGS_LAYOUT_KEY = 'louvorhub_songs_layout';
+
+const VALID_VIEWS: ViewMode[] = [
+  'public',
+  'register',
+  'workspace',
+  'setlist',
+  'churches',
+  'organizations',
+  'events',
+  'schedules',
+  'liturgies',
+  'users',
+  'accounts',
+  'admin',
+  'profile',
+];
+
+/** Lê `?view=` (atalhos do PWA) e limpa a URL. */
+function readInitialView(): ViewMode | null {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get('view');
+    if (v && (VALID_VIEWS as string[]).includes(v)) return v as ViewMode;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
 
 const INITIAL_FILTERS: SearchFilters = {
   keyword: '',
@@ -105,6 +148,7 @@ export default function App() {
   const { ready, user, profile, signOut, configured, refreshMemberships, refreshProfile } = useAuth();
   const { showToast } = useToast();
   const { withBusy } = useApiBusy();
+  const confirm = useConfirm();
   const { orgId, memberships, setActiveOrgId, activeOrgId } = useOrg();
   const {
     isAdmin,
@@ -123,6 +167,7 @@ export default function App() {
     refreshGrants,
   } = usePermissions();
 
+  const [pendingShortcutView] = useState<ViewMode | null>(readInitialView);
   const [currentView, setCurrentView] = useState<ViewMode>('public');
   const [activeCategoryPill, setActiveCategoryPill] = useState('Todos');
   const [selectedLetter, setSelectedLetter] = useState('TODAS');
@@ -254,6 +299,22 @@ export default function App() {
     setQuickQuery(val);
     if (val.trim()) goToCatalog();
   };
+
+  // Atalhos do PWA (?view=setlist etc.): aplica após a sessão estar pronta.
+  useEffect(() => {
+    if (!ready || !pendingShortcutView) return;
+    if (window.location.search) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+    if (pendingShortcutView === 'public') return;
+    if (!user && PROTECTED_VIEWS.includes(pendingShortcutView)) {
+      setShowLogin(true);
+      return;
+    }
+    if (pendingShortcutView === 'workspace' && !orgId) return;
+    setCurrentView(pendingShortcutView);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, pendingShortcutView, user, orgId]);
 
   // Visitante: somente consulta de músicas
   useEffect(() => {
@@ -464,11 +525,14 @@ export default function App() {
     );
   };
 
-  const handleDeleteSong = (song: Song) => {
+  const handleDeleteSong = async (song: Song) => {
     const label = song.number ? `hino #${song.number}` : `cântico "${song.title}"`;
-    if (confirm(`Tem certeza que deseja excluir o ${label}?`)) {
-      void withBusy(() => deleteSongMutation.mutateAsync(song.id));
-    }
+    const ok = await confirm({
+      title: 'Excluir música',
+      message: `Tem certeza que deseja excluir o ${label}? Ele sairá do catálogo e das playlists.`,
+      confirmLabel: 'Excluir música',
+    });
+    if (ok) void withBusy(() => deleteSongMutation.mutateAsync(song.id));
   };
 
   const handleSaveCategories = async (updated: Category[]) => {
@@ -563,7 +627,12 @@ export default function App() {
   };
 
   const handleDeleteChurch = async (id: string) => {
-    if (!confirm('Remover esta igreja? Esta ação é irreversível.')) return;
+    const ok = await confirm({
+      title: 'Remover igreja',
+      message: 'Todos os eventos, grupos e membros vinculados serão perdidos. Esta ação é irreversível.',
+      confirmLabel: 'Remover igreja',
+    });
+    if (!ok) return;
     return withBusy(async () => {
       try {
         await orgsService.deleteOrganization(id);
@@ -930,9 +999,9 @@ export default function App() {
           await songsService.importSongsBulk(orgId!, data.songs);
         }
         await invalidateAll();
-        showToast('Dados importados no Supabase!');
+        showToast('Dados importados com sucesso!');
       } catch {
-        alert('Formato de arquivo JSON inválido.');
+        showToast('Formato de arquivo JSON inválido.', 'error');
       }
     };
     reader.readAsText(file);
@@ -1072,7 +1141,7 @@ export default function App() {
 
   if (inviteToken) {
     return (
-      <div className="min-h-screen bg-stone-950 text-stone-100 font-sans">
+      <div className="min-h-screen bg-app text-fg font-sans">
         <InviteAcceptPage />
       </div>
     );
@@ -1093,20 +1162,27 @@ export default function App() {
       !songsQuery.isError &&
       (songsQuery.isPending || songsQuery.isFetching);
     return (
-      <div className="min-h-screen bg-stone-950 text-stone-200 flex flex-col items-center justify-center gap-3 px-6">
-        <Loader2 className="w-9 h-9 text-emerald-400 animate-spin" />
-        <p className="text-sm font-semibold text-stone-200">
-          {loadingSongs ? 'Carregando músicas…' : 'Carregando…'}
-        </p>
-        <p className="text-[11px] text-stone-500 text-center">
-          {loadingSongs ? 'Montando o catálogo' : 'Preparando a sessão'}
-        </p>
+      <div className="min-h-[100dvh] bg-app text-fg flex flex-col items-center justify-center gap-5 px-6 animate-in fade-in duration-300">
+        <div className="w-20 h-20 rounded-[1.5rem] bg-gradient-to-br from-emerald-400 to-emerald-700 flex items-center justify-center text-emerald-950 shadow-xl shadow-emerald-500/25 ring-1 ring-emerald-300/40">
+          <BookOpen className="w-10 h-10" strokeWidth={2.25} />
+        </div>
+        <div className="text-center space-y-1">
+          <p className="text-2xl font-display font-extrabold tracking-tight">
+            Louvor<span className="text-brand-text">Hub</span>
+          </p>
+          <p className="text-xs text-fg-subtle">
+            {loadingSongs ? 'Montando o catálogo de músicas…' : 'Preparando sua sessão…'}
+          </p>
+        </div>
+        <Loader2 className="w-6 h-6 text-brand-text animate-spin" />
       </div>
     );
   }
 
+  const showMobileNav = Boolean(user) && !songMatch && !songVersionMatch;
+
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col font-sans">
+    <div className="min-h-[100dvh] bg-app text-fg flex flex-col font-sans">
       {!songMatch && (
         <Header
           onViewChange={handleViewChange}
@@ -1188,52 +1264,73 @@ export default function App() {
         )}
 
       <main
-        className={`flex-1 w-full min-w-0 space-y-4 sm:space-y-6 transition-[padding] duration-200 ${
+        className={cn(
+          'flex-1 w-full min-w-0 space-y-4 sm:space-y-6 transition-[padding] duration-200',
           isWorkspaceShell
             ? 'px-0 py-0 sm:py-0'
             : isEventDetail
-              ? 'px-2 sm:px-4 lg:px-5 xl:px-6 2xl:px-8 py-3 sm:py-8'
-              : 'px-2.5 sm:px-6 lg:px-8 py-3 sm:py-8'
-        }`}
+              ? 'px-2 sm:px-4 lg:px-5 xl:px-6 2xl:px-8 py-3 sm:py-6'
+              : 'px-3 sm:px-6 lg:px-8 py-3 sm:py-6',
+          showMobileNav && 'pb-nav lg:pb-6',
+        )}
       >
         {!configured && (
-          <div className="bg-rose-950/40 border border-rose-800 rounded-2xl p-4 text-sm text-rose-100 flex gap-2">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            Configure <code className="mx-1">VITE_SUPABASE_URL</code> e{' '}
-            <code className="mx-1">VITE_SUPABASE_ANON_KEY</code> no arquivo{' '}
-            <code className="mx-1">.env.local</code>.
-          </div>
+          <Alert tone="danger" title="Backend não configurado">
+            Configure <code className="mx-0.5 font-mono">VITE_SUPABASE_URL</code> e{' '}
+            <code className="mx-0.5 font-mono">VITE_SUPABASE_ANON_KEY</code> no arquivo{' '}
+            <code className="mx-0.5 font-mono">.env.local</code>.
+          </Alert>
         )}
 
         {configured && songsQuery.isError && (
-          <div className="bg-rose-950/40 border border-rose-800 rounded-2xl p-4 text-sm text-rose-100 flex gap-2">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            <div>
-              <p className="font-semibold">Erro ao carregar songs</p>
-              <p className="text-xs mt-1 opacity-90">
-                {(songsQuery.error as Error)?.message || 'Falha na consulta à tabela songs.'}
-              </p>
-            </div>
-          </div>
+          <Alert
+            tone="danger"
+            title="Não foi possível carregar as músicas"
+            action={
+              <Button size="xs" variant="danger-soft" onClick={() => void songsQuery.refetch()}>
+                Tentar novamente
+              </Button>
+            }
+          >
+            {(songsQuery.error as Error)?.message || 'Falha na consulta ao catálogo.'}
+          </Alert>
         )}
 
-        {configured && user && !orgId && (
-          <div className="bg-emerald-950/40 border border-emerald-800 rounded-2xl p-4 text-sm space-y-3">
-            <p>Você ainda não pertence a nenhuma igreja. Crie uma em “Igrejas” ou entre com o código:</p>
-            <div className="flex gap-2">
-              <input
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value)}
-                placeholder="Código de convite"
-                className="flex-1 bg-stone-950 border border-stone-700 rounded-xl px-3 py-2 text-xs"
-              />
-              <button
-                onClick={handleJoinOrg}
-                className="px-4 py-2 bg-emerald-500 text-stone-950 font-bold rounded-button text-xs"
-              >
-                Entrar
-              </button>
+        {configured && user && !orgId && currentView !== 'register' && (
+          <div className="ui-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="w-11 h-11 rounded-xl bg-brand-soft text-brand-text border border-brand-line flex items-center justify-center shrink-0">
+                <ChurchIcon className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-fg">Você ainda não faz parte de uma igreja</p>
+                <p className="text-xs text-fg-muted mt-0.5">
+                  Peça o código de convite ao líder da sua igreja e informe abaixo.
+                </p>
+              </div>
             </div>
+            <form
+              className="flex gap-2 w-full sm:w-auto"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleJoinOrg();
+              }}
+            >
+              <div className="relative flex-1 sm:w-56">
+                <KeyRound className="w-4 h-4 text-fg-subtle absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Input
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value)}
+                  placeholder="Código de convite"
+                  aria-label="Código de convite"
+                  className="pl-9 min-h-10"
+                  autoCapitalize="characters"
+                />
+              </div>
+              <Button type="submit" size="sm" className="h-10" disabled={!joinCode.trim()}>
+                Entrar
+              </Button>
+            </form>
           </div>
         )}
 
@@ -1396,64 +1493,82 @@ export default function App() {
         ) : catalogSongsLoading ? (
           <CatalogSongsLoading layout={songsLayout} />
         ) : (
-          <div className="w-full space-y-4 sm:space-y-6">
-            <div className="flex flex-col gap-3 bg-stone-900/60 p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-stone-800/80">
-              <div className="flex flex-wrap items-center gap-1.5">
-                {categories.map((cat) => {
-                  const count = songs.filter((h) => h.category === cat.name).length;
-                  const isSelected = activeCategoryPill === cat.name;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() =>
-                        setActiveCategoryPill(isSelected ? 'Todos' : cat.name)
-                      }
-                      className={`min-h-9 px-3 py-1.5 rounded-button text-xs font-semibold transition-all border touch-manipulation ${
-                        isSelected
-                          ? 'bg-emerald-500 text-stone-950 border-emerald-400 font-bold shadow-sm'
-                          : 'bg-stone-800/80 light:bg-stone-100 text-stone-300 light:text-stone-700 border-stone-700/80 light:border-stone-200 hover:bg-stone-700/80 light:hover:bg-stone-200'
-                      }`}
-                    >
-                      {cat.name} ({count})
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="flex items-center gap-1.5 min-w-0 text-xs text-stone-400 light:text-stone-500">
-                <div className="flex items-center gap-1 flex-1 min-w-0 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div className="w-full space-y-4 sm:space-y-5">
+            <div className="flex flex-col gap-3 ui-card p-3 sm:p-4 rounded-2xl sm:rounded-3xl">
+              {categories.length > 0 && (
+                <div
+                  className="flex items-center gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1 sm:flex-wrap sm:overflow-visible"
+                  role="group"
+                  aria-label="Categorias"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setActiveCategoryPill('Todos')}
+                    aria-pressed={activeCategoryPill === 'Todos'}
+                    className={cn(
+                      'shrink-0 min-h-9 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border touch-manipulation',
+                      activeCategoryPill === 'Todos'
+                        ? 'bg-brand text-brand-fg border-transparent font-bold shadow-sm'
+                        : 'bg-muted text-fg-muted border-transparent hover:bg-muted-hover hover:text-fg',
+                    )}
+                  >
+                    Todas
+                    <span className="ml-1 opacity-70 tabular-nums">{songs.length}</span>
+                  </button>
+                  {categories.map((cat) => {
+                    const count = songs.filter((h) => h.category === cat.name).length;
+                    const isSelected = activeCategoryPill === cat.name;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setActiveCategoryPill(isSelected ? 'Todos' : cat.name)}
+                        aria-pressed={isSelected}
+                        className={cn(
+                          'shrink-0 min-h-9 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border touch-manipulation',
+                          isSelected
+                            ? 'bg-brand text-brand-fg border-transparent font-bold shadow-sm'
+                            : 'bg-muted text-fg-muted border-transparent hover:bg-muted-hover hover:text-fg',
+                        )}
+                      >
+                        {cat.name}
+                        <span className="ml-1 opacity-70 tabular-nums">{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="flex items-center gap-2 min-w-0 text-xs text-fg-muted">
+                <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-x-auto overscroll-x-contain scrollbar-none">
                   <div
-                    className="flex items-center shrink-0 bg-stone-800 light:bg-stone-100 border border-stone-700 light:border-stone-200 rounded-xl p-0.5"
+                    className="flex items-center shrink-0 bg-muted border border-line rounded-xl p-0.5"
                     role="group"
                     aria-label="Modo de visualização"
                   >
-                    <button
-                      type="button"
-                      onClick={() => handleSongsLayoutChange('cards')}
-                      aria-label="Visualização em cards"
-                      className={`flex items-center justify-center gap-1.5 min-h-9 min-w-9 sm:min-w-0 px-2 sm:px-2.5 py-1.5 rounded-button font-semibold transition-all touch-manipulation ${
-                        songsLayout === 'cards'
-                          ? 'bg-emerald-500 text-stone-950 shadow-sm'
-                          : 'text-stone-400 light:text-stone-600 hover:text-stone-200 light:hover:text-stone-900'
-                      }`}
-                      title="Visualização em cards"
-                    >
-                      <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
-                      <span className="hidden sm:inline">Cards</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSongsLayoutChange('list')}
-                      aria-label="Listagem simples"
-                      className={`flex items-center justify-center gap-1.5 min-h-9 min-w-9 sm:min-w-0 px-2 sm:px-2.5 py-1.5 rounded-button font-semibold transition-all touch-manipulation ${
-                        songsLayout === 'list'
-                          ? 'bg-emerald-500 text-stone-950 shadow-sm'
-                          : 'text-stone-400 light:text-stone-600 hover:text-stone-200 light:hover:text-stone-900'
-                      }`}
-                      title="Listagem simples"
-                    >
-                      <List className="w-3.5 h-3.5 shrink-0" />
-                      <span className="hidden sm:inline">Lista</span>
-                    </button>
+                    {(
+                      [
+                        { mode: 'cards', label: 'Cards', Icon: LayoutGrid },
+                        { mode: 'list', label: 'Lista', Icon: List },
+                      ] as const
+                    ).map(({ mode, label, Icon }) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => handleSongsLayoutChange(mode)}
+                        aria-label={`Visualização em ${label.toLowerCase()}`}
+                        aria-pressed={songsLayout === mode}
+                        title={`Visualização em ${label.toLowerCase()}`}
+                        className={cn(
+                          'flex items-center justify-center gap-1.5 min-h-8 min-w-9 sm:min-w-0 px-2 sm:px-2.5 rounded-lg font-semibold transition-all touch-manipulation',
+                          songsLayout === mode
+                            ? 'bg-surface text-fg shadow-sm'
+                            : 'text-fg-subtle hover:text-fg',
+                        )}
+                      >
+                        <Icon className="w-3.5 h-3.5 shrink-0" />
+                        <span className="hidden sm:inline">{label}</span>
+                      </button>
+                    ))}
                   </div>
                   <SongTypeFilter
                     showHinos={showHinos}
@@ -1468,19 +1583,19 @@ export default function App() {
                   />
                 </div>
 
-                <label className="flex items-center gap-1 shrink-0 pl-1.5 sm:pl-0 border-l border-stone-800/80 light:border-stone-200 sm:border-0">
+                <label className="flex items-center gap-1.5 shrink-0">
                   <ArrowUpDown className="w-3.5 h-3.5 shrink-0" aria-hidden />
                   <span className="hidden md:inline shrink-0 font-medium">Ordem</span>
-                  <select
+                  <Select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as 'number' | 'title' | 'recent')}
                     aria-label="Ordenação"
-                    className="min-h-9 max-w-[6.25rem] sm:max-w-none bg-stone-800 light:bg-white border border-stone-700 light:border-stone-300 text-stone-200 light:text-stone-900 rounded-button px-1.5 sm:px-2.5 py-1.5 text-[11px] sm:text-xs font-medium focus:outline-none touch-manipulation"
+                    className="min-h-9 !py-1 !text-xs w-auto max-w-[7.5rem] sm:max-w-none"
                   >
-                    <option value="number">Por Número</option>
-                    <option value="title">Por Título</option>
-                    <option value="recent">Mais Recentes</option>
-                  </select>
+                    <option value="number">Por número</option>
+                    <option value="title">Por título</option>
+                    <option value="recent">Mais recentes</option>
+                  </Select>
                 </label>
               </div>
 
@@ -1554,27 +1669,50 @@ export default function App() {
                 ))}
               </div>
               )
+            ) : songs.length === 0 ? (
+              <EmptyState
+                icon={Music}
+                title="Catálogo vazio"
+                description={
+                  canManageSongs
+                    ? 'Nenhuma música cadastrada ainda. Cadastre a primeira música ou importe um arquivo JSON no painel de músicas.'
+                    : 'Nenhuma música disponível no momento. Fale com o administrador da sua igreja.'
+                }
+                action={
+                  canManageSongs ? (
+                    <Button icon={Music} onClick={() => setSongToEdit('new')}>
+                      Cadastrar música
+                    </Button>
+                  ) : undefined
+                }
+              />
             ) : (
-              <div className="bg-stone-900/40 border border-stone-800 rounded-3xl p-12 text-center space-y-3">
-                <Music className="w-12 h-12 text-stone-600 mx-auto" />
-                <h3 className="text-xl font-serif font-bold text-stone-200">Nenhuma música encontrada</h3>
-                <p className="text-xs text-stone-400 max-w-sm mx-auto">
-                  {songs.length === 0
-                    ? 'Nenhuma música visível na tabela songs (verifique is_public / org global e o RLS).'
-                    : 'Não encontramos músicas com os filtros selecionados.'}
-                </p>
-                <button
-                  onClick={() => {
-                    setActiveCategoryPill('Todos');
-                    setShowFavoritesOnly(false);
-                    setQuickQuery('');
-                    setAdvancedFilters(INITIAL_FILTERS);
-                  }}
-                  className="mt-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-emerald-300 rounded-button text-xs font-semibold border border-stone-700"
-                >
-                  Limpar filtros
-                </button>
-              </div>
+              <EmptyState
+                icon={SearchX}
+                title="Nenhuma música encontrada"
+                description={
+                  quickQuery.trim()
+                    ? `Não encontramos resultados para “${quickQuery.trim()}”. Verifique a grafia ou tente buscar pelo número ou por um trecho da letra.`
+                    : 'Não encontramos músicas com os filtros selecionados. Remova alguns filtros para ampliar a busca.'
+                }
+                action={
+                  <Button
+                    variant="secondary"
+                    icon={FilterX}
+                    onClick={() => {
+                      setActiveCategoryPill('Todos');
+                      setShowFavoritesOnly(false);
+                      setQuickQuery('');
+                      setSelectedLetter('TODAS');
+                      setShowHinos(true);
+                      setShowCanticos(true);
+                      setAdvancedFilters(INITIAL_FILTERS);
+                    }}
+                  >
+                    Limpar filtros
+                  </Button>
+                }
+              />
             )}
           </div>
         )}
@@ -1582,30 +1720,39 @@ export default function App() {
       </div>
       )}
 
+      {showMobileNav && (
+        <MobileNav
+          currentView={currentView}
+          onViewChange={handleViewChange}
+          hasWorkspace={Boolean(orgId)}
+          onOpenMenu={() => setSidebarDrawerOpen(true)}
+          hidden={Boolean(projectionSongs)}
+        />
+      )}
+
       {activeSongRouteId &&
         (selectedEventSongId
           ? selectedSongVersionQuery.isError
           : selectedSongQuery.isError) && (
-        <div className="fixed inset-0 z-50 bg-stone-900 flex flex-col items-center justify-center gap-3 text-stone-100 px-6">
-          <AlertCircle className="w-8 h-8 text-rose-400" />
-          <p className="text-sm font-semibold">
-            {selectedEventSongId ? 'Versão não encontrada' : 'Música não encontrada'}
-          </p>
-          <p className="text-xs text-stone-400 text-center max-w-sm">
-            {(
-              (selectedEventSongId
-                ? selectedSongVersionQuery.error
-                : selectedSongQuery.error) as Error
-            )?.message ||
-              'Este link pode estar inválido ou a música não está disponível.'}
-          </p>
-          <button
-            type="button"
-            onClick={closeSongPage}
-            className="mt-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-emerald-300 rounded-button text-xs font-semibold border border-stone-700"
-          >
-            Voltar
-          </button>
+        <div className="fixed inset-0 z-50 bg-app flex items-center justify-center px-6">
+          <EmptyState
+            tone="danger"
+            icon={AlertCircle}
+            title={selectedEventSongId ? 'Versão não encontrada' : 'Música não encontrada'}
+            description={
+              (
+                (selectedEventSongId
+                  ? selectedSongVersionQuery.error
+                  : selectedSongQuery.error) as Error
+              )?.message || 'Este link pode estar inválido ou a música não está disponível.'
+            }
+            action={
+              <Button variant="secondary" onClick={closeSongPage}>
+                Voltar ao catálogo
+              </Button>
+            }
+            className="w-full max-w-md"
+          />
         </div>
       )}
 

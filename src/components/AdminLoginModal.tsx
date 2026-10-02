@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { X, Mail, ShieldCheck, AlertCircle, Info, Loader2 } from 'lucide-react';
+import { Mail, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthProvider';
+import { Alert, Button, Field, Input, Modal } from './ui';
 
 interface AdminLoginModalProps {
   onClose: () => void;
@@ -48,91 +49,83 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl text-stone-100 relative">
-        <div className="flex items-center justify-between pb-4 border-b border-stone-800 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 light:bg-emerald-100 text-emerald-300 light:text-emerald-800 flex items-center justify-center font-bold border border-emerald-500/30 light:border-emerald-300 shadow-inner">
-              <Mail className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-xl font-display font-bold text-emerald-100 light:text-stone-900 tracking-tight">Entrar no LouvorHub</h3>
-              <p className="text-xs text-stone-400 light:text-stone-500">Magic link por e-mail</p>
-            </div>
+    <Modal
+      open
+      onClose={handleClose}
+      locked={loading}
+      icon={sent ? ShieldCheck : Mail}
+      title={sent ? 'Verifique seu e-mail' : 'Entrar no LouvorHub'}
+      subtitle={sent ? undefined : 'Sem senha: enviamos um link de acesso para o seu e-mail.'}
+      size="sm"
+      footer={
+        sent ? (
+          <Button block onClick={handleClose}>
+            Fechar
+          </Button>
+        ) : (
+          <>
+            {onGoToRegister && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  handleClose();
+                  onGoToRegister();
+                }}
+                className="mr-auto"
+              >
+                Criar conta
+              </Button>
+            )}
+            <Button type="submit" form="login-form" loading={loading} icon={Mail}>
+              Enviar link de acesso
+            </Button>
+          </>
+        )
+      }
+    >
+      {sent ? (
+        <div className="text-center space-y-3 py-2">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-brand-soft border border-brand-line text-brand-text flex items-center justify-center">
+            <ShieldCheck className="w-8 h-8" />
           </div>
-          <button onClick={handleClose} className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="bg-emerald-950/40 light:bg-emerald-50 border border-emerald-800/40 light:border-emerald-200 rounded-2xl p-3.5 mb-6 text-xs text-emerald-200/90 light:text-emerald-800 flex items-start gap-2.5">
-          <Info className="w-4 h-4 text-emerald-400 light:text-emerald-600 shrink-0 mt-0.5" />
-          <p>
-            Só contas já cadastradas e aprovadas recebem magic link. Se ainda não tem cadastro, crie
-            sua conta e aguarde a aprovação do administrador.
+          <p className="text-sm text-fg font-semibold">Link enviado para {email}</p>
+          <p className="text-xs text-fg-muted leading-relaxed">
+            Abra o e-mail neste aparelho e toque no link para entrar. Se não aparecer em alguns
+            minutos, confira a caixa de spam.
           </p>
         </div>
+      ) : (
+        <form id="login-form" onSubmit={(e) => void handleLogin(e)} className="space-y-4">
+          <Alert tone="info">
+            <span className="inline-flex items-start gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <span>
+                Só contas já cadastradas e aprovadas recebem o link. Ainda não tem cadastro?
+                Crie sua conta e aguarde a aprovação do administrador.
+              </span>
+            </span>
+          </Alert>
 
-        {errorMsg && (
-          <div className="bg-rose-950/60 border border-rose-800/60 rounded-2xl p-3 mb-4 text-xs text-rose-300 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
+          {errorMsg && <Alert tone="danger">{errorMsg}</Alert>}
 
-        {sent ? (
-          <div className="text-center space-y-3 py-4">
-            <ShieldCheck className="w-10 h-10 text-emerald-400 mx-auto" />
-            <p className="text-sm text-emerald-100 font-semibold">Link enviado!</p>
-            <p className="text-xs text-stone-400">
-              Verifique sua caixa de entrada ({email}) e abra o magic link para entrar.
-            </p>
-            <button
-              onClick={handleClose}
-              className="mt-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 rounded-button text-xs font-semibold"
-            >
-              Fechar
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleLogin} className="space-y-4 text-sm">
-            <div>
-              <label className="block text-stone-400 font-semibold mb-1">E-mail</label>
-              <input
+          <Field label="E-mail" required>
+            {(id) => (
+              <Input
+                id={id}
                 type="email"
+                inputMode="email"
+                autoComplete="email"
+                autoCapitalize="none"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="voce@igreja.org"
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                autoFocus
               />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-stone-950 font-bold rounded-button shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 text-sm transition-all mt-6"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-              <span>Enviar magic link</span>
-            </button>
-            {onGoToRegister && (
-              <p className="text-xs text-stone-500 text-center pt-1">
-                Ainda não tem cadastro?{' '}
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleClose();
-                    onGoToRegister();
-                  }}
-                  className="text-emerald-400 hover:text-emerald-300 font-semibold"
-                >
-                  Criar conta
-                </button>
-              </p>
             )}
-          </form>
-        )}
-      </div>
-    </div>
+          </Field>
+        </form>
+      )}
+    </Modal>
   );
 };

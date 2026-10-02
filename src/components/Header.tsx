@@ -3,19 +3,22 @@ import {
   BookOpen,
   Search,
   SlidersHorizontal,
-  Lock,
-  LockOpen,
-  Grid,
+  LogIn,
+  LogOut,
+  Hash,
   Heart,
   Menu,
   X,
   Church,
   Edit3,
+  Download,
 } from 'lucide-react';
 import { ViewMode } from '../types';
 import { PublicEventsFab } from './PublicEventsFab';
 import { ThemeToggle } from './ThemeToggle';
 import { WORKSPACE_VIEWS } from './ChurchWorkspace';
+import { usePwa } from '@/contexts/PwaProvider';
+import { cn } from './ui/cn';
 
 interface HeaderProps {
   onViewChange: (view: ViewMode) => void;
@@ -43,6 +46,9 @@ interface HeaderProps {
   onEditActiveChurch?: () => void;
 }
 
+const iconBtn =
+  'inline-flex items-center justify-center w-10 h-10 rounded-button border border-line bg-muted/70 text-fg-muted hover:text-fg hover:bg-muted-hover transition-colors touch-manipulation shrink-0';
+
 export const Header: React.FC<HeaderProps> = ({
   onViewChange,
   quickNumberQuery,
@@ -64,13 +70,12 @@ export const Header: React.FC<HeaderProps> = ({
   onEditActiveChurch,
 }) => {
   const [inputVal, setInputVal] = useState(quickNumberQuery);
+  const { canInstall, install } = usePwa();
   const showMobileSearch = currentView === 'public';
-  const churchBrandLabel =
-    activeChurchSigla?.trim() ||
-    activeChurchName?.trim() ||
-    '';
-  const inChurchWorkspace =
-    Boolean(isAuthenticated && churchBrandLabel && WORKSPACE_VIEWS.includes(currentView));
+  const churchBrandLabel = activeChurchSigla?.trim() || activeChurchName?.trim() || '';
+  const inChurchWorkspace = Boolean(
+    isAuthenticated && churchBrandLabel && (WORKSPACE_VIEWS as string[]).includes(currentView),
+  );
   const canOpenSelectedChurch = Boolean(isAuthenticated && churchBrandLabel);
 
   useEffect(() => {
@@ -79,9 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   const handleQuickSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputVal.trim()) {
-      onQuickNumberChange(inputVal.trim());
-    }
+    if (inputVal.trim()) onQuickNumberChange(inputVal.trim());
   };
 
   const clearSearch = () => {
@@ -89,128 +92,151 @@ export const Header: React.FC<HeaderProps> = ({
     onQuickNumberChange('');
   };
 
+  const renderSearch = (variant: 'desktop' | 'mobile') => {
+    const isMobile = variant === 'mobile';
+    return (
+      <form
+        onSubmit={handleQuickSubmit}
+        role="search"
+        className={cn('relative flex-1 min-w-0', !isMobile && 'max-w-xl')}
+      >
+        <Search
+          className="w-4 h-4 text-fg-subtle absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+          aria-hidden
+        />
+        <input
+          type="search"
+          enterKeyHint="search"
+          autoComplete="off"
+          value={inputVal}
+          onChange={(e) => {
+            setInputVal(e.target.value);
+            onQuickNumberChange(e.target.value);
+          }}
+          placeholder={isMobile ? 'Nº, título ou trecho da letra' : 'Buscar hino por nº, título ou letra…'}
+          aria-label="Buscar música"
+          className={cn(
+            'ui-input !min-h-10 !rounded-full !pl-10 !text-sm !bg-surface-2',
+            inputVal.trim() ? '!pr-[5.75rem]' : '!pr-14',
+            '[&::-webkit-search-cancel-button]:hidden',
+          )}
+        />
+        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          {inputVal.trim() && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              title="Limpar busca"
+              aria-label="Limpar busca"
+              className="w-7 h-7 inline-flex items-center justify-center rounded-full text-fg-subtle hover:text-fg hover:bg-muted transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onOpenKeypad}
+            title="Teclado numérico do hinário"
+            aria-label="Teclado numérico do hinário"
+            className="h-7 px-2 inline-flex items-center gap-1 rounded-full bg-brand-soft text-brand-text border border-brand-line text-[11px] font-mono font-bold hover:bg-brand hover:text-brand-fg transition-colors"
+          >
+            <Hash className="w-3 h-3" />
+            Nº
+          </button>
+        </div>
+      </form>
+    );
+  };
+
   return (
-    <header className="sticky top-0 z-30 w-full bg-stone-900/95 backdrop-blur-md text-stone-100 border-b border-emerald-900/40 shadow-lg">
+    <header className="sticky top-0 z-30 w-full bg-surface/92 backdrop-blur-md text-fg border-b border-line shadow-[0_1px_0_0_var(--line)] pt-safe">
       <div className="w-full px-3 sm:px-5 lg:px-6">
-        {/* Barra principal: logo esquerda · busca centro · ações direita */}
-        <div className="flex items-center gap-3 h-16 sm:h-20 w-full">
-          {/* Esquerda */}
+        <div className="flex items-center gap-2 sm:gap-3 h-14 sm:h-16 w-full">
+          {/* Esquerda — menu + marca */}
           <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
             {isAuthenticated && onOpenSidebar && (
               <button
                 type="button"
                 onClick={onOpenSidebar}
-                className="lg:hidden w-10 h-10 flex items-center justify-center rounded-button bg-stone-800/80 text-stone-300 border border-stone-700 hover:bg-stone-700"
+                className={cn(iconBtn, 'lg:hidden')}
                 title="Abrir menu"
                 aria-label="Abrir menu"
               >
                 <Menu className="w-5 h-5" />
               </button>
             )}
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-              {/* Mobile + dentro do workspace: ícone (+ lápis) + sigla */}
-              {inChurchWorkspace ? (
-                <div className="flex sm:hidden items-center gap-2 min-w-0">
-                  {canEditActiveChurch && onEditActiveChurch ? (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEditActiveChurch();
-                      }}
-                      title="Editar igreja"
-                      aria-label="Editar igreja"
-                      className="relative w-10 h-10 rounded-xl bg-emerald-500/20 light:bg-emerald-50 text-emerald-400 light:text-emerald-700 flex items-center justify-center border border-emerald-500/30 light:border-emerald-200 shrink-0 hover:bg-emerald-500/30 light:hover:bg-emerald-100 transition-colors"
-                    >
-                      <Church className="w-5 h-5" />
-                      <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-500 text-stone-950 flex items-center justify-center ring-2 ring-stone-900 light:ring-white shadow-sm">
-                        <Edit3 className="w-2.5 h-2.5" strokeWidth={2.5} />
-                      </span>
-                    </button>
-                  ) : (
-                    <div
-                      className="w-10 h-10 rounded-xl bg-emerald-500/20 light:bg-emerald-50 text-emerald-400 light:text-emerald-700 flex items-center justify-center border border-emerald-500/30 light:border-emerald-200 shrink-0 cursor-pointer"
-                      onClick={() => onViewChange('workspace')}
-                    >
-                      <Church className="w-5 h-5" />
-                    </div>
-                  )}
+
+            {inChurchWorkspace && (
+              <div className="flex sm:hidden items-center gap-2 min-w-0">
+                {canEditActiveChurch && onEditActiveChurch ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditActiveChurch();
+                    }}
+                    title="Editar igreja"
+                    aria-label="Editar igreja"
+                    className="relative w-10 h-10 rounded-xl bg-brand-soft text-brand-text border border-brand-line flex items-center justify-center shrink-0 hover:brightness-110 transition"
+                  >
+                    <Church className="w-5 h-5" />
+                    <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-brand text-brand-fg flex items-center justify-center ring-2 ring-surface shadow-sm">
+                      <Edit3 className="w-2.5 h-2.5" strokeWidth={2.5} />
+                    </span>
+                  </button>
+                ) : (
                   <button
                     type="button"
                     onClick={() => onViewChange('workspace')}
-                    title="Ir para Início"
-                    className="text-base font-display font-bold text-emerald-100 light:text-emerald-800 tracking-tight truncate uppercase text-left min-w-0 hover:opacity-80 transition-opacity"
+                    aria-label="Início da igreja"
+                    className="w-10 h-10 rounded-xl bg-brand-soft text-brand-text border border-brand-line flex items-center justify-center shrink-0"
                   >
-                    {churchBrandLabel}
+                    <Church className="w-5 h-5" />
                   </button>
-                </div>
-              ) : null}
-
-              {/* LouvorHub: desktop sempre; mobile fora do workspace */}
-              <button
-                type="button"
-                onClick={() => onViewChange('public')}
-                className={`items-center gap-2.5 sm:gap-3 min-w-0 text-left ${
-                  inChurchWorkspace ? 'hidden sm:flex' : 'flex'
-                }`}
-              >
-                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-stone-950 font-black shadow-md shadow-emerald-500/20 ring-1 ring-emerald-400/30 shrink-0">
-                  <BookOpen className="w-6 h-6" />
-                </div>
-                <div className="min-w-0">
-                  <h1 className="text-lg sm:text-2xl font-display font-bold tracking-tight bg-gradient-to-r from-emerald-200 via-emerald-100 to-emerald-400 light:from-emerald-700 light:via-emerald-600 light:to-emerald-800 bg-clip-text text-transparent truncate">
-                    LouvorHub
-                  </h1>
-                  <p className="hidden sm:block text-[10px] sm:text-xs text-emerald-200/70 light:text-emerald-700/80 font-medium tracking-wider uppercase truncate">
-                    {activeChurchSigla?.trim() || 'IPB MEDIANEIRA'}
-                  </p>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Centro — busca */}
-          <div className="hidden md:flex items-center gap-2 flex-1 justify-center min-w-0 px-4">
-            <form onSubmit={handleQuickSubmit} className="relative w-full max-w-xl">
-              <input
-                type="text"
-                value={inputVal}
-                onChange={(e) => {
-                  setInputVal(e.target.value);
-                  onQuickNumberChange(e.target.value);
-                }}
-                placeholder="Buscar hino por nº, título, letra..."
-                className={`w-full bg-stone-800/90 border border-stone-700/80 rounded-xl py-2 pl-10 text-sm text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all ${
-                  inputVal.trim() ? 'pr-32' : 'pr-24'
-                }`}
-              />
-              <Search className="w-4 h-4 text-stone-400 absolute left-3 top-2.5" />
-              {inputVal.trim() && (
+                )}
                 <button
                   type="button"
-                  onClick={clearSearch}
-                  title="Limpar busca"
-                  aria-label="Limpar busca"
-                  className="absolute right-14 top-1.5 p-1.5 rounded-button text-stone-400 hover:text-stone-100 hover:bg-stone-700/80 transition-colors"
+                  onClick={() => onViewChange('workspace')}
+                  title="Ir para Início"
+                  className="text-base font-display font-bold text-fg tracking-tight truncate uppercase text-left min-w-0 hover:opacity-80 transition-opacity"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  {churchBrandLabel}
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={onOpenKeypad}
-                title="Teclado numérico rápido"
-                className="absolute right-1.5 top-1.5 px-2 py-1 bg-stone-700/80 hover:bg-stone-700 text-emerald-300 rounded-button text-xs font-mono font-semibold flex items-center gap-1 border border-stone-600 transition-colors light:bg-emerald-100 light:hover:bg-emerald-200 light:text-emerald-900 light:border-emerald-300"
-              >
-                <Grid className="w-3 h-3" />
-                Nº
-              </button>
-            </form>
+              </div>
+            )}
 
             <button
+              type="button"
+              onClick={() => onViewChange('public')}
+              title="Ir para o catálogo"
+              className={cn(
+                'items-center gap-2.5 min-w-0 text-left group',
+                inChurchWorkspace ? 'hidden sm:flex' : 'flex',
+              )}
+            >
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-700 flex items-center justify-center text-[#052e16] shadow-md shadow-emerald-500/25 ring-1 ring-emerald-300/40 shrink-0 group-hover:scale-[1.03] transition-transform">
+                <BookOpen className="w-5 h-5" strokeWidth={2.4} />
+              </div>
+              <div className="min-w-0 leading-none">
+                <h1 className="text-[17px] sm:text-xl font-display font-extrabold tracking-tight text-fg truncate">
+                  Louvor<span className="text-brand-text">Hub</span>
+                </h1>
+                <p className="hidden sm:block mt-0.5 text-[10px] text-fg-subtle font-semibold tracking-[0.14em] uppercase truncate">
+                  {activeChurchSigla?.trim() || 'Caderno de louvor'}
+                </p>
+              </div>
+            </button>
+          </div>
+
+          {/* Centro — busca (desktop) */}
+          <div className="hidden md:flex items-center gap-2 flex-1 justify-center min-w-0 px-4">
+            {renderSearch('desktop')}
+            <button
+              type="button"
               onClick={onOpenAdvancedSearch}
-              title="Filtros e Busca Avançada"
-              className="p-2.5 bg-stone-800 hover:bg-stone-700/80 text-stone-300 hover:text-emerald-300 rounded-button border border-stone-700 transition-colors flex items-center justify-center shrink-0"
+              title="Filtros e busca avançada"
+              aria-label="Filtros e busca avançada"
+              className={iconBtn}
             >
               <SlidersHorizontal className="w-4 h-4" />
             </button>
@@ -224,7 +250,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={() => onViewChange('public')}
                 title="Catálogo"
                 aria-label="Abrir catálogo"
-                className="sm:hidden w-10 h-10 flex items-center justify-center rounded-button border transition-all bg-stone-800/80 light:bg-stone-100 text-stone-300 light:text-stone-700 border-stone-700 light:border-stone-300 hover:bg-stone-700 light:hover:bg-stone-200"
+                className={cn(iconBtn, 'sm:hidden')}
               >
                 <BookOpen className="w-5 h-5" />
               </button>
@@ -234,101 +260,100 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={() => onViewChange('workspace')}
                 title={churchBrandLabel}
                 aria-label={`Abrir ${churchBrandLabel}`}
-                className="sm:hidden w-10 h-10 flex items-center justify-center rounded-button border transition-all bg-emerald-500/20 light:bg-emerald-50 text-emerald-300 light:text-emerald-800 border-emerald-500/40 light:border-emerald-300"
+                className={cn(
+                  iconBtn,
+                  'sm:hidden !bg-brand-soft !text-brand-text !border-brand-line',
+                )}
               >
                 <Church className="w-5 h-5" />
               </button>
             ) : null}
-            <ThemeToggle className="w-10 h-10 !p-0 justify-center sm:!w-auto sm:!h-auto sm:!px-3 sm:!py-2" />
+
+            {canInstall && (
+              <button
+                type="button"
+                onClick={() => void install()}
+                title="Instalar aplicativo"
+                aria-label="Instalar aplicativo"
+                className={cn(
+                  iconBtn,
+                  'hidden sm:inline-flex sm:w-auto sm:px-3 gap-1.5 text-xs font-semibold !bg-brand-soft !text-brand-text !border-brand-line hover:!bg-brand hover:!text-brand-fg',
+                )}
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden lg:inline">Instalar</span>
+              </button>
+            )}
+
+            <ThemeToggle compact />
             <PublicEventsFab enabled={showPublicEvents} />
 
             {isAuthenticated && (
               <button
+                type="button"
                 onClick={onToggleFavoritesOnly}
-                className={`hidden sm:flex p-2 sm:px-3 sm:py-2 rounded-button text-xs font-medium items-center gap-1.5 transition-all border ${
+                aria-pressed={showFavoritesOnly}
+                className={cn(
+                  'hidden sm:inline-flex items-center gap-1.5 min-h-10 px-3 rounded-button text-xs font-semibold border transition-colors',
                   showFavoritesOnly
-                    ? 'bg-rose-950/60 text-rose-300 border-rose-700/60 shadow-sm shadow-rose-900/30'
-                    : 'bg-stone-800/80 text-stone-300 border-stone-700 hover:bg-stone-700/80'
-                }`}
-                title="Favoritos"
+                    ? 'bg-danger-soft text-danger-text border-danger-line'
+                    : 'bg-muted/70 text-fg-muted border-line hover:text-fg hover:bg-muted-hover',
+                )}
+                title={showFavoritesOnly ? 'Mostrar todas as músicas' : 'Mostrar só favoritos'}
               >
                 <Heart
-                  className={`w-4 h-4 ${showFavoritesOnly ? 'fill-rose-400 text-rose-400' : 'text-stone-400'}`}
+                  className={cn('w-4 h-4', showFavoritesOnly ? 'fill-current' : 'text-fg-subtle')}
                 />
                 <span className="hidden lg:inline">Favoritos</span>
                 {favoritesCount > 0 && (
-                  <span className="ml-0.5 px-1.5 py-0.2 bg-rose-500/20 text-rose-300 rounded-full text-[10px] font-bold">
+                  <span
+                    className={cn(
+                      'ml-0.5 min-w-[1.25rem] h-5 px-1.5 rounded-full text-[10px] font-bold inline-flex items-center justify-center',
+                      showFavoritesOnly ? 'bg-danger text-white' : 'bg-muted-hover text-fg',
+                    )}
+                  >
                     {favoritesCount}
                   </span>
                 )}
               </button>
             )}
 
-            <button
-              onClick={isAuthenticated && onSignOut ? onSignOut : onAdminAuthClick}
-              className={`p-2 sm:px-3 sm:py-2 rounded-button text-xs font-medium flex items-center gap-1.5 transition-all border ${
-                isAuthenticated
-                  ? 'hidden sm:flex bg-emerald-950/60 text-emerald-300 border-emerald-700/60 shadow-sm'
-                  : 'bg-stone-800/80 text-stone-400 border-stone-700 hover:bg-stone-700/80 hover:text-stone-200'
-              }`}
-              title={isAuthenticated ? 'Sair' : 'Entrar com e-mail'}
-            >
-              {isAuthenticated ? (
-                <>
-                  <LockOpen className="w-4 h-4 text-emerald-400" />
-                  <span className="hidden sm:inline font-semibold">Sair</span>
-                </>
-              ) : (
-                <>
-                  <Lock className="w-4 h-4" />
-                  <span className="hidden sm:inline">Entrar</span>
-                </>
-              )}
-            </button>
+            {isAuthenticated ? (
+              onSignOut && (
+                <button
+                  type="button"
+                  onClick={onSignOut}
+                  className="hidden sm:inline-flex items-center gap-1.5 min-h-10 px-3 rounded-button text-xs font-semibold border border-line bg-muted/70 text-fg-muted hover:text-danger-text hover:border-danger-line hover:bg-danger-soft transition-colors"
+                  title="Sair da conta"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sair</span>
+                </button>
+              )
+            ) : (
+              <button
+                type="button"
+                onClick={onAdminAuthClick}
+                className="inline-flex items-center gap-1.5 h-10 px-3 sm:px-4 rounded-button text-xs font-bold bg-brand text-brand-fg hover:bg-brand-hover shadow-sm shadow-emerald-500/20 transition-colors"
+                title="Entrar com e-mail"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Entrar</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Mobile Quick Search Bar — só no catálogo */}
+        {/* Busca mobile — só no catálogo */}
         {showMobileSearch && (
-          <div className="md:hidden pb-3 pt-1 flex items-center gap-2 border-t border-stone-800/80 mt-1">
-            <form onSubmit={handleQuickSubmit} className="relative flex-1">
-              <input
-                type="text"
-                value={inputVal}
-                onChange={(e) => {
-                  setInputVal(e.target.value);
-                  onQuickNumberChange(e.target.value);
-                }}
-                placeholder="Nº, título ou palavra..."
-                className={`w-full bg-stone-800 border border-stone-700 rounded-xl py-2 pl-9 text-xs text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
-                  inputVal.trim() ? 'pr-24' : 'pr-16'
-                }`}
-              />
-              <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-3" />
-              {inputVal.trim() && (
-                <button
-                  type="button"
-                  onClick={clearSearch}
-                  title="Limpar busca"
-                  aria-label="Limpar busca"
-                  className="absolute right-12 top-1.5 p-1.5 rounded-button text-stone-400 hover:text-stone-100 hover:bg-stone-700/80 transition-colors"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={onOpenKeypad}
-                className="absolute right-1 top-1 px-2 py-1 bg-stone-700 text-emerald-300 rounded-button text-[10px] font-mono font-bold flex items-center gap-1 border border-stone-600 light:bg-emerald-100 light:hover:bg-emerald-200 light:text-emerald-900 light:border-emerald-300 transition-colors"
-              >
-                <Grid className="w-3 h-3" />
-                Nº
-              </button>
-            </form>
-
+          <div className="md:hidden pb-2.5 flex items-center gap-2">
+            {renderSearch('mobile')}
             <button
+              type="button"
               onClick={onOpenAdvancedSearch}
-              className="p-2 bg-stone-800 text-stone-300 rounded-button border border-stone-700 shrink-0"
+              title="Filtros e busca avançada"
+              aria-label="Filtros e busca avançada"
+              className={cn(iconBtn, '!rounded-full')}
             >
               <SlidersHorizontal className="w-4 h-4" />
             </button>

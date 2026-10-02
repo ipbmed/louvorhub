@@ -1,9 +1,32 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="pt-BR" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LouvorHub - Gestão e Caderno de Louvor</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>LouvorHub — Gestão e Caderno de Louvor</title>
+    <meta
+      name="description"
+      content="Hinário, cifras, playlists, eventos e equipe de louvor da sua igreja — no celular, tablet ou telão."
+    />
+
+    <!-- PWA / cores do sistema -->
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c0a09" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f1f5f9" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="application-name" content="LouvorHub" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="LouvorHub" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,9 +39,17 @@
       (function () {
         try {
           var theme = localStorage.getItem('louvorhub_theme');
+          var isLight = theme === 'light';
           document.documentElement.classList.remove('light', 'dark');
-          document.documentElement.classList.add(theme === 'light' ? 'light' : 'dark');
-          document.documentElement.style.colorScheme = theme === 'light' ? 'light' : 'dark';
+          document.documentElement.classList.add(isLight ? 'light' : 'dark');
+          document.documentElement.style.colorScheme = isLight ? 'light' : 'dark';
+          var meta = document.querySelector('meta[name="theme-color"]:not([media])');
+          if (!meta) {
+            meta = document.createElement('meta');
+            meta.setAttribute('name', 'theme-color');
+            document.head.appendChild(meta);
+          }
+          meta.setAttribute('content', isLight ? '#f1f5f9' : '#0c0a09');
         } catch (e) {
           document.documentElement.classList.add('dark');
         }
@@ -28,4 +59,3 @@
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

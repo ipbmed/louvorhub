@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Song } from '../types';
-import { X, Trash2, Tags, Check, Pencil } from 'lucide-react';
+import { Check, Pencil, Tags, Trash2, X } from 'lucide-react';
+import { useConfirm } from '@/contexts/ConfirmProvider';
+import { Badge, Button, EmptyState, IconButton, Input, Modal } from './ui';
 
 interface TagManagerModalProps {
   songs: Song[];
@@ -15,9 +17,11 @@ export const TagManagerModal: React.FC<TagManagerModalProps> = ({
   onDeleteTag,
   onClose,
 }) => {
+  const confirm = useConfirm();
   const [editingTag, setEditingTag] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState('');
 
   const tagStats = useMemo(() => {
     const counts = new Map<string, number>();
@@ -32,6 +36,11 @@ export const TagManagerModal: React.FC<TagManagerModalProps> = ({
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
   }, [songs]);
+
+  const visible = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    return q ? tagStats.filter((t) => t.name.toLowerCase().includes(q)) : tagStats;
+  }, [tagStats, filter]);
 
   const startEdit = (tag: string) => {
     setEditingTag(tag);
@@ -54,8 +63,13 @@ export const TagManagerModal: React.FC<TagManagerModalProps> = ({
     }
   };
 
-  const removeTag = async (tag: string) => {
-    if (!confirm(`Remover a tag "${tag}" de todas as músicas?`)) return;
+  const removeTag = async (tag: string, count: number) => {
+    const ok = await confirm({
+      title: 'Remover tag',
+      message: `A tag "${tag}" será removida de ${count} ${count === 1 ? 'música' : 'músicas'}.`,
+      confirmLabel: 'Remover tag',
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       await onDeleteTag(tag);
@@ -65,99 +79,111 @@ export const TagManagerModal: React.FC<TagManagerModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl text-stone-100 relative">
-        <div className="flex items-center justify-between pb-4 border-b border-stone-800 mb-5">
-          <div className="flex items-center gap-2">
-            <Tags className="w-5 h-5 text-emerald-400 light:text-emerald-600" />
-            <h3 className="text-xl font-display font-bold text-emerald-100 light:text-stone-900 tracking-tight">
-              Gerenciar Tags
-            </h3>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Modal
+      open
+      onClose={onClose}
+      locked={busy}
+      icon={Tags}
+      title="Tags das músicas"
+      subtitle="Renomear ou remover uma tag atualiza todas as músicas vinculadas."
+      size="md"
+      footer={<Button onClick={onClose} disabled={busy}>Concluir</Button>}
+    >
+      <div className="space-y-3">
+        {tagStats.length > 6 && (
+          <Input
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Filtrar tags…"
+            aria-label="Filtrar tags"
+            className="!min-h-10"
+          />
+        )}
 
-        <p className="text-xs text-stone-400 mb-4">
-          Tags usadas nas músicas. Renomear ou remover atualiza todas as músicas vinculadas.
-        </p>
-
-        <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-          {tagStats.length === 0 ? (
-            <div className="py-10 text-center text-xs text-stone-500 border border-dashed border-stone-800 rounded-2xl">
-              Nenhuma tag cadastrada nas músicas.
-            </div>
-          ) : (
-            tagStats.map(({ name, count }) => (
-              <div
+        {tagStats.length === 0 ? (
+          <EmptyState
+            compact
+            icon={Tags}
+            title="Nenhuma tag cadastrada"
+            description="Adicione tags ao editar uma música para vê-las aqui."
+            className="!shadow-none !border-dashed"
+          />
+        ) : visible.length === 0 ? (
+          <p className="text-xs text-fg-subtle text-center py-6">Nenhuma tag corresponde ao filtro.</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {visible.map(({ name, count }) => (
+              <li
                 key={name}
-                className="p-3 bg-stone-950 border border-stone-800/80 rounded-xl flex items-center justify-between gap-2 text-xs"
+                className="px-3 py-2.5 rounded-xl border border-line bg-surface flex items-center justify-between gap-2 text-xs"
               >
                 {editingTag === name ? (
                   <form
-                    className="flex-1 flex items-center gap-2"
+                    className="flex-1 flex items-center gap-1.5"
                     onSubmit={(e) => {
                       e.preventDefault();
                       void saveEdit();
                     }}
                   >
-                    <input
+                    <Input
                       autoFocus
                       value={editValue}
                       onChange={(e) => setEditValue(e.target.value)}
                       disabled={busy}
-                      className="flex-1 bg-stone-900 border border-stone-700 rounded-button px-2.5 py-1.5 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                      className="!min-h-9 !text-xs"
+                      aria-label="Novo nome da tag"
                     />
-                    <button
+                    <IconButton
                       type="submit"
+                      icon={Check}
+                      label="Salvar"
+                      size="sm"
+                      variant="primary"
+                      loading={busy}
+                    />
+                    <IconButton
+                      icon={X}
+                      label="Cancelar"
+                      size="sm"
+                      variant="ghost"
                       disabled={busy}
-                      className="p-1.5 text-emerald-300 hover:bg-emerald-950/60 rounded-button"
-                      title="Salvar"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
+                      onClick={() => setEditingTag(null)}
+                    />
                   </form>
                 ) : (
-                  <div className="min-w-0">
-                    <p className="font-bold text-stone-100 truncate">{name}</p>
-                    <p className="text-[11px] text-stone-500 font-mono">
-                      {count} {count === 1 ? 'música' : 'músicas'}
-                    </p>
-                  </div>
+                  <>
+                    <div className="min-w-0 flex items-center gap-2">
+                      <p className="font-bold text-fg truncate">{name}</p>
+                      <Badge tone="neutral" className="font-mono">
+                        {count}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <IconButton
+                        icon={Pencil}
+                        label={`Renomear tag ${name}`}
+                        size="sm"
+                        variant="ghost"
+                        disabled={busy}
+                        onClick={() => startEdit(name)}
+                      />
+                      <IconButton
+                        icon={Trash2}
+                        label={`Excluir tag ${name}`}
+                        size="sm"
+                        variant="ghost"
+                        className="hover:!bg-danger-soft hover:!text-danger-text"
+                        disabled={busy}
+                        onClick={() => void removeTag(name, count)}
+                      />
+                    </div>
+                  </>
                 )}
-
-                {editingTag !== name && (
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(name)}
-                      disabled={busy}
-                      className="p-1.5 text-stone-400 hover:text-emerald-300 hover:bg-stone-800 rounded-button"
-                      title="Renomear tag"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void removeTag(name)}
-                      disabled={busy}
-                      className="p-1.5 text-rose-400 hover:bg-rose-950/60 rounded-button"
-                      title="Excluir tag"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 };

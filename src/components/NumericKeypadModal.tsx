@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Song } from '../types';
-import { X, Delete, ArrowRight, Music } from 'lucide-react';
+import { ArrowRight, Delete, Hash, Music } from 'lucide-react';
+import { Button, Modal, cn } from './ui';
 
 interface NumericKeypadModalProps {
   songs: Song[];
   onClose: () => void;
   onSelectSong: (song: Song) => void;
 }
+
+const KEY_BASE =
+  'min-h-14 rounded-xl font-mono text-2xl font-bold border transition-colors touch-manipulation select-none active:scale-[0.97]';
 
 export const NumericKeypadModal: React.FC<NumericKeypadModalProps> = ({
   songs,
@@ -16,119 +20,124 @@ export const NumericKeypadModal: React.FC<NumericKeypadModalProps> = ({
   const [numberInput, setNumberInput] = useState<string>('');
 
   const handleDigitClick = (digit: string) => {
-    if (numberInput.length < 4) {
-      setNumberInput(prev => prev + digit);
-    }
+    setNumberInput((prev) => (prev.length < 4 ? prev + digit : prev));
   };
+  const handleDelete = () => setNumberInput((prev) => prev.slice(0, -1));
+  const handleClear = () => setNumberInput('');
 
-  const handleDelete = () => {
-    setNumberInput(prev => prev.slice(0, -1));
-  };
-
-  const handleClear = () => {
-    setNumberInput('');
-  };
-
-  // Find exact match or closest matching Song
   const targetNum = parseInt(numberInput, 10);
-  const matchedSong = !isNaN(targetNum)
-    ? songs.find(s => s.number && Number(s.number) === targetNum)
+  const matchedSong = !Number.isNaN(targetNum)
+    ? songs.find((s) => s.number && Number(s.number) === targetNum)
     : null;
 
-  const handleSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const handleSubmit = () => {
     if (matchedSong) {
       onSelectSong(matchedSong);
       onClose();
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-      
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl flex flex-col text-stone-100 relative">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-stone-800 mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 light:bg-emerald-100 text-emerald-300 light:text-emerald-800 flex items-center justify-center font-bold">
-              #
-            </div>
-            <h3 className="text-lg font-display font-bold text-emerald-100 light:text-stone-900 tracking-tight">
-              Ir para o Número
-            </h3>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+  // Teclado físico: dígitos, Backspace, Enter.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (/^[0-9]$/.test(e.key)) {
+        e.preventDefault();
+        handleDigitClick(e.key);
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        handleDelete();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        handleSubmit();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matchedSong]);
 
-        {/* Number Display Box */}
-        <div className="bg-stone-950 light:bg-stone-50 border border-stone-800 light:border-stone-200 rounded-2xl p-4 text-center mb-4 min-h-[72px] flex flex-col items-center justify-center shadow-inner">
-          <span className="font-mono text-4xl font-black tracking-widest text-emerald-400 light:text-emerald-700">
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      icon={Hash}
+      title="Ir para o número"
+      subtitle="Digite o número do hino no hinário."
+      size="sm"
+    >
+      <div className="space-y-4">
+        <div
+          className={cn(
+            'rounded-2xl border p-4 text-center min-h-[5.5rem] flex flex-col items-center justify-center transition-colors',
+            matchedSong
+              ? 'bg-brand-soft border-brand-line'
+              : numberInput
+                ? 'bg-danger-soft border-danger-line'
+                : 'bg-surface-2 border-line',
+          )}
+          aria-live="polite"
+        >
+          <span
+            className={cn(
+              'font-mono text-4xl font-black tracking-widest',
+              matchedSong ? 'text-brand-text' : numberInput ? 'text-danger-text' : 'text-fg-subtle',
+            )}
+          >
             {numberInput ? `#${numberInput}` : '# ---'}
           </span>
           {matchedSong ? (
-            <span className="text-xs font-serif italic text-emerald-200/90 light:text-emerald-800 mt-1 truncate max-w-full font-semibold">
+            <span className="text-xs text-fg mt-1 truncate max-w-full font-semibold">
               {matchedSong.title}
             </span>
           ) : numberInput ? (
-            <span className="text-xs text-rose-400 light:text-rose-600 mt-1 font-semibold">Hino não encontrado</span>
+            <span className="text-xs text-danger-text mt-1 font-semibold">Hino não encontrado</span>
           ) : (
-            <span className="text-xs text-stone-400 light:text-stone-500 mt-1">Digite o número do hino</span>
+            <span className="text-xs text-fg-subtle mt-1">Use o teclado abaixo ou o físico</span>
           )}
         </div>
 
-        {/* Keypad Grid (1-9, C, 0, Backspace) */}
-        <div className="grid grid-cols-3 gap-2.5 mb-4">
+        <div className="grid grid-cols-3 gap-2">
           {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
             <button
               key={digit}
+              type="button"
               onClick={() => handleDigitClick(digit)}
-              className="py-3.5 bg-stone-800 light:bg-stone-100 hover:bg-stone-700 light:hover:bg-stone-200 active:bg-emerald-500 active:text-stone-950 rounded-button font-mono text-xl font-bold text-stone-100 light:text-stone-900 border border-stone-700/60 light:border-stone-300 shadow transition-colors"
+              className={cn(KEY_BASE, 'bg-muted border-line text-fg hover:bg-muted-hover active:bg-brand active:text-brand-fg')}
             >
               {digit}
             </button>
           ))}
-
           <button
+            type="button"
             onClick={handleClear}
-            className="py-3.5 bg-rose-950/40 light:bg-rose-50 hover:bg-rose-900/60 light:hover:bg-rose-100 text-rose-300 light:text-rose-700 rounded-button font-semibold text-sm border border-rose-800/40 light:border-rose-200"
+            disabled={!numberInput}
+            className={cn(KEY_BASE, '!text-sm font-sans font-semibold bg-danger-soft border-danger-line text-danger-text disabled:opacity-40')}
           >
             Limpar
           </button>
-
           <button
+            type="button"
             onClick={() => handleDigitClick('0')}
-            className="py-3.5 bg-stone-800 light:bg-stone-100 hover:bg-stone-700 light:hover:bg-stone-200 active:bg-emerald-500 active:text-stone-950 rounded-button font-mono text-xl font-bold text-stone-100 light:text-stone-900 border border-stone-700/60 light:border-stone-300 shadow transition-colors"
+            className={cn(KEY_BASE, 'bg-muted border-line text-fg hover:bg-muted-hover active:bg-brand active:text-brand-fg')}
           >
             0
           </button>
-
           <button
+            type="button"
             onClick={handleDelete}
-            className="py-3.5 bg-stone-800 light:bg-stone-100 hover:bg-stone-700 light:hover:bg-stone-200 text-stone-300 light:text-stone-700 rounded-button flex items-center justify-center border border-stone-700/60 light:border-stone-300"
+            disabled={!numberInput}
             title="Apagar"
+            aria-label="Apagar último dígito"
+            className={cn(KEY_BASE, 'bg-muted border-line text-fg-muted hover:bg-muted-hover flex items-center justify-center disabled:opacity-40')}
           >
-            <Delete className="w-5 h-5" />
+            <Delete className="w-6 h-6" />
           </button>
         </div>
 
-        {/* Submit Button */}
-        <button
-          onClick={() => handleSubmit()}
-          disabled={!matchedSong}
-          className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:pointer-events-none text-stone-950 font-bold rounded-button shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 text-base transition-all"
-        >
-          <Music className="w-5 h-5" />
-          <span>Abrir Hino #{numberInput}</span>
-          <ArrowRight className="w-5 h-5" />
-        </button>
-
+        <Button size="lg" block icon={Music} iconRight={ArrowRight} disabled={!matchedSong} onClick={handleSubmit}>
+          {matchedSong ? `Abrir hino #${numberInput}` : 'Abrir hino'}
+        </Button>
       </div>
-    </div>
+    </Modal>
   );
 };

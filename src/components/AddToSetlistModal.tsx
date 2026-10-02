@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { ListMusic, Loader2, X } from 'lucide-react';
+import { Check, ListMusic, ListPlus } from 'lucide-react';
 import type { Setlist, Song } from '@/types';
 import { isGroupSetlist } from '@/services/playlists';
+import { Alert, Badge, Button, EmptyState, Modal, cn } from './ui';
 
 interface AddToSetlistModalProps {
   song: Song;
@@ -50,102 +51,86 @@ export const AddToSetlistModal: React.FC<AddToSetlistModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl w-full max-w-md shadow-2xl text-stone-100 overflow-hidden">
-        <div className="p-5 border-b border-stone-800 flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-display font-bold text-emerald-100 light:text-stone-900 flex items-center gap-2">
-              <ListMusic className="w-5 h-5 text-emerald-400 light:text-emerald-600" />
-              Adicionar à playlist
-            </h3>
-            <p className="text-xs text-stone-400 light:text-stone-500 mt-1 line-clamp-2">{songLabel}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
+    <Modal
+      open
+      onClose={onClose}
+      locked={saving}
+      icon={ListMusic}
+      title="Adicionar à playlist"
+      subtitle={songLabel}
+      size="sm"
+      zIndexClassName="z-[60]"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button
+            icon={ListPlus}
+            disabled={!selectedId || options.length === 0}
+            loading={saving}
+            onClick={() => void handleConfirm()}
           >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="p-5 space-y-4">
-          {options.length === 0 ? (
-            <p className="text-sm text-stone-400 text-center py-4">
-              Nenhuma playlist disponível. Crie uma em Playlists ou peça acesso de edição.
-            </p>
-          ) : (
-            <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
-              {options.map((s) => (
-                <SetlistOption
+            Adicionar
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-3">
+        {options.length === 0 ? (
+          <EmptyState
+            compact
+            icon={ListMusic}
+            title="Nenhuma playlist disponível"
+            description="Crie uma playlist na aba Playlists ou peça acesso de edição a quem a criou."
+            className="!shadow-none"
+          />
+        ) : (
+          <div role="radiogroup" aria-label="Playlists" className="space-y-1.5">
+            {options.map((s) => {
+              const selected = selectedId === s.id;
+              const alreadyHas = (s.items ?? []).some((i) => i.songId === song.id);
+              const count = (s.items ?? []).length;
+              return (
+                <button
                   key={s.id}
-                  setlist={s}
-                  selected={selectedId === s.id}
-                  alreadyHas={(s.items ?? []).some((i) => i.songId === song.id)}
-                  onSelect={() => {
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => {
                     setSelectedId(s.id);
                     setError(null);
                   }}
-                />
-              ))}
-            </div>
-          )}
+                  className={cn(
+                    'w-full text-left px-3 py-2.5 rounded-xl border text-xs transition-colors flex items-center gap-3 touch-manipulation',
+                    selected
+                      ? 'bg-brand-soft border-brand-line text-fg'
+                      : 'bg-surface-2/60 border-line text-fg-muted hover:border-line-strong hover:text-fg',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
+                      selected ? 'bg-brand border-brand text-brand-fg' : 'border-line-strong',
+                    )}
+                  >
+                    {selected && <Check className="w-3 h-3" strokeWidth={3} />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold truncate">{s.title}</span>
+                    <span className="block text-[10px] text-fg-subtle font-mono mt-0.5">
+                      {count} {count === 1 ? 'música' : 'músicas'}
+                    </span>
+                  </span>
+                  {alreadyHas && <Badge tone="warning">Já contém</Badge>}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
-          {error && (
-            <p className="text-[11px] text-rose-300 bg-rose-950/40 border border-rose-800/40 rounded-xl px-3 py-2">
-              {error}
-            </p>
-          )}
-        </div>
-
-        <div className="p-5 border-t border-stone-800 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            disabled={!selectedId || saving || options.length === 0}
-            onClick={() => void handleConfirm()}
-            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-stone-950 font-bold rounded-button text-xs inline-flex items-center gap-1.5"
-          >
-            {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            Adicionar
-          </button>
-        </div>
+        {error && <Alert tone="danger">{error}</Alert>}
       </div>
-    </div>
+    </Modal>
   );
 };
-
-const SetlistOption: React.FC<{
-  setlist: Setlist;
-  selected: boolean;
-  alreadyHas: boolean;
-  onSelect: () => void;
-}> = ({ setlist, selected, alreadyHas, onSelect }) => (
-  <button
-    type="button"
-    onClick={onSelect}
-    className={`w-full text-left px-3 py-2.5 rounded-xl border text-xs transition-colors ${
-      selected
-        ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-100'
-        : 'bg-stone-950 border-stone-800 text-stone-300 hover:border-stone-700'
-    }`}
-  >
-    <div className="flex items-center justify-between gap-2">
-      <span className="font-semibold truncate">{setlist.title}</span>
-      <span className="font-mono text-[10px] text-stone-500 shrink-0">
-        {(setlist.items ?? []).length} mús.
-      </span>
-    </div>
-    {alreadyHas && (
-      <div className="mt-1 text-[10px] text-stone-500">
-        <span className="text-amber-300/90">Já contém</span>
-      </div>
-    )}
-  </button>
-);
