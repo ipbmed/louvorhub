@@ -10,7 +10,8 @@ import {
 
 export type AppTheme = 'light' | 'dark';
 
-const STORAGE_KEY = 'louvorhub_theme';
+/** v2: o visual claro (índigo) passou a ser o padrão; a preferência antiga é ignorada. */
+const STORAGE_KEY = 'louvorhub_theme_v2';
 
 interface ThemeContextValue {
   theme: AppTheme;
@@ -22,12 +23,12 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function readStoredTheme(): AppTheme {
-  if (typeof window === 'undefined') return 'dark';
+  if (typeof window === 'undefined') return 'light';
   const stored = localStorage.getItem(STORAGE_KEY);
-  return stored === 'light' ? 'light' : 'dark';
+  return stored === 'dark' ? 'dark' : 'light';
 }
 
-const THEME_COLOR: Record<AppTheme, string> = { dark: '#0c0a09', light: '#f1f5f9' };
+const THEME_COLOR: Record<AppTheme, string> = { dark: '#0f0e17', light: '#f6f5fb' };
 
 function applyThemeClass(theme: AppTheme) {
   const root = document.documentElement;

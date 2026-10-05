@@ -15,8 +15,7 @@ export type ButtonVariant =
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
 const VARIANT: Record<ButtonVariant, string> = {
-  primary:
-    'bg-brand text-brand-fg hover:bg-brand-hover border-transparent shadow-sm shadow-emerald-500/20 font-bold',
+  primary: 'btn-gradient border-transparent font-bold',
   secondary:
     'bg-muted text-fg hover:bg-muted-hover border-line-strong/60 font-semibold',
   ghost:
@@ -78,7 +77,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(
-        'inline-flex items-center justify-center rounded-button border transition-all touch-manipulation select-none whitespace-nowrap',
+        'inline-flex items-center justify-center rounded-full border transition-all touch-manipulation select-none whitespace-nowrap',
         'disabled:opacity-55 disabled:pointer-events-none active:scale-[0.98]',
         VARIANT[variant],
         SIZE[size],

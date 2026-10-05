@@ -1,23 +1,25 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft,
   Building2,
   Calendar,
   CalendarPlus,
   Church,
   ChevronRight,
   Edit3,
-  LayoutGrid,
   MapPin,
   Phone,
   User,
-  Users,
+  UsersRound,
 } from 'lucide-react';
 import type { Church as ChurchType, ChurchEvent, ViewMode } from '@/types';
+import { todayStr } from '@/utils/dateLabels';
 import { PageHeader } from './PageHeader';
-import { Alert, Button, EmptyState, Field, IconButton, Input, Modal, cn } from './ui';
+import { EventCard } from './EventCard';
+import { Alert, Button, EmptyState, Field, IconButton, Input, Modal, Tabs, type TabItem } from './ui';
 
-export const WORKSPACE_VIEWS: ViewMode[] = ['workspace', 'events', 'churches', 'users'];
+export const WORKSPACE_VIEWS: ViewMode[] = ['workspace', 'churches', 'users'];
+
+type WorkspaceView = 'workspace' | 'churches' | 'users';
 
 interface ChurchWorkspaceProps {
   church: ChurchType;
@@ -28,23 +30,17 @@ interface ChurchWorkspaceProps {
   canEditChurch?: boolean;
   onSaveChurch?: (church: ChurchType) => void | Promise<void>;
   onNavigate: (view: ViewMode) => void;
-  /** Voltar contextual (ex.: do detalhe do evento para o calendário). */
-  onBack?: () => void;
-  backLabel?: string;
-  /** Incrementa para abrir o modal de edição (ex.: lápis no header mobile). */
+  /** Voltar para a lista de igrejas. */
+  onBack: () => void;
+  /** Incrementa para abrir o modal de edição a partir de outra tela. */
   editRequestKey?: number;
-  /** Próximos eventos na aba Início. */
   events?: ChurchEvent[];
+  groupsCount?: number;
+  membersCount?: number;
+  groupName?: (groupId?: string) => string | undefined;
   onOpenEvent?: (eventId: string) => void;
   children?: React.ReactNode;
 }
-
-type WorkspaceTab = {
-  view: ViewMode;
-  label: string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-};
 
 type ChurchForm = {
   name: string;
@@ -56,11 +52,8 @@ type ChurchForm = {
   color: string;
 };
 
-function formatEventDate(date: string, opts: Intl.DateTimeFormatOptions) {
-  const d = new Date(`${date}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('pt-BR', opts);
-}
+const DEFAULT_COLOR = '#4f46e5';
+const CHURCH_COLORS = ['#4f46e5', '#0d9488', '#db2777', '#ea580c', '#7c3aed', '#0284c7', '#16a34a', '#ca8a04'];
 
 export const ChurchWorkspace: React.FC<ChurchWorkspaceProps> = ({
   church,
@@ -72,9 +65,11 @@ export const ChurchWorkspace: React.FC<ChurchWorkspaceProps> = ({
   onSaveChurch,
   onNavigate,
   onBack,
-  backLabel,
   editRequestKey = 0,
   events = [],
+  groupsCount,
+  membersCount,
+  groupName,
   onOpenEvent,
   children,
 }) => {
@@ -88,83 +83,26 @@ export const ChurchWorkspace: React.FC<ChurchWorkspaceProps> = ({
     leader: '',
     phone: '',
     sigla: '',
-    color: '#10b981',
+    color: DEFAULT_COLOR,
   });
 
-  const tabs: WorkspaceTab[] = [
-    { view: 'workspace', label: 'Início', description: 'Resumo da igreja', icon: LayoutGrid },
-    ...(canAccessEvents
-      ? [
-          {
-            view: 'events' as ViewMode,
-            label: 'Eventos',
-            description: 'Cultos, escalas, liturgia e repertório',
-            icon: Calendar,
-          },
-        ]
-      : []),
-    ...(canManageGroups
-      ? [
-          {
-            view: 'churches' as ViewMode,
-            label: 'Bandas',
-            description: 'Grupos e equipes de louvor',
-            icon: Building2,
-          },
-        ]
-      : []),
-    ...(canManageMembers
-      ? [
-          {
-            view: 'users' as ViewMode,
-            label: 'Membros',
-            description: 'Pessoas, convites e permissões',
-            icon: Users,
-          },
-        ]
-      : []),
-  ];
-
-  const moduleTabs = tabs.filter((t) => t.view !== 'workspace');
+  const color = church.color || DEFAULT_COLOR;
   const address = church.address?.trim() || '';
   const leader = church.leader?.trim() || '';
   const phone = church.phone?.trim() || '';
 
   const upcomingEvents = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = todayStr();
     return events
-      .filter((ev) => {
-        const d = new Date(`${ev.date}T00:00:00`);
-        return !Number.isNaN(d.getTime()) && d >= today;
-      })
-      .sort((a, b) => {
-        const byDate = a.date.localeCompare(b.date);
-        if (byDate !== 0) return byDate;
-        return (a.time || '').localeCompare(b.time || '');
-      })
-      .slice(0, 6);
+      .filter((ev) => ev.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || ''));
   }, [events]);
 
-  const headerMeta =
-    address || leader ? (
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        {address && (
-          <span className="inline-flex items-center gap-1.5 min-w-0">
-            <MapPin className="w-3.5 h-3.5 shrink-0 text-fg-subtle" />
-            <span className="truncate">{address}</span>
-          </span>
-        )}
-        {leader && (
-          <span className="inline-flex items-center gap-1.5 min-w-0">
-            <User className="w-3.5 h-3.5 shrink-0 text-fg-subtle" />
-            <span>
-              Líder: <span className="font-semibold text-fg">{leader}</span>
-            </span>
-          </span>
-        )}
-      </div>
-    ) : undefined;
+  const tabs: TabItem<WorkspaceView>[] = [
+    { id: 'workspace', label: 'Eventos', icon: Calendar, count: canAccessEvents ? upcomingEvents.length : undefined },
+    ...(canManageGroups ? [{ id: 'churches' as const, label: 'Grupos', icon: Building2, count: groupsCount }] : []),
+    ...(canManageMembers ? [{ id: 'users' as const, label: 'Equipe', icon: UsersRound, count: membersCount }] : []),
+  ];
 
   const openEdit = () => {
     setForm({
@@ -174,7 +112,7 @@ export const ChurchWorkspace: React.FC<ChurchWorkspaceProps> = ({
       leader: church.leader || '',
       phone: church.phone || '',
       sigla: church.sigla || '',
-      color: church.color || '#10b981',
+      color: church.color || DEFAULT_COLOR,
     });
     setErrorMsg('');
     setModalOpen(true);
@@ -184,7 +122,7 @@ export const ChurchWorkspace: React.FC<ChurchWorkspaceProps> = ({
     if (!editRequestKey) return;
     if (!canEditChurch || !onSaveChurch) return;
     openEdit();
-    // Trigger externo (header): reabre o modal a cada incremento da chave
+    // Trigger externo: reabre o modal a cada incremento da chave
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editRequestKey]);
 
@@ -226,211 +164,118 @@ export const ChurchWorkspace: React.FC<ChurchWorkspaceProps> = ({
   };
 
   const canEdit = Boolean(canEditChurch && onSaveChurch);
+  const mark = church.sigla?.trim().slice(0, 4).toUpperCase();
 
   return (
-    <div className="w-full animate-in fade-in duration-300">
-      {/* Cabeçalho da igreja (rola junto com a página) */}
-      <div>
-        <PageHeader
-          icon={Church}
-          title={church.name}
-          description={headerMeta}
-          onIconClick={canEdit ? openEdit : undefined}
-          iconTitle={canEdit ? 'Editar igreja' : undefined}
-          iconBadge={canEdit ? Edit3 : undefined}
-          onTitleClick={() => onNavigate('workspace')}
-          titleTitle="Ir para Início"
-          actions={
-            <>
-              {canEdit && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  icon={Edit3}
-                  onClick={openEdit}
-                  className="hidden sm:inline-flex"
-                >
-                  Editar
-                </Button>
-              )}
-              <IconButton
-                icon={ArrowLeft}
-                label={onBack ? backLabel || 'Voltar' : 'Voltar ao catálogo'}
-                onClick={() => (onBack ? onBack() : onNavigate('public'))}
-              />
-            </>
-          }
-        />
+    <div className="w-full space-y-4 animate-in fade-in duration-300">
+      <PageHeader
+        title={church.name}
+        description={
+          church.city ? (
+            <span className="inline-flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5" />
+              {church.city}
+            </span>
+          ) : undefined
+        }
+        onBack={onBack}
+        backLabel="Voltar para Igrejas"
+        actions={
+          canEdit ? (
+            <IconButton
+              icon={Edit3}
+              label="Editar igreja"
+              variant="ghost"
+              onClick={openEdit}
+              className="bg-surface shadow-card"
+            />
+          ) : undefined
+        }
+      />
+
+      <div
+        className="rounded-[22px] p-5 text-white shadow-card-lg relative overflow-hidden"
+        style={{ background: `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 70%, black))` }}
+      >
+        <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/10" aria-hidden />
+        <div className="relative flex items-center gap-4">
+          <span className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-base font-extrabold shrink-0">
+            {mark || <Church className="w-6 h-6" />}
+          </span>
+          <div className="min-w-0">
+            <p className="text-lg font-extrabold leading-tight truncate">{church.name}</p>
+            {leader && (
+              <p className="text-sm text-white/85 mt-0.5 inline-flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5" />
+                {leader}
+              </p>
+            )}
+          </div>
+        </div>
+        {(address || phone) && (
+          <div className="relative mt-4 flex flex-col gap-1.5 text-[13px] text-white/90">
+            {address && (
+              <span className="inline-flex items-start gap-1.5">
+                <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                {address}
+              </span>
+            )}
+            {phone && (
+              <a href={`tel:${phone.replace(/\D/g, '')}`} className="inline-flex items-center gap-1.5 font-semibold hover:underline">
+                <Phone className="w-3.5 h-3.5 shrink-0" />
+                {phone}
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
       {tabs.length > 1 && (
-        <div
-          className="sticky top-safe md:top-16 z-20 w-full border-b border-line bg-surface/95 backdrop-blur-md"
-          role="tablist"
-          aria-label="Navegação da igreja"
-        >
-          <div className="flex w-full sm:px-6 lg:px-8 overflow-x-auto scrollbar-none">
-            {tabs.map(({ view, label, icon: Icon }) => {
-              const selected = currentView === view;
-              return (
-                <button
-                  key={view}
-                  type="button"
-                  role="tab"
-                  aria-selected={selected}
-                  title={label}
-                  onClick={() => onNavigate(view)}
-                  className={cn(
-                    'relative flex-1 sm:flex-none min-w-0 inline-flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-3 text-[11px] sm:text-sm transition-colors !rounded-none border-b-2 touch-manipulation',
-                    selected
-                      ? 'border-brand text-brand-text font-bold'
-                      : 'border-transparent text-fg-subtle font-semibold hover:text-fg hover:bg-muted/50',
-                  )}
-                >
-                  <Icon
-                    className={cn(
-                      'w-4 h-4 shrink-0',
-                      selected ? 'text-brand-text' : 'text-fg-subtle',
-                    )}
-                  />
-                  <span className="truncate">{label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <Tabs
+          ariaLabel="Seções da igreja"
+          value={(WORKSPACE_VIEWS.includes(currentView) ? currentView : 'workspace') as WorkspaceView}
+          onChange={(v) => onNavigate(v)}
+          tabs={tabs}
+        />
       )}
 
-      <div className={cn('pt-3 sm:pt-5 space-y-3 sm:space-y-4', 'px-2.5 sm:px-6 lg:px-8')}>
+      <div className="space-y-3">
         {currentView === 'workspace' ? (
-          moduleTabs.length === 0 ? (
+          !canAccessEvents ? (
             <EmptyState
+              compact
               icon={Church}
-              title={church.name}
-              description="Você está associado a esta igreja, mas ainda não possui permissão de eventos, grupos ou membros. Peça ao administrador para liberar o acesso."
+              title="Sem acesso à agenda"
+              description="Você participa desta igreja, mas ainda não tem permissão para ver os eventos. Peça ao administrador para liberar o acesso."
+            />
+          ) : upcomingEvents.length === 0 ? (
+            <EmptyState
+              compact
+              icon={CalendarPlus}
+              title="Nenhum evento próximo"
+              description="Crie um culto ou ensaio para montar a escala, a liturgia e o repertório."
+              action={
+                <Button size="sm" icon={CalendarPlus} onClick={() => onNavigate('events')}>
+                  Abrir agenda
+                </Button>
+              }
             />
           ) : (
-            <div className="space-y-3 sm:space-y-4">
-              {(address || leader) && (
-                <p className="sm:hidden text-[11px] text-fg-subtle truncate">
-                  {[address, leader && `Líder: ${leader}`].filter(Boolean).join(' · ')}
-                </p>
-              )}
-
-              {/* Atalhos dos módulos */}
-              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-                {moduleTabs.map(({ view, label, description, icon: Icon }) => (
-                  <button
-                    key={view}
-                    type="button"
-                    onClick={() => onNavigate(view)}
-                    className="ui-card group text-left p-3.5 sm:p-4 flex items-center sm:items-start gap-3 hover:border-brand-line hover:shadow-md transition-all touch-manipulation !rounded-2xl"
-                  >
-                    <span className="w-10 h-10 rounded-xl bg-brand-soft border border-brand-line text-brand-text flex items-center justify-center shrink-0 group-hover:bg-brand group-hover:text-brand-fg transition-colors">
-                      <Icon className="w-5 h-5" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-bold text-fg">{label}</span>
-                      <span className="block text-[11px] text-fg-muted leading-snug mt-0.5">
-                        {description}
-                      </span>
-                    </span>
-                    <ChevronRight className="w-4 h-4 text-fg-subtle shrink-0 self-center group-hover:text-brand-text group-hover:translate-x-0.5 transition-all" />
-                  </button>
-                ))}
-              </div>
-
-              {canAccessEvents && (
-                <section className="ui-card p-3.5 sm:p-4 !rounded-2xl">
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-fg-muted inline-flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-brand-text" />
-                      Próximos eventos
-                    </h3>
-                    <Button
-                      variant="ghost"
-                      size="xs"
-                      iconRight={ChevronRight}
-                      onClick={() => onNavigate('events')}
-                      className="!text-brand-text"
-                    >
-                      Ver todos
-                    </Button>
-                  </div>
-
-                  {upcomingEvents.length === 0 ? (
-                    <EmptyState
-                      compact
-                      icon={CalendarPlus}
-                      title="Nenhum evento próximo"
-                      description="Crie um culto ou ensaio para montar a escala, a liturgia e o repertório."
-                      action={
-                        <Button size="sm" icon={CalendarPlus} onClick={() => onNavigate('events')}>
-                          Ir para eventos
-                        </Button>
-                      }
-                      className="!border-dashed !shadow-none"
-                    />
-                  ) : (
-                    <ul className="space-y-1.5">
-                      {upcomingEvents.map((ev) => (
-                        <li key={ev.id}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onNavigate('events');
-                              onOpenEvent?.(ev.id);
-                            }}
-                            className="w-full text-left flex items-center gap-3 rounded-xl border border-line hover:border-brand-line bg-surface-2/60 hover:bg-surface px-3 py-2.5 transition-colors touch-manipulation"
-                          >
-                            <div className="shrink-0 w-12 text-center">
-                              <p className="text-[10px] font-bold uppercase text-brand-text leading-none">
-                                {formatEventDate(ev.date, { weekday: 'short' })}
-                              </p>
-                              <p className="text-sm font-display font-bold text-fg leading-tight mt-0.5">
-                                {formatEventDate(ev.date, { day: '2-digit', month: 'short' })}
-                              </p>
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-fg truncate">{ev.title}</p>
-                              <p className="text-[11px] text-fg-subtle truncate">
-                                {ev.time ? ev.time.slice(0, 5) : 'Horário a definir'}
-                                {ev.theme ? ` · ${ev.theme}` : ''}
-                              </p>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-fg-subtle shrink-0" />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
-              )}
-
-              {(phone || address) && (
-                <section className="ui-card p-3.5 sm:p-4 !rounded-2xl sm:hidden">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-fg-muted mb-2">
-                    Contato
-                  </h3>
-                  <div className="space-y-1.5 text-xs text-fg-muted">
-                    {address && (
-                      <p className="inline-flex items-start gap-2">
-                        <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-fg-subtle" />
-                        {address}
-                      </p>
-                    )}
-                    {phone && (
-                      <p className="inline-flex items-center gap-2">
-                        <Phone className="w-3.5 h-3.5 shrink-0 text-fg-subtle" />
-                        <a href={`tel:${phone.replace(/\D/g, '')}`} className="text-brand-text font-semibold">
-                          {phone}
-                        </a>
-                      </p>
-                    )}
-                  </div>
-                </section>
-              )}
-            </div>
+            <>
+              {upcomingEvents.slice(0, 8).map((ev) => (
+                <EventCard
+                  key={ev.id}
+                  event={ev}
+                  churchName={church.sigla || undefined}
+                  churchColor={color}
+                  groupName={groupName?.(ev.musicGroupId)}
+                  onOpen={() => onOpenEvent?.(ev.id)}
+                />
+              ))}
+              <Button variant="secondary" block iconRight={ChevronRight} onClick={() => onNavigate('events')}>
+                Ver agenda completa
+              </Button>
+            </>
           )
         ) : (
           children
@@ -526,6 +371,32 @@ export const ChurchWorkspace: React.FC<ChurchWorkspaceProps> = ({
                 />
               )}
             </Field>
+          </div>
+          <div>
+            <p className="ui-label">Cor da igreja</p>
+            <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Cor da igreja">
+              {CHURCH_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  role="radio"
+                  aria-checked={form.color === c}
+                  aria-label={c}
+                  onClick={() => setForm((p) => ({ ...p, color: c }))}
+                  className="w-8 h-8 !rounded-full ring-offset-2 ring-offset-surface transition-shadow"
+                  style={{ backgroundColor: c, boxShadow: form.color === c ? `0 0 0 2px var(--surface), 0 0 0 4px ${c}` : undefined }}
+                />
+              ))}
+              <label className="w-8 h-8 rounded-full border border-dashed border-line-strong flex items-center justify-center cursor-pointer overflow-hidden relative" title="Outra cor">
+                <input
+                  type="color"
+                  value={form.color}
+                  onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+                <span className="text-xs font-bold text-fg-subtle">+</span>
+              </label>
+            </div>
           </div>
         </form>
       </Modal>

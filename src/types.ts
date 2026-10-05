@@ -335,6 +335,9 @@ export interface Liturgy {
 }
 
 export type ViewMode =
+  | 'home'
+  | 'churchList'
+  | 'more'
   | 'public'
   | 'register'
   | 'workspace'

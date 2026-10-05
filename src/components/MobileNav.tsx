@@ -1,110 +1,51 @@
 import React from 'react';
-import { BookOpen, Church, ListMusic, Menu, UserRound } from 'lucide-react';
 import type { ViewMode } from '../types';
-import { WORKSPACE_VIEWS } from './ChurchWorkspace';
+import { NAV, sectionOf, type NavSection } from './privateNav';
 import { cn } from './ui/cn';
 
 interface MobileNavProps {
   currentView: ViewMode;
   onViewChange: (view: ViewMode) => void;
-  hasWorkspace: boolean;
-  onOpenMenu: () => void;
   /** Esconde a barra (ex.: leitura de música / telão). */
   hidden?: boolean;
 }
 
-type Item = {
-  key: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
-  active: boolean;
-  onClick: () => void;
-};
+const ITEMS: NavSection[] = ['home', 'agenda', 'songs', 'churches', 'more'];
 
-/**
- * Barra de navegação inferior (somente mobile, usuário logado).
- * Dá acesso com o polegar às áreas principais, como num app nativo.
- */
-export const MobileNav: React.FC<MobileNavProps> = ({
-  currentView,
-  onViewChange,
-  hasWorkspace,
-  onOpenMenu,
-  hidden = false,
-}) => {
+/** Barra de navegação inferior do ambiente privado (celular/tablet). */
+export const MobileNav: React.FC<MobileNavProps> = ({ currentView, onViewChange, hidden = false }) => {
   if (hidden) return null;
-
-  const items: Item[] = [
-    {
-      key: 'public',
-      label: 'Catálogo',
-      icon: BookOpen,
-      active: currentView === 'public',
-      onClick: () => onViewChange('public'),
-    },
-    {
-      key: 'setlist',
-      label: 'Playlists',
-      icon: ListMusic,
-      active: currentView === 'setlist',
-      onClick: () => onViewChange('setlist'),
-    },
-    ...(hasWorkspace
-      ? [
-          {
-            key: 'workspace',
-            label: 'Igreja',
-            icon: Church,
-            active: WORKSPACE_VIEWS.includes(currentView),
-            onClick: () => onViewChange('workspace'),
-          } satisfies Item,
-        ]
-      : []),
-    {
-      key: 'profile',
-      label: 'Perfil',
-      icon: UserRound,
-      active: currentView === 'profile',
-      onClick: () => onViewChange('profile'),
-    },
-    {
-      key: 'menu',
-      label: 'Menu',
-      icon: Menu,
-      active: false,
-      onClick: onOpenMenu,
-    },
-  ];
+  const activeSection = sectionOf(currentView);
 
   return (
     <nav
-      aria-label="Navegação rápida"
-      className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-surface/95 backdrop-blur-md border-t border-line pb-safe shadow-[0_-4px_24px_-12px_rgb(0_0_0/0.35)]"
+      aria-label="Navegação principal"
+      className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-surface/95 backdrop-blur-md border-t border-line pb-safe"
     >
-      <ul className="grid auto-cols-fr grid-flow-col h-[4.25rem] px-1">
-        {items.map(({ key, label, icon: Icon, active, onClick }) => (
-          <li key={key} className="min-w-0">
-            <button
-              type="button"
-              onClick={onClick}
-              aria-current={active ? 'page' : undefined}
-              className={cn(
-                'w-full h-full flex flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-semibold tracking-wide transition-colors touch-manipulation !rounded-none',
-                active ? 'text-brand-text' : 'text-fg-subtle hover:text-fg',
-              )}
-            >
-              <span
+      <ul className="grid grid-cols-5 h-[4.25rem]">
+        {ITEMS.map((key) => {
+          const { view, label, icon: Icon } = NAV[key];
+          const active = activeSection === key;
+          return (
+            <li key={key} className="min-w-0">
+              <button
+                type="button"
+                onClick={() => onViewChange(view)}
+                aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'inline-flex items-center justify-center w-12 h-7 rounded-full transition-colors',
-                  active && 'bg-brand-soft',
+                  'relative w-full h-full flex flex-col items-center justify-center gap-1 text-[11px] font-semibold transition-colors touch-manipulation !rounded-none',
+                  active ? 'text-brand-text' : 'text-fg-subtle hover:text-fg',
                 )}
               >
-                <Icon className="w-[20px] h-[20px]" strokeWidth={active ? 2.5 : 2} />
-              </span>
-              <span className="truncate max-w-full">{label}</span>
-            </button>
-          </li>
-        ))}
+                {active && (
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] rounded-b-full bg-brand" />
+                )}
+                <Icon className="w-[22px] h-[22px]" strokeWidth={active ? 2.4 : 2} />
+                <span className="truncate max-w-full">{label}</span>
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );

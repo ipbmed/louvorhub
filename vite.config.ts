@@ -7,7 +7,8 @@ import { VitePWA } from 'vite-plugin-pwa';
 const APP_NAME = 'LouvorHub';
 const APP_DESCRIPTION =
   'Hinário, cifras, playlists, eventos e equipe de louvor da sua igreja — no celular, tablet ou telão.';
-const THEME_COLOR = '#0c0a09';
+const THEME_COLOR = '#4f46e5';
+const BACKGROUND_COLOR = '#f6f5fb';
 
 export default defineConfig(() => {
   return {
@@ -31,7 +32,7 @@ export default defineConfig(() => {
           display_override: ['standalone', 'minimal-ui'],
           orientation: 'any',
           theme_color: THEME_COLOR,
-          background_color: THEME_COLOR,
+          background_color: BACKGROUND_COLOR,
           categories: ['music', 'productivity', 'lifestyle'],
           icons: [
             { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },

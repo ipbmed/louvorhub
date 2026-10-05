@@ -27,7 +27,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       ? 'bg-brand-soft text-brand-text border-brand-line'
       : tone === 'danger'
         ? 'bg-danger-soft text-danger-text border-danger-line'
-        : 'bg-muted text-fg-subtle border-line';
+        : 'bg-brand-soft text-brand-text border-transparent';
   return (
     <div
       className={cn(
@@ -38,8 +38,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     >
       <div
         className={cn(
-          'rounded-2xl border flex items-center justify-center',
-          compact ? 'w-11 h-11' : 'w-14 h-14',
+          'rounded-[20px] border flex items-center justify-center',
+          compact ? 'w-12 h-12' : 'w-16 h-16',
           iconTone,
         )}
       >

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   BookOpen,
+  Music2,
   Search,
   SlidersHorizontal,
   LogIn,
@@ -154,7 +155,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header
       className={cn(
-        'sticky top-0 z-30 w-full bg-surface/92 backdrop-blur-md text-fg border-b border-line shadow-[0_1px_0_0_var(--line)] pt-safe',
+        'sticky top-0 z-30 w-full bg-app/85 backdrop-blur-md text-fg border-b border-line/60 pt-safe',
         hideOnMobile && 'hidden md:block',
       )}
     >
@@ -222,12 +223,12 @@ export const Header: React.FC<HeaderProps> = ({
                 inChurchWorkspace ? 'hidden sm:flex' : 'flex',
               )}
             >
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-700 flex items-center justify-center text-[#052e16] shadow-md shadow-emerald-500/25 ring-1 ring-emerald-300/40 shrink-0 group-hover:scale-[1.03] transition-transform">
-                <BookOpen className="w-5 h-5" strokeWidth={2.4} />
-              </div>
+              <span className="btn-gradient w-9 h-9 rounded-[11px] flex items-center justify-center shrink-0 group-hover:scale-[1.03] transition-transform">
+                <Music2 className="w-[18px] h-[18px]" strokeWidth={2.4} />
+              </span>
               <div className="min-w-0 leading-none">
-                <h1 className="text-[17px] sm:text-xl font-display font-extrabold tracking-tight text-fg truncate">
-                  Louvor<span className="text-brand-text">Hub</span>
+                <h1 className="text-[17px] sm:text-lg font-medium tracking-tight text-fg truncate">
+                  Louvor<b className="font-extrabold text-brand-text">Hub</b>
                 </h1>
                 <p className="hidden sm:block mt-0.5 text-[10px] text-fg-subtle font-semibold tracking-[0.14em] uppercase truncate">
                   {activeChurchSigla?.trim() || 'Caderno de louvor'}
@@ -342,7 +343,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={onAdminAuthClick}
-                className="inline-flex items-center gap-1.5 h-10 px-3 sm:px-4 rounded-button text-xs font-bold bg-brand text-brand-fg hover:bg-brand-hover shadow-sm shadow-emerald-500/20 transition-colors"
+                className="btn-gradient inline-flex items-center gap-1.5 h-10 px-4 sm:px-5 !rounded-full text-sm font-bold transition-all"
                 title="Entrar com e-mail"
               >
                 <LogIn className="w-4 h-4" />

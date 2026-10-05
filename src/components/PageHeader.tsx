@@ -1,13 +1,16 @@
 import React from 'react';
-import type { LucideIcon } from 'lucide-react';
-import { Button, type ButtonProps } from './ui/Button';
+import { ArrowLeft, type LucideIcon } from 'lucide-react';
+import { Button, IconButton, type ButtonProps } from './ui/Button';
 import { cn } from './ui/cn';
 
 interface PageHeaderProps {
-  icon: LucideIcon;
+  icon?: LucideIcon;
   title: string;
   description?: React.ReactNode;
   actions?: React.ReactNode;
+  /** Mostra o botão de voltar à esquerda do título. */
+  onBack?: () => void;
+  backLabel?: string;
   /** Quando definido, o ícone vira botão clicável. */
   onIconClick?: () => void;
   iconTitle?: string;
@@ -46,12 +49,14 @@ export const PageHeaderButton: React.FC<PageHeaderButtonProps> = ({
   </Button>
 );
 
-/** Cabeçalho padronizado das views internas (painel, playlists, igrejas, etc.). */
+/** Cabeçalho padronizado das views internas: título, subtítulo, voltar e ações. */
 export const PageHeader: React.FC<PageHeaderProps> = ({
   icon: Icon,
   title,
   description,
   actions,
+  onBack,
+  backLabel = 'Voltar',
   onIconClick,
   iconTitle,
   iconBadge: BadgeIcon,
@@ -61,59 +66,65 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   className,
 }) => {
   const iconClassName =
-    'relative w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl sm:rounded-2xl bg-brand-soft text-brand-text flex items-center justify-center border border-brand-line';
+    'relative hidden sm:flex w-11 h-11 shrink-0 rounded-[14px] bg-brand-soft text-brand-text items-center justify-center';
 
-  const iconInner = (
+  const iconInner = Icon ? (
     <>
-      <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+      <Icon className="w-5 h-5" />
       {BadgeIcon && (
-        <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 sm:w-[1.125rem] sm:h-[1.125rem] rounded-full bg-brand text-brand-fg flex items-center justify-center ring-2 ring-surface shadow-sm">
+        <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-brand text-brand-fg flex items-center justify-center ring-2 ring-app shadow-sm">
           <BadgeIcon className="w-2.5 h-2.5" strokeWidth={2.5} />
         </span>
       )}
     </>
-  );
+  ) : null;
 
   const titleClassName =
-    'text-lg sm:text-2xl font-display font-bold text-fg leading-tight tracking-tight truncate';
+    'text-[22px] sm:text-2xl font-extrabold text-fg leading-tight tracking-tight truncate';
 
   return (
-    <div
-      className={cn(
-        'w-full bg-surface border-b border-line px-3 sm:px-6 lg:px-8 py-3 sm:py-4',
-        className,
-      )}
-    >
+    <div className={cn('w-full', className)}>
       <div className="flex flex-row items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          {onIconClick ? (
-            <button
-              type="button"
-              onClick={onIconClick}
-              title={iconTitle}
-              aria-label={iconTitle || 'Ação'}
-              className={cn(iconClassName, 'hover:brightness-110 transition')}
-            >
-              {iconInner}
-            </button>
-          ) : (
-            <div className={iconClassName}>{iconInner}</div>
+          {onBack && (
+            <IconButton
+              icon={ArrowLeft}
+              label={backLabel}
+              variant="ghost"
+              onClick={onBack}
+              className="-ml-1 bg-surface shadow-card"
+            />
           )}
-          <div className="min-w-0 pr-2">
+          {Icon &&
+            !onBack &&
+            (onIconClick ? (
+              <button
+                type="button"
+                onClick={onIconClick}
+                title={iconTitle}
+                aria-label={iconTitle || 'Ação'}
+                className={cn(iconClassName, 'hover:brightness-95 transition')}
+              >
+                {iconInner}
+              </button>
+            ) : (
+              <div className={iconClassName}>{iconInner}</div>
+            ))}
+          <div className="min-w-0 pr-1">
             {onTitleClick ? (
               <button
                 type="button"
                 onClick={onTitleClick}
                 title={titleTitle || title}
-                className={cn(titleClassName, 'text-left hover:opacity-80 transition-opacity max-w-full')}
+                className={cn(titleClassName, 'block text-left hover:opacity-80 transition-opacity max-w-full')}
               >
                 {title}
               </button>
             ) : (
-              <h2 className={titleClassName}>{title}</h2>
+              <h1 className={titleClassName}>{title}</h1>
             )}
             {description != null && description !== '' && (
-              <div className="hidden sm:block text-xs text-fg-muted mt-0.5 leading-relaxed">
+              <div className="text-[13px] sm:text-sm text-fg-muted mt-0.5 leading-snug line-clamp-2">
                 {description}
               </div>
             )}

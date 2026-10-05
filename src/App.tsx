@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useMatch, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -62,31 +62,41 @@ import { InviteAcceptPage } from './components/InviteAcceptPage';
 import { AlphabetFilter, AlphabetFilterToggle } from './components/AlphabetFilter';
 import { SongTypeFilter, matchesSongTypeFilter } from './components/SongTypeFilter';
 import { AppSidebar } from './components/AppSidebar';
+import { AppTopbar } from './components/AppTopbar';
 import { MobileNav } from './components/MobileNav';
 import { CatalogSearchBar } from './components/CatalogSearchBar';
 import { ProfilePage } from './components/ProfilePage';
+import { HomeDashboard } from './components/HomeDashboard';
+import { ChurchesPage } from './components/ChurchesPage';
+import { MorePage } from './components/MorePage';
+import { PageHeader } from './components/PageHeader';
 import {
   Music,
+  Music2,
   ArrowUpDown,
   AlertCircle,
   LayoutGrid,
   List,
   Loader2,
-  BookOpen,
   Church as ChurchIcon,
   KeyRound,
   SearchX,
   FilterX,
+  Settings2,
 } from 'lucide-react';
 import { CatalogSongsLoading } from './components/CatalogSongsLoading';
 import { HelpModal } from './components/HelpModal';
 import { useConfirm } from '@/contexts/ConfirmProvider';
-import { Alert, Button, EmptyState, Input, Select, cn } from './components/ui';
+import { getAvatarPublicUrl } from '@/utils/avatarUrl';
+import { Alert, Button, Chip, EmptyState, Input, Select, cn } from './components/ui';
 
 type SongsLayoutMode = 'cards' | 'list';
 const SONGS_LAYOUT_KEY = 'louvorhub_songs_layout';
 
 const VALID_VIEWS: ViewMode[] = [
+  'home',
+  'churchList',
+  'more',
   'public',
   'register',
   'workspace',
@@ -206,33 +216,17 @@ export default function App() {
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [showTagManager, setShowTagManager] = useState(false);
   const [joinCode, setJoinCode] = useState('');
-  const [sidebarDrawerOpen, setSidebarDrawerOpen] = useState(false);
   const [churchEditRequestKey, setChurchEditRequestKey] = useState(0);
-  const [sidebarDesktopOpen, setSidebarDesktopOpen] = useState(() => {
-    try {
-      return localStorage.getItem('louvorhub_sidebar_desktop') !== '0';
-    } catch {
-      return true;
-    }
-  });
+  const [createOrgOnOpen, setCreateOrgOnOpen] = useState(false);
   const [songToAddToSetlist, setSongToAddToSetlist] = useState<Song | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
-  const setSidebarDesktop = (open: boolean) => {
-    setSidebarDesktopOpen(open);
-    try {
-      localStorage.setItem('louvorhub_sidebar_desktop', open ? '1' : '0');
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const isEventDetail =
-    currentView === 'events' && Boolean(selectedEventId);
-  const isWorkspaceShell =
-    Boolean(user && orgId && WORKSPACE_VIEWS.includes(currentView));
+  const isEventDetail = Boolean(user && selectedEventId);
 
   const PROTECTED_VIEWS: ViewMode[] = [
+    'home',
+    'churchList',
+    'more',
     'workspace',
     'setlist',
     'churches',
@@ -279,20 +273,36 @@ export default function App() {
         showToast('Sem permissão para gerenciar grupos e bandas.');
         return;
       }
+      if (view === 'events' && !orgId) {
+        showToast('Associe-se a uma igreja para ver a agenda.');
+        return;
+      }
       if (view === 'events' && !canAccessEvents) {
         showToast('Sem permissão para acessar eventos.');
         return;
       }
     }
-    // Sai do detalhe do evento ao trocar de aba (ou ao clicar de novo em Eventos).
-    if (view !== 'events' || currentView === 'events') setSelectedEventId(null);
+    setSelectedEventId(null);
+    if (view !== 'organizations') setCreateOrgOnOpen(false);
+    if (view !== currentView) window.scrollTo({ top: 0 });
     setCurrentView(view);
+  };
+
+  const openEvent = (eventId: string) => {
+    setSelectedEventId(eventId);
+    window.scrollTo({ top: 0 });
+  };
+
+  const openChurch = (churchId: string) => {
+    if (churchId !== orgId) setActiveOrgId(churchId);
+    setSelectedEventId(null);
+    setCurrentView('workspace');
+    window.scrollTo({ top: 0 });
   };
 
   const goToCatalog = () => {
     if (currentView === 'public') return;
     setSelectedEventId(null);
-    setSidebarDrawerOpen(false);
     setCurrentView('public');
   };
 
@@ -316,6 +326,16 @@ export default function App() {
     setCurrentView(pendingShortcutView);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, pendingShortcutView, user, orgId]);
+
+  // Ao entrar (ou reabrir com sessão ativa), o ambiente privado começa no Início.
+  const lastUserIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const id = user?.id ?? null;
+    if (id && id !== lastUserIdRef.current && !pendingShortcutView) {
+      setCurrentView((v) => (v === 'public' ? 'home' : v));
+    }
+    lastUserIdRef.current = id;
+  }, [user?.id, pendingShortcutView]);
 
   // Visitante: somente consulta de músicas
   useEffect(() => {
@@ -1164,12 +1184,12 @@ export default function App() {
       (songsQuery.isPending || songsQuery.isFetching);
     return (
       <div className="min-h-[100dvh] bg-app text-fg flex flex-col items-center justify-center gap-5 px-6 animate-in fade-in duration-300">
-        <div className="w-20 h-20 rounded-[1.5rem] bg-gradient-to-br from-emerald-400 to-emerald-700 flex items-center justify-center text-emerald-950 shadow-xl shadow-emerald-500/25 ring-1 ring-emerald-300/40">
-          <BookOpen className="w-10 h-10" strokeWidth={2.25} />
-        </div>
+        <span className="btn-gradient w-20 h-20 rounded-3xl flex items-center justify-center shadow-card-lg">
+          <Music2 className="w-10 h-10" strokeWidth={2.4} />
+        </span>
         <div className="text-center space-y-1">
-          <p className="text-2xl font-display font-extrabold tracking-tight">
-            Louvor<span className="text-brand-text">Hub</span>
+          <p className="text-2xl font-medium tracking-tight">
+            Louvor<b className="font-extrabold text-brand-text">Hub</b>
           </p>
           <p className="text-xs text-fg-subtle">
             {loadingSongs ? 'Montando o catálogo de músicas…' : 'Preparando sua sessão…'}
@@ -1181,103 +1201,92 @@ export default function App() {
   }
 
   const showMobileNav = Boolean(user) && !songMatch && !songVersionMatch;
-  const hideHeaderOnMobile = Boolean(user);
+  const userName =
+    profile?.display_name?.trim() || user?.email?.split('@')[0] || 'Usuário';
+  const userAvatarUrl = getAvatarPublicUrl(profile?.avatar_path, profile?.updated_at);
+  const roleLabel = isAdmin
+    ? 'Administrador'
+    : canManageActiveOrgMembers
+      ? 'Líder'
+      : 'Membro';
+  const churchList = orgOptions.map((o) => {
+    const c = churches.find((ch) => ch.id === o.id);
+    return {
+      id: o.id,
+      name: c?.name || o.name,
+      city: c?.city,
+      sigla: c?.sigla ?? o.sigla,
+      color: c?.color,
+    };
+  });
+  const groupNameById = (id?: string) => musicGroups.find((g) => g.id === id)?.name;
+  const NARROW_VIEWS: ViewMode[] = ['home', 'more', 'churchList', 'profile', 'events', 'workspace', 'churches', 'users'];
+  const contentWidth = !user
+    ? 'max-w-none'
+    : isEventDetail
+      ? 'max-w-6xl'
+      : NARROW_VIEWS.includes(currentView)
+        ? 'max-w-3xl'
+        : 'max-w-7xl';
+
+  const handleSignOut = async () => {
+    await signOut();
+    setSelectedEventId(null);
+    setCurrentView('public');
+    showToast('Sessão encerrada.');
+  };
 
   return (
     <div className="min-h-[100dvh] bg-app text-fg flex flex-col font-sans">
-      {hideHeaderOnMobile && !songMatch && (
-        <div className="md:hidden fixed top-0 inset-x-0 h-safe z-40 bg-app" aria-hidden />
-      )}
-      {!songMatch && (
+      {!songMatch && !user && (
         <Header
-          hideOnMobile={hideHeaderOnMobile}
           onViewChange={handleViewChange}
           quickNumberQuery={quickQuery}
           onQuickNumberChange={handleQuickQueryChange}
           onOpenKeypad={() => setShowKeypad(true)}
           onOpenAdvancedSearch={() => setShowAdvancedSearch(true)}
-          isAuthenticated={Boolean(user)}
-          showPublicEvents={!user && currentView === 'public'}
-          onAdminAuthClick={() => {
-            if (!user) setShowLogin(true);
-            else if (canAccessAdminPanel) setCurrentView(currentView === 'admin' ? 'public' : 'admin');
-            else showToast('Somente administradores acessam o Painel Geral.');
-          }}
-          onSignOut={async () => {
-            await signOut();
-            setSidebarDrawerOpen(false);
-            setCurrentView('public');
-            showToast('Sessão encerrada.');
-          }}
+          isAuthenticated={false}
+          showPublicEvents={currentView === 'public'}
+          onAdminAuthClick={() => setShowLogin(true)}
+          onSignOut={handleSignOut}
           favoritesCount={favorites.length}
           showFavoritesOnly={showFavoritesOnly}
           onToggleFavoritesOnly={() => {
             void handleToggleFavoritesOnly();
           }}
-          onOpenSidebar={() => setSidebarDrawerOpen(true)}
           currentView={currentView}
-          activeChurchSigla={workspaceChurch?.sigla}
-          activeChurchName={workspaceChurch?.name}
-          canEditActiveChurch={Boolean(orgId && canEditChurch(orgId))}
-          onEditActiveChurch={() => {
-            if (!orgId || !canEditChurch(orgId)) return;
-            // Garante ChurchWorkspace montado para abrir o modal, sem trocar a aba se já estiver no workspace
-            if (!WORKSPACE_VIEWS.includes(currentView)) {
-              setCurrentView('workspace');
-              setSelectedEventId(null);
-            }
-            requestAnimationFrame(() => {
-              setChurchEditRequestKey((k) => k + 1);
-            });
-          }}
         />
       )}
 
-      {!songMatch && (
-      <div className={cn('flex flex-1 w-full min-h-0', hideHeaderOnMobile && 'pt-safe md:pt-0')}>
-        {user && (
+      {!songMatch && user && (
+        <>
           <AppSidebar
             currentView={currentView}
             onViewChange={handleViewChange}
-            open={sidebarDrawerOpen}
-            onClose={() => setSidebarDrawerOpen(false)}
-            desktopExpanded={sidebarDesktopOpen}
-            onToggleDesktop={() => setSidebarDesktop(!sidebarDesktopOpen)}
-            orgOptions={orgOptions}
-            activeOrgId={activeOrgId || undefined}
-            onOrgChange={setActiveOrgId}
-            userEmail={user.email}
-            userDisplayName={profile?.display_name}
-            userAvatarPath={profile?.avatar_path}
-            userAvatarUpdatedAt={profile?.updated_at}
-            permissions={{
-              canAccessAdminPanel,
-              canManageUsers,
-              canManageOrgMembers: canManageActiveOrgMembers,
-              canManageChurches,
-              canAccessLiturgies,
-              canManageSchedules,
-              canAccessEvents,
-            }}
-            onSignOut={async () => {
-              await signOut();
-              setSidebarDrawerOpen(false);
-              setCurrentView('public');
-              showToast('Sessão encerrada.');
-            }}
-            onOpenHelp={() => setShowHelp(true)}
+            userName={userName}
+            userAvatarUrl={userAvatarUrl}
+            roleLabel={roleLabel}
+            showAgenda={Boolean(orgId && canAccessEvents)}
+            showAccounts={canManageUsers}
+            onSignOut={() => void handleSignOut()}
           />
-        )}
+          <AppTopbar
+            userName={userName}
+            userAvatarUrl={userAvatarUrl}
+            onHome={() => handleViewChange('home')}
+            onProfile={() => handleViewChange('profile')}
+          />
+        </>
+      )}
 
+      {!songMatch && (
+      <div className={cn('flex flex-1 w-full min-h-0', user && 'lg:pl-64')}>
       <main
         className={cn(
-          'flex-1 w-full min-w-0 space-y-4 sm:space-y-6 transition-[padding] duration-200',
-          isWorkspaceShell
-            ? 'px-0 py-0 sm:py-0'
-            : isEventDetail
-              ? 'px-2 sm:px-4 lg:px-5 xl:px-6 2xl:px-8 py-3 sm:py-6'
-              : 'px-3 sm:px-6 lg:px-8 py-3 sm:py-6',
-          showMobileNav && 'pb-nav lg:pb-6',
+          'flex-1 w-full min-w-0 mx-auto space-y-4 sm:space-y-6',
+          contentWidth,
+          user ? 'px-4 sm:px-6 lg:px-8 pt-2 pb-6 lg:pt-8' : 'px-3 sm:px-6 lg:px-8 py-3 sm:py-6',
+          showMobileNav && 'pb-nav lg:pb-8',
         )}
       >
         {!configured && (
@@ -1302,7 +1311,7 @@ export default function App() {
           </Alert>
         )}
 
-        {configured && user && !orgId && currentView !== 'register' && (
+        {configured && user && !orgId && currentView === 'home' && (
           <div className="ui-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <div className="w-11 h-11 rounded-xl bg-brand-soft text-brand-text border border-brand-line flex items-center justify-center shrink-0">
@@ -1348,8 +1357,136 @@ export default function App() {
               setShowLogin(true);
             }}
           />
+        ) : user && isEventDetail ? (
+          eventBundle?.event ? (
+            <div className="space-y-4">
+              <PageHeader
+                title={eventBundle.event.title}
+                description={workspaceChurch?.name}
+                onBack={() => setSelectedEventId(null)}
+                backLabel="Voltar"
+              />
+              <EventDetail
+                event={eventBundle.event}
+                schedule={eventBundle.schedule}
+                liturgy={eventBundle.liturgy}
+                setlist={eventBundle.setlist}
+                songs={songs}
+                musicGroups={activeChurchGroups}
+                systemUsers={systemUsers}
+                churchName={workspaceChurch?.name}
+                canManageTeam={canAccessEvents}
+                canManageLiturgy={canAccessLiturgies}
+                canManageSetlist={canAccessEvents}
+                onSaveSchedule={handleSaveSchedule}
+                onDeleteSchedule={handleDeleteSchedule}
+                onSaveLiturgy={handleSaveLiturgy}
+                onDeleteLiturgy={handleDeleteLiturgy}
+                onEnsureLiturgy={handleEnsureEventLiturgy}
+                onSaveSetlist={handleSaveEventSetlist}
+                onSaveEvent={handleSaveEvent}
+                onSaveSongVersion={handleSaveEventSongVersion}
+                onResetSongVersion={handleResetEventSongVersion}
+                onSelectSong={openSong}
+                onShareUpdated={invalidateEvents}
+              />
+            </div>
+          ) : eventBundleQuery.isError ? (
+            <EmptyState
+              tone="danger"
+              icon={AlertCircle}
+              title="Evento não encontrado"
+              description={(eventBundleQuery.error as Error)?.message || 'Não foi possível carregar o evento.'}
+              action={
+                <Button variant="secondary" onClick={() => setSelectedEventId(null)}>
+                  Voltar
+                </Button>
+              }
+            />
+          ) : (
+            <div className="flex items-center justify-center py-20 text-fg-subtle gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Carregando evento...
+            </div>
+          )
+        ) : user && currentView === 'home' ? (
+          <HomeDashboard
+            userName={userName}
+            churchName={workspaceChurch?.name}
+            churchColor={workspaceChurch?.color}
+            canAccessEvents={Boolean(orgId && canAccessEvents)}
+            events={events}
+            musicGroups={activeChurchGroups}
+            setlists={setlists}
+            songsCount={songs.length}
+            churchesCount={orgOptions.length}
+            onNavigate={handleViewChange}
+            onOpenEvent={openEvent}
+          />
+        ) : user && currentView === 'more' ? (
+          <MorePage
+            userName={userName}
+            userEmail={user.email}
+            userAvatarUrl={userAvatarUrl}
+            roleLabel={roleLabel}
+            canManageSongs={canAccessAdminPanel}
+            canManageChurches={canAccessAdminPanel}
+            canManageUsers={canManageUsers}
+            onNavigate={handleViewChange}
+            onOpenHelp={() => setShowHelp(true)}
+            onSignOut={() => void handleSignOut()}
+          />
+        ) : user && currentView === 'churchList' ? (
+          <ChurchesPage
+            churches={churchList}
+            activeOrgId={orgId}
+            groupsCount={(id) => musicGroups.filter((g) => g.churchId === id).length}
+            membersCount={systemUsers.length}
+            onOpen={openChurch}
+            onManageAll={canAccessAdminPanel ? () => handleViewChange('organizations') : undefined}
+            onCreate={
+              canAccessAdminPanel
+                ? () => {
+                    handleViewChange('organizations');
+                    setCreateOrgOnOpen(true);
+                  }
+                : undefined
+            }
+            joinCode={joinCode}
+            onJoinCodeChange={setJoinCode}
+            onJoin={() => void handleJoinOrg()}
+          />
+        ) : user && currentView === 'events' && orgId && canAccessEvents ? (
+          <EventManager
+            events={events}
+            musicGroups={activeChurchGroups}
+            activeChurchId={orgId}
+            churchName={workspaceChurch?.name}
+            churchColor={workspaceChurch?.color}
+            onSaveEvent={handleSaveEvent}
+            onSaveEventBatch={handleSaveEventBatch}
+            onDeleteEvent={handleDeleteEvent}
+            onOpenEvent={openEvent}
+            toolbar={
+              churchList.length > 1 ? (
+                <div className="flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+                  {churchList.map((c) => (
+                    <Chip
+                      key={c.id}
+                      active={c.id === orgId}
+                      dotColor={c.color || '#4f46e5'}
+                      onClick={() => c.id !== orgId && setActiveOrgId(c.id)}
+                      title={c.name}
+                    >
+                      {c.sigla?.trim() || c.name}
+                    </Chip>
+                  ))}
+                </div>
+              ) : undefined
+            }
+          />
         ) : user && currentView === 'profile' ? (
-          <ProfilePage onBack={() => setCurrentView('public')} />
+          <ProfilePage onBack={() => handleViewChange('more')} />
         ) : user && currentView === 'admin' && canAccessAdminPanel ? (
           <AdminDashboard
             songs={songs}
@@ -1387,11 +1524,13 @@ export default function App() {
             canEditChurch={canEditChurch(orgId)}
             onSaveChurch={handleSaveChurch}
             onNavigate={handleViewChange}
-            onBack={isEventDetail ? () => setSelectedEventId(null) : undefined}
-            backLabel={isEventDetail ? 'Voltar ao calendário' : undefined}
+            onBack={() => handleViewChange('churchList')}
             editRequestKey={churchEditRequestKey}
             events={events}
-            onOpenEvent={(id) => setSelectedEventId(id)}
+            groupsCount={activeChurchGroups.length}
+            membersCount={systemUsers.length}
+            groupName={groupNameById}
+            onOpenEvent={openEvent}
           >
             {currentView === 'churches' && canManageChurches ? (
               <ChurchManager
@@ -1426,49 +1565,6 @@ export default function App() {
                 }}
                 onDeleteUser={handleDeleteUser}
               />
-            ) : currentView === 'events' && canAccessEvents ? (
-              selectedEventId && eventBundle?.event ? (
-                <EventDetail
-                  event={eventBundle.event}
-                  schedule={eventBundle.schedule}
-                  liturgy={eventBundle.liturgy}
-                  setlist={eventBundle.setlist}
-                  songs={songs}
-                  musicGroups={activeChurchGroups}
-                  systemUsers={systemUsers}
-                  churchName={workspaceChurch?.name}
-                  canManageTeam={canAccessEvents}
-                  canManageLiturgy={canAccessLiturgies}
-                  canManageSetlist={canAccessEvents}
-                  onSaveSchedule={handleSaveSchedule}
-                  onDeleteSchedule={handleDeleteSchedule}
-                  onSaveLiturgy={handleSaveLiturgy}
-                  onDeleteLiturgy={handleDeleteLiturgy}
-                  onEnsureLiturgy={handleEnsureEventLiturgy}
-                  onSaveSetlist={handleSaveEventSetlist}
-                  onSaveEvent={handleSaveEvent}
-                  onSaveSongVersion={handleSaveEventSongVersion}
-                  onResetSongVersion={handleResetEventSongVersion}
-                  onSelectSong={openSong}
-                  onShareUpdated={invalidateEvents}
-                />
-              ) : selectedEventId && eventBundleQuery.isLoading ? (
-                <div className="flex items-center justify-center py-20 text-stone-400 gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Carregando evento...
-                </div>
-              ) : (
-                <EventManager
-                  events={events}
-                  musicGroups={activeChurchGroups}
-                  activeChurchId={orgId}
-                  embedded
-                  onSaveEvent={handleSaveEvent}
-                  onSaveEventBatch={handleSaveEventBatch}
-                  onDeleteEvent={handleDeleteEvent}
-                  onOpenEvent={(id) => setSelectedEventId(id)}
-                />
-              )
             ) : null}
           </ChurchWorkspace>
         ) : user && currentView === 'setlist' ? (
@@ -1493,6 +1589,8 @@ export default function App() {
             onSave={handleSaveChurch}
             onDelete={handleDeleteChurch}
             onRefresh={() => queryClient.invalidateQueries({ queryKey: ['allOrganizations'] })}
+            startWithCreate={createOrgOnOpen}
+            onBack={() => handleViewChange('churchList')}
           />
         ) : user && currentView === 'accounts' && canManageUsers ? (
           <AccountManager />
@@ -1500,8 +1598,21 @@ export default function App() {
           <CatalogSongsLoading layout={songsLayout} />
         ) : (
           <div className="w-full space-y-4 sm:space-y-5">
-            {hideHeaderOnMobile && (
-              <div className="md:hidden sticky top-safe z-20 -mx-3 -mt-3 px-3 py-2.5 bg-app/95 backdrop-blur-md border-b border-line">
+            {user && (
+              <PageHeader
+                title="Músicas"
+                description={`${songs.length} hinos e cânticos no catálogo`}
+                actions={
+                  canAccessAdminPanel ? (
+                    <Button variant="secondary" size="sm" icon={Settings2} onClick={() => handleViewChange('admin')}>
+                      Gerenciar
+                    </Button>
+                  ) : undefined
+                }
+              />
+            )}
+            {user && (
+              <div className="sticky top-[calc(60px+env(safe-area-inset-top,0px))] lg:top-0 z-20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 bg-app/90 backdrop-blur-md">
                 <CatalogSearchBar
                   value={quickQuery}
                   onChange={handleQuickQueryChange}
@@ -1742,8 +1853,6 @@ export default function App() {
         <MobileNav
           currentView={currentView}
           onViewChange={handleViewChange}
-          hasWorkspace={Boolean(orgId)}
-          onOpenMenu={() => setSidebarDrawerOpen(true)}
           hidden={Boolean(projectionSongs)}
         />
       )}

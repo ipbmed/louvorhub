@@ -20,6 +20,9 @@ interface OrganizationManagerProps {
   onSave: (church: Church) => void | Promise<void>;
   onDelete: (id: string) => void | Promise<void>;
   onRefresh?: () => void | Promise<void>;
+  /** Abre o formulário de nova igreja ao montar. */
+  startWithCreate?: boolean;
+  onBack?: () => void;
 }
 
 const EMPTY_FORM = {
@@ -29,7 +32,7 @@ const EMPTY_FORM = {
   leader: '',
   phone: '',
   sigla: '',
-  color: '#10b981',
+  color: '#4f46e5',
 };
 
 export const OrganizationManager: React.FC<OrganizationManagerProps> = ({
@@ -37,6 +40,8 @@ export const OrganizationManager: React.FC<OrganizationManagerProps> = ({
   loading = false,
   onSave,
   onDelete,
+  startWithCreate = false,
+  onBack,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
@@ -73,6 +78,11 @@ export const OrganizationManager: React.FC<OrganizationManagerProps> = ({
     setErrorMsg('');
     setModalOpen(true);
   };
+
+  useEffect(() => {
+    if (startWithCreate) openCreate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startWithCreate]);
 
   const openEdit = (church: Church) => {
     setEditing(church);
@@ -132,8 +142,10 @@ export const OrganizationManager: React.FC<OrganizationManagerProps> = ({
     <div className="w-full space-y-6">
       <PageHeader
         icon={Building2}
-        title="Igrejas"
+        title="Todas as igrejas"
         description="Cadastro e edição das igrejas do LouvorHub."
+        onBack={onBack}
+        backLabel="Voltar para Igrejas"
         actions={
           <PageHeaderButton icon={Plus} onClick={openCreate}>
             Nova igreja

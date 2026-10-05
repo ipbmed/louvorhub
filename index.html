@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR" class="light">
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -13,14 +13,14 @@
     />
 
     <!-- PWA / cores do sistema -->
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c0a09" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f1f5f9" />
-    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f0e17" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f5fb" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="application-name" content="LouvorHub" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="LouvorHub" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="format-detection" content="telephone=no" />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -30,7 +30,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
   </head>
@@ -38,20 +38,20 @@
     <script>
       (function () {
         try {
-          var theme = localStorage.getItem('louvorhub_theme');
-          var isLight = theme === 'light';
+          var theme = localStorage.getItem('louvorhub_theme_v2');
+          var isDark = theme === 'dark';
           document.documentElement.classList.remove('light', 'dark');
-          document.documentElement.classList.add(isLight ? 'light' : 'dark');
-          document.documentElement.style.colorScheme = isLight ? 'light' : 'dark';
+          document.documentElement.classList.add(isDark ? 'dark' : 'light');
+          document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
           var meta = document.querySelector('meta[name="theme-color"]:not([media])');
           if (!meta) {
             meta = document.createElement('meta');
             meta.setAttribute('name', 'theme-color');
             document.head.appendChild(meta);
           }
-          meta.setAttribute('content', isLight ? '#f1f5f9' : '#0c0a09');
+          meta.setAttribute('content', isDark ? '#0f0e17' : '#f6f5fb');
         } catch (e) {
-          document.documentElement.classList.add('dark');
+          document.documentElement.classList.add('light');
         }
       })();
     </script>

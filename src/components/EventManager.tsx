@@ -7,21 +7,22 @@ import {
   ChevronLeft,
   ChevronRight,
   Edit3,
-  ExternalLink,
   LayoutList,
   Plus,
   Repeat,
   Trash2,
-  Users,
 } from 'lucide-react';
 import type { ChurchEvent, MusicGroup } from '../types';
 import { EVENT_TITLE_SUGGESTIONS } from '../constants/eventTitles';
-import { PageHeader, PageHeaderButton } from './PageHeader';
+import { PageHeader } from './PageHeader';
+import { EventCard } from './EventCard';
+import { Button, EmptyState, Fab, IconButton, Modal, Tabs, cn } from './ui';
+import { formatDateLong } from '@/utils/dateLabels';
 import { useConfirm } from '@/contexts/ConfirmProvider';
 
 type DisplayMode = 'calendar' | 'month' | 'week' | 'agenda';
 
-const DISPLAY_MODE_STORAGE_KEY = 'louvorhub_events_display_mode';
+const DISPLAY_MODE_STORAGE_KEY = 'louvorhub_events_display_mode_v2';
 const DISPLAY_MODES: DisplayMode[] = ['calendar', 'month', 'week', 'agenda'];
 
 function readStoredDisplayMode(): DisplayMode {
@@ -31,7 +32,7 @@ function readStoredDisplayMode(): DisplayMode {
   } catch {
     /* ignore */
   }
-  return 'calendar';
+  return 'agenda';
 }
 
 function toDateStr(d: Date): string {
@@ -85,6 +86,10 @@ interface EventManagerProps {
   ) => void | Promise<void>;
   onDeleteEvent: (id: string) => void | Promise<void>;
   onOpenEvent: (eventId: string) => void;
+  churchName?: string;
+  churchColor?: string | null;
+  /** Conteúdo logo abaixo do cabeçalho (ex.: filtro por igreja). */
+  toolbar?: React.ReactNode;
 }
 
 export const EventManager: React.FC<EventManagerProps> = ({
@@ -96,10 +101,13 @@ export const EventManager: React.FC<EventManagerProps> = ({
   onSaveEventBatch,
   onDeleteEvent,
   onOpenEvent,
+  churchName,
+  churchColor,
+  toolbar,
 }) => {
   const confirm = useConfirm();
   const [displayMode, setDisplayMode] = useState<DisplayMode>(readStoredDisplayMode);
-  const [listScope, setListScope] = useState<'agenda' | 'all'>('agenda');
+  const [listScope, setListScope] = useState<'upcoming' | 'past'>('upcoming');
 
   useEffect(() => {
     try {
@@ -140,6 +148,10 @@ export const EventManager: React.FC<EventManagerProps> = ({
   );
 
   const upcomingEvents = sortedEvents.filter((e) => e.date >= todayStr);
+  const pastEvents = useMemo(
+    () => sortedEvents.filter((e) => e.date < todayStr).reverse(),
+    [sortedEvents, todayStr],
+  );
 
   const eventsByDate = useMemo(() => {
     const map = new Map<string, ChurchEvent[]>();
@@ -201,7 +213,7 @@ export const EventManager: React.FC<EventManagerProps> = ({
     ? sortedEvents.filter((e) => e.date === selectedDay)
     : [];
 
-  const agendaEvents = listScope === 'agenda' ? upcomingEvents : sortedEvents;
+  const agendaEvents = listScope === 'upcoming' ? upcomingEvents : pastEvents;
 
   const eventsToShow =
     displayMode === 'calendar'
@@ -284,13 +296,12 @@ export const EventManager: React.FC<EventManagerProps> = ({
   const modeButtons: {
     id: DisplayMode;
     label: string;
-    shortLabel: string;
     icon: React.ComponentType<{ className?: string }>;
   }[] = [
-    { id: 'calendar', label: 'Calendário', shortLabel: 'Cal.', icon: CalendarDays },
-    { id: 'month', label: 'Mensal', shortLabel: 'Mês', icon: Calendar },
-    { id: 'week', label: 'Semana', shortLabel: 'Sem.', icon: CalendarRange },
-    { id: 'agenda', label: 'Programação', shortLabel: 'Prog.', icon: LayoutList },
+    { id: 'agenda', label: 'Lista', icon: LayoutList },
+    { id: 'calendar', label: 'Calendário', icon: CalendarDays },
+    { id: 'month', label: 'Mês', icon: Calendar },
+    { id: 'week', label: 'Semana', icon: CalendarRange },
   ];
 
   const emptyMessage =
@@ -300,111 +311,53 @@ export const EventManager: React.FC<EventManagerProps> = ({
         ? 'Nenhum evento neste mês'
         : displayMode === 'week'
           ? 'Nenhum evento nesta semana'
-          : listScope === 'agenda'
+          : listScope === 'upcoming'
             ? 'Nenhum evento próximo'
-            : 'Nenhum evento cadastrado';
+            : 'Nenhum evento anterior';
 
-  const renderEventCard = (ev: ChurchEvent) => {
-    const group = musicGroups.find((g) => g.id === ev.musicGroupId);
-    return (
-      <div
-        key={ev.id}
-        className="bg-stone-900 border border-stone-800 rounded-2xl p-5 hover:border-stone-700 transition-all"
-      >
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
-              {new Date(ev.date + 'T00:00:00').toLocaleDateString('pt-BR', {
-                weekday: 'short',
-                day: '2-digit',
-                month: 'short',
-              })}
-              {ev.time ? ` · ${ev.time}` : ''}
-            </p>
-            <button
-              type="button"
-              onClick={() => onOpenEvent(ev.id)}
-              className="text-left text-lg font-display font-bold text-stone-100 mt-0.5 hover:text-emerald-300 transition-colors"
-            >
-              {ev.title}
-            </button>
-            {ev.theme && <p className="text-xs text-stone-400 mt-1">Tema: {ev.theme}</p>}
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={() => onOpenEvent(ev.id)}
-              className="px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs inline-flex items-center gap-1.5"
-              title="Abrir evento"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Abrir
-            </button>
-            <button
-              type="button"
-              onClick={() => openEdit(ev)}
-              className="p-1.5 text-stone-400 hover:text-emerald-300 rounded-button border border-transparent hover:border-stone-700"
-              title="Editar"
-            >
-              <Edit3 className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                void confirm({
-                  title: 'Excluir evento',
-                  message: `"${ev.title}" será removido junto com a escala, a liturgia e o repertório vinculados.`,
-                  confirmLabel: 'Excluir evento',
-                }).then((ok) => {
-                  if (ok) onDeleteEvent(ev.id);
-                });
-              }}
-              className="p-1.5 text-stone-500 hover:text-rose-400 rounded-button"
-              title="Excluir"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2 text-[10px] font-semibold">
-          <span
-            className={`px-2 py-0.5 rounded border ${
-              ev.hasSchedule
-                ? 'border-emerald-800/60 text-emerald-300 bg-emerald-950/40'
-                : 'border-stone-700 text-stone-500'
-            }`}
-          >
-            <Users className="w-3 h-3 inline mr-1" />
-            Equipe
-          </span>
-          <span
-            className={`px-2 py-0.5 rounded border ${
-              ev.hasLiturgy
-                ? 'border-emerald-800/60 text-emerald-300 bg-emerald-950/40'
-                : 'border-stone-700 text-stone-500'
-            }`}
-          >
-            Liturgia
-          </span>
-          <span
-            className={`px-2 py-0.5 rounded border ${
-              ev.hasSetlist
-                ? 'border-emerald-800/60 text-emerald-300 bg-emerald-950/40'
-                : 'border-stone-700 text-stone-500'
-            }`}
-          >
-            Repertório
-          </span>
-          {group && (
-            <span className="px-2 py-0.5 rounded border border-stone-700 text-stone-400">
-              {group.name}
-            </span>
-          )}
-        </div>
-      </div>
-    );
+  const askDelete = (ev: ChurchEvent) => {
+    void confirm({
+      title: 'Excluir evento',
+      message: `"${ev.title}" será removido junto com a escala, a liturgia e o repertório vinculados.`,
+      confirmLabel: 'Excluir evento',
+    }).then((ok) => {
+      if (ok) onDeleteEvent(ev.id);
+    });
   };
+
+  const renderEventCard = (ev: ChurchEvent) => (
+    <EventCard
+      key={ev.id}
+      event={ev}
+      churchName={churchName}
+      churchColor={churchColor}
+      groupName={musicGroups.find((g) => g.id === ev.musicGroupId)?.name}
+      onOpen={() => onOpenEvent(ev.id)}
+      actions={
+        <>
+          <IconButton icon={Edit3} label="Editar evento" variant="ghost" size="sm" onClick={() => openEdit(ev)} />
+          <IconButton
+            icon={Trash2}
+            label="Excluir evento"
+            variant="ghost"
+            size="sm"
+            onClick={() => askDelete(ev)}
+            className="hover:!text-danger-text hover:!bg-danger-soft"
+          />
+        </>
+      }
+    />
+  );
+
+  const groupedByDate = useMemo(() => {
+    const groups: { date: string; items: ChurchEvent[] }[] = [];
+    for (const ev of eventsToShow) {
+      const last = groups[groups.length - 1];
+      if (last && last.date === ev.date) last.items.push(ev);
+      else groups.push({ date: ev.date, items: [ev] });
+    }
+    return groups;
+  }, [eventsToShow]);
 
   const renderPeriodNav = (opts: {
     label: string;
@@ -414,122 +367,79 @@ export const EventManager: React.FC<EventManagerProps> = ({
     nextLabel: string;
   }) => (
     <div className="flex items-center justify-between gap-3 mb-4">
-      <button
-        type="button"
-        onClick={opts.onPrev}
-        className="p-2 rounded-button border border-stone-800 text-stone-300 hover:bg-stone-800"
-        aria-label={opts.prevLabel}
-      >
-        <ChevronLeft className="w-4 h-4" />
-      </button>
+      <IconButton icon={ChevronLeft} label={opts.prevLabel} variant="ghost" onClick={opts.onPrev} />
       <div className="text-center">
-        <h3 className="text-base sm:text-lg font-display font-bold text-stone-100 capitalize">
-          {opts.label}
-        </h3>
+        <h3 className="text-base sm:text-lg font-bold text-fg capitalize">{opts.label}</h3>
         <button
           type="button"
           onClick={goToToday}
-          className="text-[11px] text-emerald-400 hover:text-emerald-300 font-semibold"
+          className="text-xs text-brand-text hover:underline font-semibold"
         >
           Ir para hoje
         </button>
       </div>
-      <button
-        type="button"
-        onClick={opts.onNext}
-        className="p-2 rounded-button border border-stone-800 text-stone-300 hover:bg-stone-800"
-        aria-label={opts.nextLabel}
-      >
-        <ChevronRight className="w-4 h-4" />
-      </button>
+      <IconButton icon={ChevronRight} label={opts.nextLabel} variant="ghost" onClick={opts.onNext} />
     </div>
   );
 
   return (
-    <div className="w-full">
+    <div className="w-full space-y-4">
       {!embedded && (
-        <div className="mb-6">
-          <PageHeader
-            icon={Calendar}
-            title="Eventos"
-            description="Calendário de cultos e eventos. Abra um evento para equipe de louvor, liturgia e repertório."
-            actions={
-              <PageHeaderButton icon={Plus} onClick={() => openNew()}>
-                Adicionar
-              </PageHeaderButton>
-            }
-          />
-        </div>
+        <PageHeader
+          title="Agenda"
+          description={churchName ? `Eventos, escalas e liturgias · ${churchName}` : 'Eventos, escalas e liturgias'}
+        />
       )}
 
-      <div className="flex flex-col gap-2 mb-4">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-1 overflow-x-auto -mx-0.5 px-0.5">
-            {modeButtons.map(({ id, label, shortLabel, icon: Icon }) => (
+      {toolbar}
+
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
+        {displayMode === 'agenda' ? (
+          <Tabs
+            ariaLabel="Período"
+            value={listScope}
+            onChange={setListScope}
+            className="sm:w-80"
+            tabs={[
+              { id: 'upcoming', label: 'Próximos', count: upcomingEvents.length },
+              { id: 'past', label: 'Anteriores', count: pastEvents.length },
+            ]}
+          />
+        ) : (
+          <p className="text-sm font-semibold text-fg-muted">
+            {eventsToShow.length} evento{eventsToShow.length === 1 ? '' : 's'}
+            {displayMode === 'calendar' ? ' no dia' : ' no período'}
+          </p>
+        )}
+        <div className="flex items-center gap-2 justify-between sm:justify-end">
+          <div className="flex items-center gap-0.5 p-1 rounded-[14px] bg-surface-2" role="group" aria-label="Modo de exibição">
+            {modeButtons.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 type="button"
                 onClick={() => setDisplayMode(id)}
                 title={label}
-                className={`px-2 sm:px-3 py-1.5 rounded-button text-[11px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 transition-all whitespace-nowrap ${
-                  displayMode === id
-                    ? 'bg-emerald-500 text-stone-950 shadow-md shadow-emerald-500/20'
-                    : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/60'
-                }`}
+                aria-pressed={displayMode === id}
+                className={cn(
+                  'inline-flex items-center gap-1.5 px-2.5 min-h-9 !rounded-[10px] text-xs font-semibold transition-all whitespace-nowrap',
+                  displayMode === id ? 'bg-surface text-brand-text shadow-card' : 'text-fg-muted hover:text-fg',
+                )}
               >
-                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-                <span className="sm:hidden">{shortLabel}</span>
-                <span className="hidden sm:inline">{label}</span>
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="hidden xs:inline">{label}</span>
               </button>
             ))}
           </div>
-          <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
-            <span className="text-xs text-stone-500 font-mono">
-              {eventsToShow.length} evento{eventsToShow.length === 1 ? '' : 's'}
-              {displayMode === 'month' || displayMode === 'week' || displayMode === 'calendar'
-                ? ' neste período'
-                : listScope === 'agenda'
-                  ? ' próximos'
-                  : ' no total'}
-            </span>
-            {embedded && (
-              <PageHeaderButton icon={Plus} onClick={() => openNew()}>
-                Adicionar
-              </PageHeaderButton>
-            )}
-          </div>
+          {embedded && (
+            <Button size="sm" icon={Plus} onClick={() => openNew()}>
+              Novo
+            </Button>
+          )}
         </div>
-
-        {displayMode === 'agenda' && (
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setListScope('agenda')}
-              className={`px-3 py-1.5 rounded-button text-[11px] font-bold border transition-all ${
-                listScope === 'agenda'
-                  ? 'bg-stone-800 text-emerald-300 border-emerald-800/60'
-                  : 'bg-transparent text-stone-400 border-stone-800 hover:text-stone-200'
-              }`}
-            >
-              Próximos ({upcomingEvents.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setListScope('all')}
-              className={`px-3 py-1.5 rounded-button text-[11px] font-bold border transition-all ${
-                listScope === 'all'
-                  ? 'bg-stone-800 text-emerald-300 border-emerald-800/60'
-                  : 'bg-transparent text-stone-400 border-stone-800 hover:text-stone-200'
-              }`}
-            >
-              Todos ({sortedEvents.length})
-            </button>
-          </div>
-        )}
       </div>
 
       {displayMode === 'calendar' && (
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 sm:p-5 mb-6">
+        <div className="ui-card p-3 sm:p-5">
           {renderPeriodNav({
             label: monthLabel,
             onPrev: () =>
@@ -689,7 +599,7 @@ export const EventManager: React.FC<EventManagerProps> = ({
       )}
 
       {(displayMode === 'month' || displayMode === 'week') && (
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 sm:p-5 mb-6">
+        <div className="ui-card p-4 sm:p-5">
           {displayMode === 'month'
             ? renderPeriodNav({
                 label: monthLabel,
@@ -711,52 +621,69 @@ export const EventManager: React.FC<EventManagerProps> = ({
                 prevLabel: 'Semana anterior',
                 nextLabel: 'Próxima semana',
               })}
-          <p className="text-xs text-stone-500 text-center -mt-2 mb-1">
+          <p className="text-xs text-fg-subtle text-center -mt-2 mb-1">
             Lista ordenada por data e horário
           </p>
         </div>
       )}
 
       {eventsToShow.length === 0 ? (
-        <div className="text-center py-12 bg-stone-900/40 rounded-2xl border border-dashed border-stone-800">
-          <Calendar className="w-12 h-12 text-stone-600 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-stone-300">{emptyMessage}</h3>
-          <button
-            type="button"
-            onClick={() =>
-              openNew(displayMode === 'calendar' ? selectedDay || undefined : undefined)
-            }
-            className="mt-4 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs"
-          >
-            + Criar evento
-          </button>
-        </div>
-      ) : displayMode === 'month' || displayMode === 'week' || displayMode === 'agenda' ? (
-        <div className="space-y-3">
-          {eventsToShow.map((ev) => renderEventCard(ev))}
-        </div>
+        <EmptyState
+          compact={displayMode === 'calendar'}
+          icon={Calendar}
+          title={emptyMessage}
+          description={
+            listScope === 'upcoming' || displayMode !== 'agenda'
+              ? 'Crie um culto ou ensaio para montar a escala, a liturgia e o repertório.'
+              : undefined
+          }
+          action={
+            <Button
+              size="sm"
+              icon={Plus}
+              onClick={() => openNew(displayMode === 'calendar' ? selectedDay || undefined : undefined)}
+            >
+              Criar evento
+            </Button>
+          }
+        />
+      ) : displayMode === 'calendar' ? (
+        <div className="space-y-3">{eventsToShow.map((ev) => renderEventCard(ev))}</div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {eventsToShow.map((ev) => renderEventCard(ev))}
+        <div className="space-y-5">
+          {groupedByDate.map(({ date, items }) => (
+            <section key={date}>
+              <h3 className="text-[13px] font-bold text-fg-muted mb-2 first-letter:uppercase">
+                {formatDateLong(date)}
+              </h3>
+              <div className="space-y-3">{items.map((ev) => renderEventCard(ev))}</div>
+            </section>
+          ))}
         </div>
       )}
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl max-h-[92vh] flex flex-col">
-            <div className="p-5 border-b border-stone-800 flex items-center justify-between shrink-0">
-              <h3 className="text-lg font-display font-bold text-stone-100">
-                {editing ? 'Editar Evento' : 'Novo Evento'}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="text-stone-400 hover:text-stone-200"
-              >
-                ✕
-              </button>
-            </div>
-            <form onSubmit={handleSave} className="p-5 space-y-4 overflow-y-auto flex-1">
+      {!embedded && <Fab icon={Plus} label="Novo evento" onClick={() => openNew()} />}
+
+      <Modal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        locked={isSaving}
+        icon={Calendar}
+        title={editing ? 'Editar evento' : 'Novo evento'}
+        footer={
+          <>
+            <Button variant="ghost" disabled={isSaving} onClick={() => setIsModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" form="event-form" loading={isSaving}>
+              {!editing && formRepeatEnabled && formRepeatCount > 1
+                ? `Criar ${formRepeatCount} eventos`
+                : 'Salvar'}
+            </Button>
+          </>
+        }
+      >
+            <form id="event-form" onSubmit={handleSave} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-stone-300 mb-1">Título</label>
                 <input
@@ -904,32 +831,8 @@ export const EventManager: React.FC<EventManagerProps> = ({
                   )}
                 </div>
               )}
-
-              <div className="pt-2 flex justify-end gap-2 border-t border-stone-800">
-                <button
-                  type="button"
-                  disabled={isSaving}
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-stone-800 text-stone-300 rounded-button text-xs font-semibold"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs"
-                >
-                  {isSaving
-                    ? 'Salvando...'
-                    : !editing && formRepeatEnabled && formRepeatCount > 1
-                      ? `Criar ${formRepeatCount} eventos`
-                      : 'Salvar'}
-                </button>
-              </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 };

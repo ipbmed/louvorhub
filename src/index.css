@@ -20,23 +20,26 @@
 */
 :root,
 html.dark {
-  --app: #0c0a09;
-  --surface: #1c1917;
-  --surface-2: #171412;
-  --muted: #292524;
-  --muted-hover: #3b3634;
-  --line: rgb(68 64 60 / 0.7);
-  --line-strong: #57534e;
-  --fg: #f5f5f4;
-  --fg-muted: #a8a29e;
-  --fg-subtle: #78716c;
+  --app: #0f0e17;
+  --surface: #1b1a25;
+  --surface-2: #15141e;
+  --muted: #2a2837;
+  --muted-hover: #3f3c50;
+  --line: rgb(63 60 80 / 0.7);
+  --line-strong: #59556d;
+  --fg: #f4f3fa;
+  --fg-muted: #b3b0c6;
+  --fg-subtle: #858199;
 
-  --brand: #10b981;
-  --brand-hover: #34d399;
-  --brand-fg: #052e16;
-  --brand-soft: rgb(16 185 129 / 0.14);
-  --brand-text: #6ee7b7;
-  --brand-line: rgb(16 185 129 / 0.35);
+  --brand: #6366f1;
+  --brand-hover: #818cf8;
+  --brand-fg: #ffffff;
+  --brand-soft: rgb(99 102 241 / 0.16);
+  --brand-text: #a5b4fc;
+  --brand-line: rgb(99 102 241 / 0.4);
+  --gold: #f59e0b;
+  --card-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+  --card-shadow-lg: 0 20px 40px -12px rgb(0 0 0 / 0.6);
 
   --danger: #f43f5e;
   --danger-soft: rgb(244 63 94 / 0.14);
@@ -53,31 +56,34 @@ html.dark {
   --info-text: #93c5fd;
   --info-line: rgb(59 130 246 / 0.4);
 
-  --overlay: rgb(12 10 9 / 0.78);
+  --overlay: rgb(10 9 16 / 0.78);
   --shadow-color: 0 0 0;
-  --ring: rgb(16 185 129 / 0.55);
+  --ring: rgb(99 102 241 / 0.55);
 }
 
 html.light {
-  --app: #f1f5f9;
+  --app: #f6f5fb;
   --surface: #ffffff;
-  --surface-2: #f8fafc;
-  --muted: #e2e8f0;
-  --muted-hover: #cbd5e1;
-  --line: #e2e8f0;
-  --line-strong: #94a3b8;
-  --fg: #0f172a;
-  --fg-muted: #475569;
-  --fg-subtle: #64748b;
+  --surface-2: #f1f0f8;
+  --muted: #f1f0f8;
+  --muted-hover: #e7e5f0;
+  --line: #e7e5f0;
+  --line-strong: #cfcce0;
+  --fg: #1e1b2e;
+  --fg-muted: #5b5872;
+  --fg-subtle: #8d8aa3;
 
-  --brand: #059669;
-  --brand-hover: #047857;
+  --brand: #4f46e5;
+  --brand-hover: #4338ca;
   --brand-fg: #ffffff;
-  --brand-soft: #ecfdf5;
-  --brand-text: #047857;
-  --brand-line: #a7f3d0;
+  --brand-soft: #eef2ff;
+  --brand-text: #4338ca;
+  --brand-line: #e0e7ff;
+  --gold: #f59e0b;
+  --card-shadow: 0 4px 16px -4px rgb(30 27 46 / 0.08), 0 1px 3px rgb(30 27 46 / 0.05);
+  --card-shadow-lg: 0 20px 40px -12px rgb(49 46 129 / 0.25);
 
-  --danger: #e11d48;
+  --danger: #dc2626;
   --danger-soft: #fff1f2;
   --danger-text: #be123c;
   --danger-line: #fecdd3;
@@ -92,19 +98,51 @@ html.light {
   --info-text: #1d4ed8;
   --info-line: #bfdbfe;
 
-  --overlay: rgb(15 23 42 / 0.5);
-  --shadow-color: 15 23 42;
-  --ring: rgb(5 150 105 / 0.45);
+  --overlay: rgb(30 27 46 / 0.5);
+  --shadow-color: 30 27 46;
+  --ring: rgb(79 70 229 / 0.45);
 }
 
 @theme {
   /* Breakpoint extra para celulares maiores em modo retrato. */
   --breakpoint-xs: 30rem;
+
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Lora", Georgia, serif;
+
+  /* A paleta "emerald" é a cor da marca nos componentes legados: aponta para o índigo. */
+  --color-emerald-50: oklch(96.2% 0.018 272.314);
+  --color-emerald-100: oklch(93% 0.034 272.788);
+  --color-emerald-200: oklch(87% 0.065 274.039);
+  --color-emerald-300: oklch(78.5% 0.115 274.713);
+  --color-emerald-400: oklch(67.3% 0.182 276.935);
+  --color-emerald-500: oklch(58.5% 0.233 277.117);
+  --color-emerald-600: oklch(51.1% 0.262 276.966);
+  --color-emerald-700: oklch(45.7% 0.24 277.023);
+  --color-emerald-800: oklch(39.8% 0.195 277.366);
+  --color-emerald-900: oklch(35.9% 0.144 278.697);
+  --color-emerald-950: oklch(25.7% 0.09 281.288);
+
+  /* Neutros levemente lavanda (mesma base do tema claro). */
+  --color-stone-50: #f6f5fb;
+  --color-stone-100: #efeef6;
+  --color-stone-200: #e2e0ec;
+  --color-stone-300: #c9c6d8;
+  --color-stone-400: #a09cb5;
+  --color-stone-500: #77738d;
+  --color-stone-600: #59556d;
+  --color-stone-700: #3f3c50;
+  --color-stone-800: #2a2837;
+  --color-stone-900: #1b1a25;
+  --color-stone-950: #0f0e17;
 }
 
 @theme inline {
-  --radius-button: 0.5rem; /* 8px */
+  --radius-button: 0.75rem; /* 12px */
   --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-gold: var(--gold);
+  --shadow-card: var(--card-shadow);
+  --shadow-card-lg: var(--card-shadow-lg);
 
   --color-app: var(--app);
   --color-surface: var(--surface);
@@ -229,7 +267,7 @@ html.light {
   }
 
   ::selection {
-    background-color: rgb(16 185 129 / 0.35);
+    background-color: rgb(99 102 241 / 0.35);
   }
 
   /* Scrollbar discreta */
@@ -262,14 +300,18 @@ html.light {
     }
   }
 
+  body {
+    font-family: var(--font-sans);
+  }
+
   html.dark body {
-    background-color: #0c0a09;
-    color: #f5f5f4;
+    background-color: #0f0e17;
+    color: #f4f3fa;
   }
 
   html.light body {
-    background-color: #f1f5f9;
-    color: #020617;
+    background-color: #f6f5fb;
+    color: #1e1b2e;
   }
 }
 
@@ -314,18 +356,31 @@ html.light {
   html.light select.ui-input,
   html.light textarea.ui-input {
     background-color: #ffffff !important;
-    border-color: #cbd5e1 !important;
+    border-color: #d6d3e4 !important;
   }
   html.light .ui-input:focus {
-    border-color: #059669 !important;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+    border-color: #4f46e5 !important;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important;
   }
 
   .ui-card {
     background-color: var(--surface);
     border: 1px solid var(--line);
     border-radius: 1rem;
-    box-shadow: 0 1px 2px rgb(var(--shadow-color) / 0.06);
+    box-shadow: var(--card-shadow);
+  }
+  html.light .ui-card {
+    border-color: transparent;
+  }
+
+  /* Botão principal com gradiente índigo (identidade IPB Music). */
+  .btn-gradient {
+    background-image: linear-gradient(135deg, #4f46e5, #4338ca);
+    color: #fff;
+    box-shadow: 0 6px 16px -6px rgb(79 70 229 / 0.6);
+  }
+  .btn-gradient:hover {
+    filter: brightness(1.06);
   }
 
   .ui-label {
@@ -347,7 +402,7 @@ html.light {
   /* ---------------- Surfaces & Backgrounds ---------------- */
   /* Nível 0: Base / Container de fundo */
   html.light .bg-stone-950 {
-    background-color: #f1f5f9;
+    background-color: #f6f5fb;
   }
 
   /* Nível 1: Cards e painéis principais (branco puro para destaque e nitidez) */
@@ -357,24 +412,24 @@ html.light {
 
   /* Nível 2: Controles secundários, botões de ação neutros, tags */
   html.light .bg-stone-800 {
-    background-color: #e2e8f0;
+    background-color: #e7e5f0;
   }
 
   /* Nível 3: Hover de botões, divisores ativos */
   html.light .bg-stone-700 {
-    background-color: #cbd5e1;
+    background-color: #d6d3e4;
   }
 
   /* Opacidades & Superfícies com blur */
   html.light .bg-stone-950\/40 {
-    background-color: rgb(241 245 249 / 0.7);
+    background-color: rgb(246 245 251 / 0.7);
   }
   html.light .bg-stone-950\/50,
   html.light .bg-stone-950\/60 {
-    background-color: #f8fafc;
+    background-color: #f9f8fd;
   }
   html.light .bg-stone-950\/70 {
-    background-color: rgb(241 245 249 / 0.9);
+    background-color: rgb(246 245 251 / 0.9);
   }
   html.light .bg-stone-950\/80 {
     background-color: rgb(255 255 255 / 0.92);
@@ -407,19 +462,19 @@ html.light {
   }
 
   html.light .bg-stone-800\/40 {
-    background-color: rgb(226 232 240 / 0.75);
+    background-color: rgb(231 229 240 / 0.75);
   }
   html.light .bg-stone-800\/50 {
-    background-color: #f1f5f9;
+    background-color: #f6f5fb;
   }
   html.light .bg-stone-800\/60 {
-    background-color: rgb(226 232 240 / 0.9);
+    background-color: rgb(231 229 240 / 0.9);
   }
   html.light .bg-stone-800\/80 {
-    background-color: #e2e8f0;
+    background-color: #e7e5f0;
   }
   html.light .bg-stone-800\/90 {
-    background-color: #e2e8f0;
+    background-color: #e7e5f0;
   }
 
   /* Overlays modais no tema claro (escurece levemente o fundo) */
@@ -427,7 +482,7 @@ html.light {
   html.light .fixed.inset-0.bg-stone-950\/70,
   html.light .absolute.inset-0.bg-stone-950\/80,
   html.light .absolute.inset-0.bg-stone-950\/70 {
-    background-color: rgb(15 23 42 / 0.45);
+    background-color: rgb(30 27 46 / 0.45);
     backdrop-filter: blur(4px);
   }
 
@@ -435,35 +490,35 @@ html.light {
   /* Títulos e textos principais: quase preto para máximo contraste */
   html.light .text-stone-50,
   html.light .text-stone-100 {
-    color: #020617;
+    color: #1e1b2e;
   }
   html.light .text-stone-200 {
-    color: #0f172a;
+    color: #1e1b2e;
   }
   html.light .text-stone-300 {
-    color: #1e293b;
+    color: #2c2940;
   }
   /* Subtextos com contraste forte (WCAG AA+) */
   html.light .text-stone-400 {
-    color: #334155;
+    color: #46435a;
   }
   html.light .text-stone-500 {
-    color: #475569;
+    color: #5b5872;
   }
   html.light .text-stone-600 {
-    color: #334155;
+    color: #46435a;
   }
 
   /* Destaques de marca (Emerald) mais escuros no claro */
   html.light .text-emerald-100 {
-    color: #022c22;
+    color: #1e1b4b;
   }
   html.light .text-emerald-200,
   html.light .text-emerald-300 {
-    color: #065f46;
+    color: #3730a3;
   }
   html.light .text-emerald-400 {
-    color: #047857;
+    color: #4338ca;
   }
   html.light .text-teal-300 {
     color: #115e59;
@@ -500,12 +555,12 @@ html.light {
 
   /* Mantém text-stone-950 escuro em botões sólidos coloridos */
   html.light .text-stone-950 {
-    color: #020617 !important;
+    color: #1e1b2e !important;
   }
 
   /* Acordes musicais no tema claro */
   html.light pre span.text-emerald-400 {
-    color: #065f46;
+    color: #3730a3;
     font-weight: 700;
   }
 
@@ -516,24 +571,24 @@ html.light {
   html.light .border-stone-800\/80,
   html.light .border-stone-800\/60,
   html.light .border-stone-800\/40 {
-    border-color: #cbd5e1;
+    border-color: #d6d3e4;
   }
 
   html.light .border-stone-700,
   html.light .border-stone-700\/80,
   html.light .border-stone-700\/60 {
-    border-color: #94a3b8;
+    border-color: #a9a5bf;
   }
 
   html.light .border-stone-600 {
-    border-color: #64748b;
+    border-color: #8d8aa3;
   }
 
   html.light .border-t-stone-800,
   html.light .border-t-stone-800\/80,
   html.light .border-b-stone-800,
   html.light .border-r-stone-800 {
-    border-color: #e2e8f0;
+    border-color: #e7e5f0;
   }
 
   /* Bordas de destaque coloridas no tema claro */
@@ -541,12 +596,12 @@ html.light {
   html.light .border-emerald-800\/60,
   html.light .border-emerald-700\/60,
   html.light .border-emerald-700\/40 {
-    border-color: #a7f3d0;
+    border-color: #c7d2fe;
   }
   html.light .border-emerald-500\/30,
   html.light .border-emerald-500\/40,
   html.light .border-emerald-500\/50 {
-    border-color: #6ee7b7;
+    border-color: #a5b4fc;
   }
 
   html.light .border-teal-800\/60,
@@ -580,17 +635,17 @@ html.light {
   html.light .bg-emerald-950\/40,
   html.light .bg-emerald-950\/30,
   html.light .bg-emerald-900\/40 {
-    background-color: #ecfdf5;
-    color: #065f46;
-    border-color: #a7f3d0;
+    background-color: #eef2ff;
+    color: #3730a3;
+    border-color: #c7d2fe;
   }
 
   html.light .bg-emerald-500\/10,
   html.light .bg-emerald-500\/15,
   html.light .bg-emerald-500\/20 {
-    background-color: #ecfdf5;
-    color: #047857;
-    border-color: #a7f3d0;
+    background-color: #eef2ff;
+    color: #4338ca;
+    border-color: #c7d2fe;
   }
 
   /* Chips Teal / Cânticos */
@@ -654,42 +709,42 @@ html.light {
   html.light select,
   html.light textarea {
     background-color: #ffffff !important;
-    border-color: #94a3b8 !important;
-    color: #020617 !important;
+    border-color: #a9a5bf !important;
+    color: #1e1b2e !important;
   }
 
   html.light input::placeholder,
   html.light textarea::placeholder,
   html.light .placeholder-stone-400::placeholder {
-    color: #64748b !important;
+    color: #8d8aa3 !important;
   }
 
   html.light input:focus,
   html.light select:focus,
   html.light textarea:focus {
-    border-color: #059669 !important;
+    border-color: #4f46e5 !important;
     outline: none !important;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important;
   }
 
   /* ---------------- Interações & Hover ---------------- */
   html.light .hover\:bg-stone-800:hover,
   html.light .hover\:bg-stone-800\/80:hover,
   html.light .hover\:bg-stone-800\/90:hover {
-    background-color: #cbd5e1;
+    background-color: #d6d3e4;
   }
 
   html.light .hover\:bg-stone-700:hover,
   html.light .hover\:bg-stone-700\/80:hover {
-    background-color: #94a3b8;
+    background-color: #a9a5bf;
   }
 
   html.light .light\:hover\:bg-emerald-100:hover {
-    background-color: #d1fae5;
+    background-color: #e0e7ff;
   }
 
   html.light .light\:hover\:bg-emerald-200:hover {
-    background-color: #a7f3d0;
+    background-color: #c7d2fe;
   }
 
   html.light .light\:hover\:bg-blue-100:hover {
@@ -701,45 +756,45 @@ html.light {
   }
 
   html.light .hover\:bg-stone-800\/40:hover {
-    background-color: #ecfdf5;
+    background-color: #eef2ff;
   }
 
   html.light .hover\:bg-stone-800\/70:hover {
-    background-color: #ecfdf5;
+    background-color: #eef2ff;
   }
 
   html.light .hover\:text-stone-100:hover {
-    color: #0f172a;
+    color: #1e1b2e;
   }
   html.light .hover\:text-stone-200:hover {
-    color: #1e293b;
+    color: #2c2940;
   }
   html.light .hover\:text-stone-300:hover {
-    color: #334155;
+    color: #46435a;
   }
 
   html.light .hover\:text-emerald-200:hover,
   html.light .hover\:text-emerald-300:hover {
-    color: #047857;
+    color: #4338ca;
   }
 
   html.light .hover\:border-emerald-500\/40:hover,
   html.light .hover\:border-emerald-500\/50:hover,
   html.light .hover\:border-emerald-600\/50:hover,
   html.light .hover\:border-emerald-700\/40:hover {
-    border-color: #10b981;
+    border-color: #6366f1;
   }
 
   html.light .hover\:border-stone-500:hover,
   html.light .hover\:border-stone-700:hover {
-    border-color: #94a3b8;
+    border-color: #a9a5bf;
   }
 
   /* ---------------- Header, Cards & Sombras Modernas ---------------- */
   html.light header.bg-stone-900\/95,
   html.light header.bg-stone-950\/95 {
     background-color: rgb(255 255 255 / 0.96);
-    border-bottom-color: #e2e8f0;
+    border-bottom-color: #e7e5f0;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
   }
 
@@ -769,13 +824,27 @@ html.light {
   }
 
   html.light .hover\:shadow-emerald-950\/20:hover {
-    box-shadow: 0 14px 28px -4px rgba(16, 185, 129, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 14px 28px -4px rgba(79, 70, 229, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.03);
   }
 
   /* ---------------- Sidebar no Tema Claro ---------------- */
   html.light aside.bg-stone-950\/95,
   html.light aside.bg-stone-950 {
     background-color: #ffffff;
-    border-right-color: #e2e8f0;
+    border-right-color: #e7e5f0;
+  }
+
+  /* Texto escuro sobre a cor da marca (índigo) vira branco em ambos os temas. */
+  html:is(.light, .dark)
+    .text-stone-950:is(
+      .bg-emerald-400,
+      .bg-emerald-500,
+      .bg-emerald-600,
+      .bg-emerald-700,
+      .bg-brand,
+      [class*="from-emerald-"]
+    ),
+  html:is(.light, .dark) .text-emerald-950:is([class*="from-emerald-"], .bg-emerald-500) {
+    color: #ffffff !important;
   }
 }

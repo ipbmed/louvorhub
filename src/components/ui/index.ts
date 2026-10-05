@@ -8,3 +8,5 @@ export { EmptyState } from './EmptyState';
 export { Alert } from './Alert';
 export { Badge } from './Badge';
 export { Spinner, LoadingBlock } from './Spinner';
+export { Avatar, Tabs, Chip, Fab, SectionTitle, StatCard, ListCard, ListRow } from './Kit';
+export type { TabItem } from './Kit';
