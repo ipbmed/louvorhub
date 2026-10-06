@@ -67,7 +67,7 @@ export const AlphabetFilterToggle: React.FC<{
       aria-expanded={expanded}
       aria-label="Índice alfabético"
       title="Índice alfabético"
-      className={`relative flex items-center justify-center gap-1.5 min-h-9 min-w-9 sm:min-w-0 px-2 sm:px-2.5 py-1.5 rounded-button font-semibold transition-all touch-manipulation border ${
+      className={`relative shrink-0 flex items-center justify-center gap-1.5 min-h-9 min-w-9 sm:min-w-0 px-2 sm:px-2.5 py-1.5 rounded-button font-semibold transition-all touch-manipulation border ${
         expanded || hasFilter
           ? 'bg-emerald-500 text-stone-950 border-emerald-400 shadow-sm'
           : 'bg-stone-800/80 light:bg-stone-100 text-stone-300 light:text-stone-700 border-stone-700 light:border-stone-200 hover:bg-stone-700/80 light:hover:bg-stone-200'

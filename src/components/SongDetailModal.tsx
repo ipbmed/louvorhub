@@ -61,6 +61,8 @@ interface SongDetailModalProps {
   onAddToSetlist?: (song: Song) => void;
   isAdmin?: boolean;
   onEditSong?: (song: Song) => void;
+  /** `pane`: ocupa o painel direito do catálogo dividido em vez da tela inteira. */
+  variant?: 'overlay' | 'pane';
 }
 
 export const SongDetailModal: React.FC<SongDetailModalProps> = ({
@@ -74,7 +76,12 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
   onAddToSetlist,
   isAdmin,
   onEditSong,
+  variant = 'overlay',
 }) => {
+  const containerClass =
+    variant === 'pane'
+      ? 'relative h-full min-h-0 bg-stone-900 flex flex-col overflow-hidden text-stone-100'
+      : 'fixed inset-0 z-50 bg-stone-900 flex flex-col overflow-hidden animate-in fade-in duration-200 text-stone-100';
   const [fontSize, setFontSize] = useState<number>(18);
   const [showChords, setShowChords] = useState<boolean>(false);
   const [semitones, setSemitones] = useState<number>(0);
@@ -152,7 +159,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
 
   if (isLoading || !song) {
     return (
-      <div className="fixed inset-0 z-50 bg-stone-900 flex flex-col animate-in fade-in duration-200 text-stone-100">
+      <div className={containerClass}>
         <button
           type="button"
           onClick={onClose}
@@ -209,7 +216,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
   const isHino = (song.songType || (song.number ? 'hino' : 'cantico')) === 'hino';
 
   return (
-    <div className="fixed inset-0 z-50 bg-stone-900 flex flex-col overflow-hidden animate-in fade-in duration-200 text-stone-100">
+    <div className={containerClass}>
         
         {/* Header Bar */}
         <div className="p-4 sm:p-6 bg-stone-900 border-b border-stone-800 flex items-start justify-between gap-4 shrink-0 z-10">
@@ -296,8 +303,11 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
 
             {/* Close */}
             <button
+              type="button"
               onClick={onClose}
               className="p-2 text-stone-400 hover:text-stone-100 hover:bg-stone-800 rounded-button transition-colors"
+              title="Fechar"
+              aria-label="Fechar música"
             >
               <X className="w-6 h-6" />
             </button>

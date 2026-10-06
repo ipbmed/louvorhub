@@ -36,6 +36,9 @@ import { songPath, songVersionPath } from '@/utils/songRoutes';
 import { Header } from './components/Header';
 import { SongCard } from './components/SongCard';
 import { SongListRow } from './components/SongListRow';
+import { SongPaneItem } from './components/SongPaneItem';
+import { CatalogSplitPlaceholder } from './components/CatalogSplitPlaceholder';
+import { useMediaQuery } from './hooks/useMediaQuery';
 import { SongDetailModal } from './components/SongDetailModal';
 import { SongProjectionModal } from './components/SongProjectionModal';
 import { NumericKeypadModal } from './components/NumericKeypadModal';
@@ -75,6 +78,7 @@ import {
   Music2,
   ArrowUpDown,
   AlertCircle,
+  ChevronDown,
   LayoutGrid,
   List,
   Loader2,
@@ -92,6 +96,8 @@ import { Alert, Button, Chip, EmptyState, Input, Select, cn } from './components
 
 type SongsLayoutMode = 'cards' | 'list';
 const SONGS_LAYOUT_KEY = 'louvorhub_songs_layout';
+/** Visitantes: o catálogo é exibido em blocos, com "Carregar mais". */
+const CATALOG_PAGE_SIZE = 30;
 
 const VALID_VIEWS: ViewMode[] = [
   'home',
@@ -142,6 +148,7 @@ export default function App() {
   const location = useLocation();
   const songVersionMatch = useMatch('/musica/versao/:eventSongId');
   const songMatch = useMatch('/musica/:songId');
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
   const playlistShareMatch = useMatch('/playlist/:shareCode');
   const legacyPlaylistShareMatch = useMatch('/repertorio/:shareCode');
   const eventShareMatch = useMatch('/evento/:shareCode');
@@ -198,6 +205,20 @@ export default function App() {
     }
   });
   const [advancedFilters, setAdvancedFilters] = useState<SearchFilters>(INITIAL_FILTERS);
+  const [catalogVisibleCount, setCatalogVisibleCount] = useState(CATALOG_PAGE_SIZE);
+
+  useEffect(() => {
+    setCatalogVisibleCount(CATALOG_PAGE_SIZE);
+  }, [
+    quickQuery,
+    activeCategoryPill,
+    selectedLetter,
+    showHinos,
+    showCanticos,
+    showFavoritesOnly,
+    sortBy,
+    advancedFilters,
+  ]);
 
   const handleSongsLayoutChange = (mode: SongsLayoutMode) => {
     setSongsLayout(mode);
@@ -376,12 +397,19 @@ export default function App() {
     queryFn: () => eventSongsService.getSongForVersion(selectedEventSongId!),
   });
 
+  /** Desktop: catálogo dividido — lista à esquerda, música selecionada à direita. */
+  const splitActive = isDesktop && currentView === 'public' && !selectedEventSongId && !isEventDetail;
+  const songOverlay = Boolean(songMatch) && !splitActive;
+
   const openSong = (song: Song, options?: { eventSongId?: string }) => {
     if (options?.eventSongId) {
       navigate(songVersionPath(options.eventSongId), { state: { fromApp: true } });
       return;
     }
-    navigate(songPath(song), { state: { fromApp: true } });
+    // Trocar de música no painel não empilha histórico; preserva a origem para o "fechar".
+    const replace = splitActive && Boolean(songMatch);
+    const fromApp = replace ? Boolean((location.state as { fromApp?: boolean } | null)?.fromApp) : true;
+    navigate(songPath(song), { replace, state: { fromApp } });
   };
 
   const closeSongPage = () => {
@@ -1131,6 +1159,9 @@ export default function App() {
     return an - bn || a.title.localeCompare(b.title, 'pt-BR');
   });
 
+  const visibleSongs = user ? sortedSongs : sortedSongs.slice(0, catalogVisibleCount);
+  const hiddenSongsCount = sortedSongs.length - visibleSongs.length;
+
   const orgOptions = memberships
     .filter((m) => m.organizations && !m.organizations.is_global)
     .map((m) => ({
@@ -1236,9 +1267,70 @@ export default function App() {
     showToast('Sessão encerrada.');
   };
 
+  const songRouteError = selectedEventSongId ? selectedSongVersionQuery.error : selectedSongQuery.error;
+  const renderSongDetail = (variant: 'overlay' | 'pane') =>
+    songRouteError ? (
+      <div
+        className={cn(
+          'flex items-center justify-center px-6',
+          variant === 'pane' ? 'h-full' : 'fixed inset-0 z-50 bg-app',
+        )}
+      >
+        <EmptyState
+          tone="danger"
+          icon={AlertCircle}
+          title={selectedEventSongId ? 'Versão não encontrada' : 'Música não encontrada'}
+          description={
+            (songRouteError as Error)?.message ||
+            'Este link pode estar inválido ou a música não está disponível.'
+          }
+          action={
+            <Button variant="secondary" onClick={closeSongPage}>
+              Voltar ao catálogo
+            </Button>
+          }
+          className="w-full max-w-md"
+        />
+      </div>
+    ) : (
+      <SongDetailModal
+        variant={variant}
+        song={selectedSong}
+        eventVersion={
+          songEventVersion
+            ? {
+                title: songEventVersion.title,
+                date: songEventVersion.date,
+                time: songEventVersion.time,
+              }
+            : null
+        }
+        isLoading={
+          selectedEventSongId
+            ? selectedSongVersionQuery.isLoading ||
+              (!selectedSongVersionQuery.data && selectedSongVersionQuery.isFetching)
+            : selectedSongQuery.isLoading ||
+              (!selectedSongQuery.data && selectedSongQuery.isFetching)
+        }
+        onClose={closeSongPage}
+        isFavorite={Boolean(user) && Boolean(catalogSongId) && favorites.includes(catalogSongId!)}
+        onToggleFavorite={user ? handleToggleFavorite : undefined}
+        onOpenProjection={(s) => setProjectionSongs([s])}
+        onAddToSetlist={user ? handleAddToSetlist : undefined}
+        isAdmin={Boolean(user) && canManageSongs && !selectedEventSongId}
+        onEditSong={
+          canManageSongs && !selectedEventSongId
+            ? () => {
+                if (selectedSongQuery.data) setSongToEdit(selectedSongQuery.data);
+              }
+            : undefined
+        }
+      />
+    );
+
   return (
     <div className="min-h-[100dvh] bg-app text-fg flex flex-col font-sans">
-      {!songMatch && !user && (
+      {!songOverlay && !user && (
         <Header
           onViewChange={handleViewChange}
           quickNumberQuery={quickQuery}
@@ -1255,10 +1347,11 @@ export default function App() {
             void handleToggleFavoritesOnly();
           }}
           currentView={currentView}
+          searchInSplitPane={splitActive}
         />
       )}
 
-      {!songMatch && user && (
+      {!songOverlay && user && (
         <>
           <AppSidebar
             currentView={currentView}
@@ -1279,14 +1372,18 @@ export default function App() {
         </>
       )}
 
-      {!songMatch && (
+      {!songOverlay && (
       <div className={cn('flex flex-1 w-full min-h-0', user && 'lg:pl-64')}>
       <main
         className={cn(
           'flex-1 w-full min-w-0 mx-auto space-y-4 sm:space-y-6',
-          contentWidth,
-          user ? 'px-4 sm:px-6 lg:px-8 pt-2 pb-6 lg:pt-8' : 'px-3 sm:px-6 lg:px-8 py-3 sm:py-6',
-          showMobileNav && 'pb-nav lg:pb-8',
+          splitActive ? 'max-w-none' : contentWidth,
+          splitActive
+            ? 'p-0'
+            : user
+              ? 'px-4 sm:px-6 lg:px-8 pt-2 pb-6 lg:pt-8'
+              : 'px-3 sm:px-6 lg:px-8 py-3 sm:py-6',
+          showMobileNav && !splitActive && 'pb-nav lg:pb-8',
         )}
       >
         {!configured && (
@@ -1595,10 +1692,39 @@ export default function App() {
         ) : user && currentView === 'accounts' && canManageUsers ? (
           <AccountManager />
         ) : catalogSongsLoading ? (
-          <CatalogSongsLoading layout={songsLayout} />
+          <div className={cn(splitActive && 'p-8')}>
+            <CatalogSongsLoading layout={songsLayout} />
+          </div>
         ) : (
-          <div className="w-full space-y-4 sm:space-y-5">
-            {user && (
+          <div
+            className={cn(
+              splitActive &&
+                'grid grid-cols-[minmax(340px,420px)_minmax(0,1fr)] 2xl:grid-cols-[460px_minmax(0,1fr)]',
+              splitActive && (user ? 'h-[100dvh]' : 'h-[calc(100dvh-4rem-1px)]'),
+            )}
+          >
+          <div
+            className={cn(
+              'w-full',
+              splitActive
+                ? 'min-h-0 overflow-y-auto overscroll-contain bg-surface border-r border-line'
+                : 'space-y-4 sm:space-y-5',
+            )}
+          >
+            {splitActive && (
+              <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-1">
+                <div className="min-w-0">
+                  <h1 className="text-xl font-extrabold tracking-tight text-fg">Músicas</h1>
+                  <p className="text-xs text-fg-muted tabular-nums">{songs.length} hinos e cânticos</p>
+                </div>
+                {user && canAccessAdminPanel && (
+                  <Button variant="ghost" size="sm" icon={Settings2} onClick={() => handleViewChange('admin')}>
+                    Gerenciar
+                  </Button>
+                )}
+              </div>
+            )}
+            {user && !splitActive && (
               <PageHeader
                 title="Músicas"
                 description={`${songs.length} hinos e cânticos no catálogo`}
@@ -1611,8 +1737,14 @@ export default function App() {
                 }
               />
             )}
-            {user && (
-              <div className="sticky top-[calc(60px+env(safe-area-inset-top,0px))] lg:top-0 z-20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 bg-app/90 backdrop-blur-md">
+            {(user || splitActive) && (
+              <div
+                className={
+                  splitActive
+                    ? 'sticky top-0 z-20 px-3 py-2 bg-surface/95 backdrop-blur-md border-b border-line/60'
+                    : 'sticky top-[calc(60px+env(safe-area-inset-top,0px))] lg:top-0 z-20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 bg-app/90 backdrop-blur-md'
+                }
+              >
                 <CatalogSearchBar
                   value={quickQuery}
                   onChange={handleQuickQueryChange}
@@ -1623,10 +1755,18 @@ export default function App() {
                 />
               </div>
             )}
-            <div className="flex flex-col gap-3 ui-card p-3 sm:p-4 rounded-2xl sm:rounded-3xl">
+            <div
+              className={cn(
+                'flex flex-col gap-3',
+                splitActive ? 'px-3 py-3 border-b border-line/60' : 'ui-card p-3 sm:p-4 rounded-2xl sm:rounded-3xl',
+              )}
+            >
               {categories.length > 0 && (
                 <div
-                  className="flex items-center gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1 sm:flex-wrap sm:overflow-visible"
+                  className={cn(
+                    'flex items-center gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1',
+                    !splitActive && 'sm:flex-wrap sm:overflow-visible',
+                  )}
                   role="group"
                   aria-label="Categorias"
                 >
@@ -1670,7 +1810,10 @@ export default function App() {
               <div className="flex items-center gap-2 min-w-0 text-xs text-fg-muted">
                 <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-x-auto overscroll-x-contain scrollbar-none">
                   <div
-                    className="flex items-center shrink-0 bg-muted border border-line rounded-xl p-0.5"
+                    className={cn(
+                      'flex items-center shrink-0 bg-muted border border-line rounded-xl p-0.5',
+                      splitActive && 'hidden',
+                    )}
                     role="group"
                     aria-label="Modo de visualização"
                   >
@@ -1713,13 +1856,16 @@ export default function App() {
                 </div>
 
                 <label className="flex items-center gap-1.5 shrink-0">
-                  <ArrowUpDown className="w-3.5 h-3.5 shrink-0" aria-hidden />
-                  <span className="hidden md:inline shrink-0 font-medium">Ordem</span>
+                  <ArrowUpDown className={cn('w-3.5 h-3.5 shrink-0', splitActive && 'hidden')} aria-hidden />
+                  <span className={cn('hidden shrink-0 font-medium', !splitActive && 'md:inline')}>Ordem</span>
                   <Select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as 'number' | 'title' | 'recent')}
                     aria-label="Ordenação"
-                    className="min-h-9 !py-1 !text-xs w-auto max-w-[7.5rem] sm:max-w-none"
+                    className={cn(
+                      'min-h-9 !py-1 !text-xs w-auto max-w-[7.5rem]',
+                      !splitActive && 'sm:max-w-none',
+                    )}
                   >
                     <option value="number">Por número</option>
                     <option value="title">Por título</option>
@@ -1753,19 +1899,34 @@ export default function App() {
             </div>
 
             {favoritesFilterLoading ? (
-              <CatalogSongsLoading
-                layout={songsLayout}
-                title={showFavoritesOnly ? 'Carregando favoritos…' : 'Atualizando catálogo…'}
-                subtitle={
-                  showFavoritesOnly
-                    ? 'Filtrando suas músicas favoritas'
-                    : 'Removendo o filtro de favoritos'
-                }
-              />
+              <div className={cn(splitActive && 'p-3')}>
+                <CatalogSongsLoading
+                  layout={splitActive ? 'list' : songsLayout}
+                  title={showFavoritesOnly ? 'Carregando favoritos…' : 'Atualizando catálogo…'}
+                  subtitle={
+                    showFavoritesOnly
+                      ? 'Filtrando suas músicas favoritas'
+                      : 'Removendo o filtro de favoritos'
+                  }
+                />
+              </div>
             ) : sortedSongs.length > 0 ? (
-              songsLayout === 'list' ? (
+              <>
+              {splitActive ? (
+                <div className="flex flex-col p-1.5" role="list" aria-label="Músicas">
+                  {visibleSongs.map((song) => (
+                    <SongPaneItem
+                      key={song.id}
+                      song={song}
+                      selected={song.id === catalogSongId}
+                      isFavorite={Boolean(user) && favorites.includes(song.id)}
+                      onSelect={openSong}
+                    />
+                  ))}
+                </div>
+              ) : songsLayout === 'list' ? (
                 <div className="flex flex-col gap-1.5">
-                  {sortedSongs.map((song) => (
+                  {visibleSongs.map((song) => (
                     <SongListRow
                       key={song.id}
                       song={song}
@@ -1782,7 +1943,7 @@ export default function App() {
                 </div>
               ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sortedSongs.map((song) => (
+                {visibleSongs.map((song) => (
                   <SongCard
                     key={song.id}
                     song={song}
@@ -1797,9 +1958,26 @@ export default function App() {
                   />
                 ))}
               </div>
-              )
+              )}
+              {hiddenSongsCount > 0 && (
+                <div className="flex flex-col items-center gap-2 pt-2 pb-4">
+                  <Button
+                    variant="secondary"
+                    icon={ChevronDown}
+                    onClick={() => setCatalogVisibleCount((n) => n + CATALOG_PAGE_SIZE)}
+                    className="min-w-56"
+                  >
+                    Carregar mais {Math.min(CATALOG_PAGE_SIZE, hiddenSongsCount)}
+                  </Button>
+                  <p className="text-xs text-fg-subtle tabular-nums">
+                    Mostrando {visibleSongs.length} de {sortedSongs.length} músicas
+                  </p>
+                </div>
+              )}
+              </>
             ) : songs.length === 0 ? (
               <EmptyState
+                className={cn(splitActive && 'm-3')}
                 icon={Music}
                 title="Catálogo vazio"
                 description={
@@ -1817,6 +1995,7 @@ export default function App() {
               />
             ) : (
               <EmptyState
+                className={cn(splitActive && 'm-3')}
                 icon={SearchX}
                 title="Nenhuma música encontrada"
                 description={
@@ -1844,6 +2023,16 @@ export default function App() {
               />
             )}
           </div>
+          {splitActive && (
+            <section className="min-h-0 min-w-0 bg-app" aria-label="Música selecionada">
+              {selectedSongId ? (
+                renderSongDetail('pane')
+              ) : (
+                <CatalogSplitPlaceholder songsCount={songs.length} />
+              )}
+            </section>
+          )}
+          </div>
         )}
       </main>
       </div>
@@ -1857,69 +2046,7 @@ export default function App() {
         />
       )}
 
-      {activeSongRouteId &&
-        (selectedEventSongId
-          ? selectedSongVersionQuery.isError
-          : selectedSongQuery.isError) && (
-        <div className="fixed inset-0 z-50 bg-app flex items-center justify-center px-6">
-          <EmptyState
-            tone="danger"
-            icon={AlertCircle}
-            title={selectedEventSongId ? 'Versão não encontrada' : 'Música não encontrada'}
-            description={
-              (
-                (selectedEventSongId
-                  ? selectedSongVersionQuery.error
-                  : selectedSongQuery.error) as Error
-              )?.message || 'Este link pode estar inválido ou a música não está disponível.'
-            }
-            action={
-              <Button variant="secondary" onClick={closeSongPage}>
-                Voltar ao catálogo
-              </Button>
-            }
-            className="w-full max-w-md"
-          />
-        </div>
-      )}
-
-      {activeSongRouteId &&
-        !(selectedEventSongId
-          ? selectedSongVersionQuery.isError
-          : selectedSongQuery.isError) && (
-        <SongDetailModal
-          song={selectedSong}
-          eventVersion={
-            songEventVersion
-              ? {
-                  title: songEventVersion.title,
-                  date: songEventVersion.date,
-                  time: songEventVersion.time,
-                }
-              : null
-          }
-          isLoading={
-            selectedEventSongId
-              ? selectedSongVersionQuery.isLoading ||
-                (!selectedSongVersionQuery.data && selectedSongVersionQuery.isFetching)
-              : selectedSongQuery.isLoading ||
-                (!selectedSongQuery.data && selectedSongQuery.isFetching)
-          }
-          onClose={closeSongPage}
-          isFavorite={Boolean(user) && Boolean(catalogSongId) && favorites.includes(catalogSongId!)}
-          onToggleFavorite={user ? handleToggleFavorite : undefined}
-          onOpenProjection={(s) => setProjectionSongs([s])}
-          onAddToSetlist={user ? handleAddToSetlist : undefined}
-          isAdmin={Boolean(user) && canManageSongs && !selectedEventSongId}
-          onEditSong={
-            canManageSongs && !selectedEventSongId
-              ? () => {
-                  if (selectedSongQuery.data) setSongToEdit(selectedSongQuery.data);
-                }
-              : undefined
-          }
-        />
-      )}
+      {activeSongRouteId && !splitActive && renderSongDetail('overlay')}
 
       {projectionSongs && (
         <SongProjectionModal
