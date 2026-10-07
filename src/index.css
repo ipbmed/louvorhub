@@ -235,6 +235,15 @@ html.light {
     overscroll-behavior-y: none;
   }
 
+  /* iOS Safari amplia a página ao focar campos com fonte < 16px. */
+  @supports (-webkit-touch-callout: none) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+
   button:not(.rounded-full):not(.rounded-none),
   input[type="button"]:not(.rounded-full):not(.rounded-none),
   input[type="submit"]:not(.rounded-full):not(.rounded-none),

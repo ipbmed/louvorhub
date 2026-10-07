@@ -57,7 +57,9 @@ export const AlphabetFilterToggle: React.FC<{
   expanded: boolean;
   onToggle: () => void;
   selectedLetter: string;
-}> = ({ expanded, onToggle, selectedLetter }) => {
+  /** Mostra o rótulo "Índice" também em telas pequenas. */
+  showLabel?: boolean;
+}> = ({ expanded, onToggle, selectedLetter, showLabel = false }) => {
   const hasFilter = selectedLetter !== 'TODAS';
 
   return (
@@ -74,7 +76,7 @@ export const AlphabetFilterToggle: React.FC<{
       }`}
     >
       <BookA className="w-3.5 h-3.5 shrink-0" />
-      <span className="hidden sm:inline">Índice</span>
+      <span className={showLabel ? 'inline' : 'hidden sm:inline'}>Índice</span>
       {hasFilter && !expanded && (
         <span className="sm:ml-0.5 absolute -top-1 -right-1 sm:static min-w-[1.1rem] h-[1.1rem] px-0.5 rounded-full bg-stone-950/25 sm:bg-stone-950/20 text-[9px] sm:text-[10px] font-extrabold flex items-center justify-center">
           {selectedLetter}

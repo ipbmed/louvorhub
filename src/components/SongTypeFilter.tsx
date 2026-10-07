@@ -56,12 +56,13 @@ export const SongTypeFilter: React.FC<SongTypeFilterProps> = ({
             title={label}
             onClick={() => onChange(mode)}
             className={cn(
-              'flex items-center justify-center gap-1.5 min-h-8 min-w-9 px-2.5 !rounded-lg text-xs font-semibold transition-all touch-manipulation',
+              'flex items-center justify-center gap-1.5 min-h-8 !rounded-lg text-xs font-semibold transition-all touch-manipulation',
+              fullWidth ? 'min-w-0 px-1.5 xs:px-2.5' : 'min-w-9 px-2.5',
               active ? 'bg-brand text-brand-fg shadow-sm' : 'text-fg-muted hover:text-fg',
             )}
           >
-            <Icon className="w-3.5 h-3.5 shrink-0" />
-            <span className={cn(!fullWidth && 'hidden sm:inline')}>{label}</span>
+            <Icon className={cn('w-3.5 h-3.5 shrink-0', fullWidth && 'max-[22.5rem]:hidden')} />
+            <span className={cn(fullWidth ? 'min-w-0 truncate' : 'hidden sm:inline')}>{label}</span>
           </button>
         );
       })}

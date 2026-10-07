@@ -150,6 +150,7 @@ export default function App() {
   const songVersionMatch = useMatch('/musica/versao/:eventSongId');
   const songMatch = useMatch('/musica/:songId');
   const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const isTabletUp = useMediaQuery('(min-width: 768px)');
   const playlistShareMatch = useMatch('/playlist/:shareCode');
   const legacyPlaylistShareMatch = useMatch('/repertorio/:shareCode');
   const eventShareMatch = useMatch('/evento/:shareCode');
@@ -401,6 +402,8 @@ export default function App() {
   /** Desktop: catálogo dividido — lista à esquerda, música selecionada à direita. */
   const splitActive = isDesktop && currentView === 'public' && !selectedEventSongId && !isEventDetail;
   const songOverlay = Boolean(songMatch) && !splitActive;
+  /** Celular e catálogo dividido: filtros em linhas (tipo, visualização, índice + ordem). */
+  const stackedFilters = splitActive || !isTabletUp;
 
   const openSong = (song: Song, options?: { eventSongId?: string }) => {
     if (options?.eventSongId) {
@@ -1787,20 +1790,24 @@ export default function App() {
               <div
                 className={cn(
                   'min-w-0 text-xs text-fg-muted',
-                  splitActive ? 'grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2' : 'flex items-center gap-2',
+                  stackedFilters ? 'grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2' : 'flex items-center gap-2',
                 )}
               >
                 <div
                   className={cn(
-                    splitActive
+                    stackedFilters
                       ? 'contents'
                       : 'flex items-center gap-1.5 flex-1 min-w-0 overflow-x-auto overscroll-x-contain scrollbar-none',
                   )}
                 >
                   <div
                     className={cn(
-                      'flex items-center shrink-0 bg-muted border border-line rounded-xl p-0.5',
-                      splitActive && 'hidden',
+                      'items-center bg-muted border border-line rounded-xl p-0.5',
+                      splitActive
+                        ? 'hidden'
+                        : stackedFilters
+                          ? 'col-span-2 grid grid-cols-2'
+                          : 'flex shrink-0',
                     )}
                     role="group"
                     aria-label="Modo de visualização"
@@ -1819,14 +1826,15 @@ export default function App() {
                         aria-pressed={songsLayout === mode}
                         title={`Visualização em ${label.toLowerCase()}`}
                         className={cn(
-                          'flex items-center justify-center gap-1.5 min-h-8 min-w-9 sm:min-w-0 px-2 sm:px-2.5 rounded-lg font-semibold transition-all touch-manipulation',
+                          'flex items-center justify-center gap-1.5 min-h-8 px-2 sm:px-2.5 rounded-lg font-semibold transition-all touch-manipulation',
+                          stackedFilters ? 'min-w-0' : 'min-w-9 sm:min-w-0',
                           songsLayout === mode
                             ? 'bg-surface text-fg shadow-sm'
                             : 'text-fg-subtle hover:text-fg',
                         )}
                       >
                         <Icon className="w-3.5 h-3.5 shrink-0" />
-                        <span className="hidden sm:inline">{label}</span>
+                        <span className={stackedFilters ? 'min-w-0 truncate' : 'hidden sm:inline'}>{label}</span>
                       </button>
                     ))}
                   </div>
@@ -1834,17 +1842,18 @@ export default function App() {
                     showHinos={showHinos}
                     showCanticos={showCanticos}
                     onChange={handleSongTypeChange}
-                    fullWidth={splitActive}
-                    className={cn(splitActive && 'col-span-2')}
+                    fullWidth={stackedFilters}
+                    className={cn(stackedFilters && 'col-span-2 order-first')}
                   />
                   <AlphabetFilterToggle
                     expanded={alphabetExpanded}
                     onToggle={() => setAlphabetExpanded((v) => !v)}
                     selectedLetter={selectedLetter}
+                    showLabel={stackedFilters}
                   />
                 </div>
 
-                <label className={cn('flex items-center gap-1.5', splitActive ? 'min-w-0' : 'shrink-0')}>
+                <label className={cn('flex items-center gap-1.5', stackedFilters ? 'min-w-0' : 'shrink-0')}>
                   <ArrowUpDown className="w-3.5 h-3.5 shrink-0" aria-hidden />
                   <span className={cn('shrink-0 font-medium', !splitActive && 'hidden md:inline')}>Ordem</span>
                   <Select
@@ -1853,7 +1862,7 @@ export default function App() {
                     aria-label="Ordenação"
                     className={cn(
                       'min-h-9 !py-1 !text-xs',
-                      splitActive ? 'flex-1 min-w-0' : 'w-auto max-w-[7.5rem] sm:max-w-none',
+                      stackedFilters ? 'flex-1 min-w-0' : 'w-auto max-w-[7.5rem] sm:max-w-none',
                     )}
                   >
                     <option value="number">Por número</option>

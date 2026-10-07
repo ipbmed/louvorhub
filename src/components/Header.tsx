@@ -347,11 +347,12 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 type="button"
                 onClick={onAdminAuthClick}
-                className="btn-gradient inline-flex items-center gap-1.5 h-10 px-4 sm:px-5 !rounded-full text-sm font-bold transition-all"
+                className="btn-gradient inline-flex items-center gap-1.5 h-10 px-3 min-[22.5rem]:px-4 sm:px-5 !rounded-full text-sm font-bold transition-all"
                 title="Entrar com e-mail"
+                aria-label="Entrar"
               >
                 <LogIn className="w-4 h-4" />
-                <span>Entrar</span>
+                <span className="max-[22.5rem]:hidden">Entrar</span>
               </button>
             )}
           </div>
