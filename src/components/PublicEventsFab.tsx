@@ -11,10 +11,13 @@ import {
 interface PublicEventsFabProps {
   /** Quando false, não renderiza (ex.: usuário logado). */
   enabled?: boolean;
+  /** `rail`: botão redondo só com ícone; o painel abre à direita. */
+  variant?: 'header' | 'rail';
 }
 
 /** Notificação de eventos públicos no header. */
-export const PublicEventsFab: React.FC<PublicEventsFabProps> = ({ enabled = true }) => {
+export const PublicEventsFab: React.FC<PublicEventsFabProps> = ({ enabled = true, variant = 'header' }) => {
+  const isRail = variant === 'rail';
   const navigate = useNavigate();
   const rootRef = useRef<HTMLDivElement>(null);
   const [orgs, setOrgs] = useState<PublicSharedOrgSummary[]>([]);
@@ -107,24 +110,40 @@ export const PublicEventsFab: React.FC<PublicEventsFabProps> = ({ enabled = true
       <button
         type="button"
         onClick={toggleOpen}
-        className={`relative p-2 sm:px-3 sm:py-2 rounded-button text-xs font-medium flex items-center gap-1.5 transition-all border ${
-          open
-            ? 'bg-emerald-950/60 text-emerald-300 border-emerald-700/60 shadow-sm'
-            : 'bg-stone-800/80 text-stone-300 border-stone-700 hover:bg-stone-700/80 hover:text-emerald-300'
-        }`}
+        className={
+          isRail
+            ? `relative w-11 h-11 !rounded-full flex items-center justify-center transition-colors ${
+                open ? 'bg-muted text-fg' : 'text-fg-muted hover:bg-muted hover:text-fg'
+              }`
+            : `relative p-2 sm:px-3 sm:py-2 rounded-button text-xs font-medium flex items-center gap-1.5 transition-all border ${
+                open
+                  ? 'bg-emerald-950/60 text-emerald-300 border-emerald-700/60 shadow-sm'
+                  : 'bg-stone-800/80 text-stone-300 border-stone-700 hover:bg-stone-700/80 hover:text-emerald-300'
+              }`
+        }
         title="Eventos disponíveis"
         aria-label="Eventos disponíveis"
         aria-expanded={open}
       >
-        <CalendarDays className="w-4 h-4" />
-        <span className="hidden sm:inline">Eventos</span>
-        <span className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-emerald-500 text-stone-950 text-[9px] font-black flex items-center justify-center border border-stone-900 shadow-sm">
+        <CalendarDays className={isRail ? 'w-[22px] h-[22px]' : 'w-4 h-4'} />
+        {!isRail && <span className="hidden sm:inline">Eventos</span>}
+        <span
+          className={
+            isRail
+              ? 'absolute top-0.5 right-0.5 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-brand text-white text-[9px] font-black flex items-center justify-center ring-2 ring-surface-2'
+              : 'absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-1 rounded-full bg-emerald-500 text-stone-950 text-[9px] font-black flex items-center justify-center border border-stone-900 shadow-sm'
+          }
+        >
           {orgs.length}
         </span>
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-[min(22rem,calc(100vw-1.5rem))] bg-stone-900 border border-stone-700 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+        <div
+          className={`absolute w-[min(22rem,calc(100vw-1.5rem))] bg-stone-900 border border-stone-700 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in duration-150 ${
+            isRail ? 'left-full top-0 ml-3 slide-in-from-left-2' : 'right-0 top-full mt-2 slide-in-from-top-2'
+          }`}
+        >
           <div className="px-4 py-3 border-b border-stone-800 flex items-center justify-between gap-2">
             <div className="min-w-0">
               {showEventsStep && selectedOrg ? (

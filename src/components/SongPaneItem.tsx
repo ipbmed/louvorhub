@@ -11,10 +11,18 @@ interface SongPaneItemProps {
   onSelect: (song: Song) => void;
 }
 
+const CHORD_TOKEN = /^[A-G][#b]?(maj|min|dim|aug|sus|add|m|M|\d+|[#b+°º-]|\([^)]*\))*(\/[A-G][#b]?)?$/;
+
+function isChordOnlyLine(line: string): boolean {
+  const tokens = line.split(/\s+/).filter((t) => t && t !== '|' && t !== '-');
+  return tokens.length > 0 && tokens.every((t) => CHORD_TOKEN.test(t));
+}
+
 function firstLyricLine(lyrics: string): string {
   for (const raw of lyrics.split('\n')) {
     const line = stripChords(raw).trim();
     if (!line || line.startsWith('[') || line.startsWith('#') || line.startsWith('{')) continue;
+    if (isChordOnlyLine(line)) continue;
     return line;
   }
   return '';

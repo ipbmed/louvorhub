@@ -38,6 +38,7 @@ import { SongCard } from './components/SongCard';
 import { SongListRow } from './components/SongListRow';
 import { SongPaneItem } from './components/SongPaneItem';
 import { CatalogSplitPlaceholder } from './components/CatalogSplitPlaceholder';
+import { CatalogRail } from './components/CatalogRail';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { SongDetailModal } from './components/SongDetailModal';
 import { SongProjectionModal } from './components/SongProjectionModal';
@@ -63,7 +64,7 @@ import { EventDetail } from './components/EventDetail';
 import { UserManager } from './components/UserManager';
 import { InviteAcceptPage } from './components/InviteAcceptPage';
 import { AlphabetFilter, AlphabetFilterToggle } from './components/AlphabetFilter';
-import { SongTypeFilter, matchesSongTypeFilter } from './components/SongTypeFilter';
+import { SongTypeFilter, matchesSongTypeFilter, type SongTypeMode } from './components/SongTypeFilter';
 import { AppSidebar } from './components/AppSidebar';
 import { AppTopbar } from './components/AppTopbar';
 import { MobileNav } from './components/MobileNav';
@@ -1070,48 +1071,9 @@ export default function App() {
     }
   };
 
-  const handleToggleHinos = () => {
-    let nextHinos: boolean;
-    let nextCanticos: boolean;
-
-    if (showHinos && !showCanticos) {
-      nextHinos = false;
-      nextCanticos = true;
-    } else {
-      nextHinos = !showHinos;
-      nextCanticos = showCanticos;
-    }
-
-    setShowHinos(nextHinos);
-    setShowCanticos(nextCanticos);
-
-    if (nextHinos && !nextCanticos) {
-      showToast('Exibindo apenas hinos');
-    } else if (!nextHinos && nextCanticos) {
-      showToast('Exibindo apenas cânticos');
-    }
-  };
-
-  const handleToggleCanticos = () => {
-    let nextHinos: boolean;
-    let nextCanticos: boolean;
-
-    if (showCanticos && !showHinos) {
-      nextCanticos = false;
-      nextHinos = true;
-    } else {
-      nextCanticos = !showCanticos;
-      nextHinos = showHinos;
-    }
-
-    setShowHinos(nextHinos);
-    setShowCanticos(nextCanticos);
-
-    if (nextHinos && !nextCanticos) {
-      showToast('Exibindo apenas hinos');
-    } else if (!nextHinos && nextCanticos) {
-      showToast('Exibindo apenas cânticos');
-    }
+  const handleSongTypeChange = (mode: SongTypeMode) => {
+    setShowHinos(mode !== 'cantico');
+    setShowCanticos(mode !== 'hino');
   };
 
   const filteredSongs = songs.filter((h) => {
@@ -1347,7 +1309,7 @@ export default function App() {
             void handleToggleFavoritesOnly();
           }}
           currentView={currentView}
-          searchInSplitPane={splitActive}
+          hideOnDesktop={splitActive}
         />
       )}
 
@@ -1698,11 +1660,24 @@ export default function App() {
         ) : (
           <div
             className={cn(
+              splitActive && 'grid h-[100dvh]',
               splitActive &&
-                'grid grid-cols-[minmax(340px,420px)_minmax(0,1fr)] 2xl:grid-cols-[460px_minmax(0,1fr)]',
-              splitActive && (user ? 'h-[100dvh]' : 'h-[calc(100dvh-4rem-1px)]'),
+                (user
+                  ? 'grid-cols-[minmax(340px,420px)_minmax(0,1fr)] 2xl:grid-cols-[460px_minmax(0,1fr)]'
+                  : 'grid-cols-[68px_minmax(340px,420px)_minmax(0,1fr)] 2xl:grid-cols-[68px_460px_minmax(0,1fr)]'),
             )}
           >
+          {splitActive && !user && (
+            <CatalogRail
+              onHome={() => navigate('/')}
+              onLogin={() => setShowLogin(true)}
+              onOpenAdvancedSearch={() => setShowAdvancedSearch(true)}
+              onToggleFavoritesOnly={() => void handleToggleFavoritesOnly()}
+              showFavoritesOnly={showFavoritesOnly}
+              favoritesCount={favorites.length}
+              showPublicEvents
+            />
+          )}
           <div
             className={cn(
               'w-full',
@@ -1749,9 +1724,11 @@ export default function App() {
                   value={quickQuery}
                   onChange={handleQuickQueryChange}
                   onOpenKeypad={() => setShowKeypad(true)}
-                  onOpenAdvancedSearch={() => setShowAdvancedSearch(true)}
+                  onOpenAdvancedSearch={splitActive && !user ? undefined : () => setShowAdvancedSearch(true)}
                   showFavoritesOnly={showFavoritesOnly}
-                  onToggleFavoritesOnly={() => void handleToggleFavoritesOnly()}
+                  onToggleFavoritesOnly={
+                    splitActive && !user ? undefined : () => void handleToggleFavoritesOnly()
+                  }
                 />
               </div>
             )}
@@ -1807,8 +1784,19 @@ export default function App() {
                   })}
                 </div>
               )}
-              <div className="flex items-center gap-2 min-w-0 text-xs text-fg-muted">
-                <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-x-auto overscroll-x-contain scrollbar-none">
+              <div
+                className={cn(
+                  'min-w-0 text-xs text-fg-muted',
+                  splitActive ? 'grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2' : 'flex items-center gap-2',
+                )}
+              >
+                <div
+                  className={cn(
+                    splitActive
+                      ? 'contents'
+                      : 'flex items-center gap-1.5 flex-1 min-w-0 overflow-x-auto overscroll-x-contain scrollbar-none',
+                  )}
+                >
                   <div
                     className={cn(
                       'flex items-center shrink-0 bg-muted border border-line rounded-xl p-0.5',
@@ -1845,8 +1833,9 @@ export default function App() {
                   <SongTypeFilter
                     showHinos={showHinos}
                     showCanticos={showCanticos}
-                    onToggleHinos={handleToggleHinos}
-                    onToggleCanticos={handleToggleCanticos}
+                    onChange={handleSongTypeChange}
+                    fullWidth={splitActive}
+                    className={cn(splitActive && 'col-span-2')}
                   />
                   <AlphabetFilterToggle
                     expanded={alphabetExpanded}
@@ -1855,16 +1844,16 @@ export default function App() {
                   />
                 </div>
 
-                <label className="flex items-center gap-1.5 shrink-0">
-                  <ArrowUpDown className={cn('w-3.5 h-3.5 shrink-0', splitActive && 'hidden')} aria-hidden />
-                  <span className={cn('hidden shrink-0 font-medium', !splitActive && 'md:inline')}>Ordem</span>
+                <label className={cn('flex items-center gap-1.5', splitActive ? 'min-w-0' : 'shrink-0')}>
+                  <ArrowUpDown className="w-3.5 h-3.5 shrink-0" aria-hidden />
+                  <span className={cn('shrink-0 font-medium', !splitActive && 'hidden md:inline')}>Ordem</span>
                   <Select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as 'number' | 'title' | 'recent')}
                     aria-label="Ordenação"
                     className={cn(
-                      'min-h-9 !py-1 !text-xs w-auto max-w-[7.5rem]',
-                      !splitActive && 'sm:max-w-none',
+                      'min-h-9 !py-1 !text-xs',
+                      splitActive ? 'flex-1 min-w-0' : 'w-auto max-w-[7.5rem] sm:max-w-none',
                     )}
                   >
                     <option value="number">Por número</option>

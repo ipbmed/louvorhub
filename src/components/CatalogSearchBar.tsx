@@ -6,7 +6,7 @@ interface CatalogSearchBarProps {
   value: string;
   onChange: (value: string) => void;
   onOpenKeypad: () => void;
-  onOpenAdvancedSearch: () => void;
+  onOpenAdvancedSearch?: () => void;
   showFavoritesOnly?: boolean;
   onToggleFavoritesOnly?: () => void;
   className?: string;
@@ -95,14 +95,16 @@ export const CatalogSearchBar: React.FC<CatalogSearchBarProps> = ({
       </button>
     )}
 
-    <button
-      type="button"
-      onClick={onOpenAdvancedSearch}
-      title="Filtros e busca avançada"
-      aria-label="Filtros e busca avançada"
-      className={cn(roundBtn, 'bg-surface text-fg-muted border-line')}
-    >
-      <SlidersHorizontal className="w-4 h-4" />
-    </button>
+    {onOpenAdvancedSearch && (
+      <button
+        type="button"
+        onClick={onOpenAdvancedSearch}
+        title="Filtros e busca avançada"
+        aria-label="Filtros e busca avançada"
+        className={cn(roundBtn, 'bg-surface text-fg-muted border-line')}
+      >
+        <SlidersHorizontal className="w-4 h-4" />
+      </button>
+    )}
   </div>
 );

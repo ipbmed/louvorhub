@@ -47,8 +47,8 @@ interface HeaderProps {
   onEditActiveChurch?: () => void;
   /** Oculta o cabeçalho no celular (navegação fica no menu e na barra inferior). */
   hideOnMobile?: boolean;
-  /** Telas grandes com catálogo dividido: a busca fica no painel da lista. */
-  searchInSplitPane?: boolean;
+  /** Oculta o cabeçalho em telas grandes (catálogo dividido usa a barra lateral de ícones). */
+  hideOnDesktop?: boolean;
 }
 
 const iconBtn =
@@ -74,7 +74,7 @@ export const Header: React.FC<HeaderProps> = ({
   canEditActiveChurch = false,
   onEditActiveChurch,
   hideOnMobile = false,
-  searchInSplitPane = false,
+  hideOnDesktop = false,
 }) => {
   const [inputVal, setInputVal] = useState(quickNumberQuery);
   const { canInstall, install } = usePwa();
@@ -160,6 +160,7 @@ export const Header: React.FC<HeaderProps> = ({
       className={cn(
         'sticky top-0 z-30 w-full bg-app/85 backdrop-blur-md text-fg border-b border-line/60 pt-safe',
         hideOnMobile && 'hidden md:block',
+        hideOnDesktop && 'lg:hidden',
       )}
     >
       <div className="w-full px-3 sm:px-5 lg:px-6">
@@ -241,12 +242,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Centro — busca (desktop) */}
-          <div
-            className={cn(
-              'hidden md:flex items-center gap-2 flex-1 justify-center min-w-0 px-4',
-              searchInSplitPane && 'lg:invisible',
-            )}
-          >
+          <div className="hidden md:flex items-center gap-2 flex-1 justify-center min-w-0 px-4">
             {renderSearch('desktop')}
             <button
               type="button"

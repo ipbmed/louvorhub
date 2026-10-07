@@ -1,57 +1,73 @@
 import React from 'react';
-import { Hash, Music2 } from 'lucide-react';
+import { Hash, Layers, Music2 } from 'lucide-react';
+import { cn } from './ui/cn';
+
+export type SongTypeMode = 'todos' | 'hino' | 'cantico';
 
 interface SongTypeFilterProps {
   showHinos: boolean;
   showCanticos: boolean;
-  onToggleHinos: () => void;
-  onToggleCanticos: () => void;
+  onChange: (mode: SongTypeMode) => void;
+  /** Ocupa toda a largura, com os três botões do mesmo tamanho. */
+  fullWidth?: boolean;
+  className?: string;
 }
 
-/** Grupo para filtrar hinos e/ou cânticos (ambos ativos por padrão). */
+const OPTIONS = [
+  { mode: 'todos', label: 'Todos', Icon: Layers },
+  { mode: 'hino', label: 'Hinos', Icon: Hash },
+  { mode: 'cantico', label: 'Cânticos', Icon: Music2 },
+] as const;
+
+export function songTypeModeOf(showHinos: boolean, showCanticos: boolean): SongTypeMode {
+  if (showHinos && !showCanticos) return 'hino';
+  if (showCanticos && !showHinos) return 'cantico';
+  return 'todos';
+}
+
+/** Seletor do tipo de louvor: todos, só hinos ou só cânticos. */
 export const SongTypeFilter: React.FC<SongTypeFilterProps> = ({
   showHinos,
   showCanticos,
-  onToggleHinos,
-  onToggleCanticos,
-}) => (
-  <div
-    className="flex items-center shrink-0 bg-stone-800 light:bg-stone-100 border border-stone-700 light:border-stone-200 rounded-xl p-0.5"
-    role="group"
-    aria-label="Tipo de louvor"
-  >
-    <button
-      type="button"
-      onClick={onToggleHinos}
-      aria-pressed={showHinos}
-      aria-label="Hinos"
-      className={`flex items-center justify-center gap-1.5 min-h-9 min-w-9 sm:min-w-0 px-2 sm:px-2.5 py-1.5 rounded-button font-semibold transition-all touch-manipulation ${
-        showHinos
-          ? 'bg-emerald-500 text-stone-950 shadow-sm'
-          : 'text-stone-400 light:text-stone-600 hover:text-stone-200 light:hover:text-stone-900'
-      }`}
-      title={showHinos ? 'Ocultar hinos' : 'Mostrar hinos'}
+  onChange,
+  fullWidth = false,
+  className,
+}) => {
+  const current = songTypeModeOf(showHinos, showCanticos);
+  return (
+    <div
+      className={cn(
+        'items-center bg-muted border border-line rounded-xl p-0.5',
+        fullWidth ? 'grid grid-cols-3 w-full' : 'flex shrink-0',
+        className,
+      )}
+      role="radiogroup"
+      aria-label="Tipo de louvor"
     >
-      <Hash className="w-3.5 h-3.5 shrink-0" />
-      <span className="hidden sm:inline">Hinos</span>
-    </button>
-    <button
-      type="button"
-      onClick={onToggleCanticos}
-      aria-pressed={showCanticos}
-      aria-label="Cânticos"
-      className={`flex items-center justify-center gap-1.5 min-h-9 min-w-9 sm:min-w-0 px-2 sm:px-2.5 py-1.5 rounded-button font-semibold transition-all touch-manipulation ${
-        showCanticos
-          ? 'bg-emerald-500 text-stone-950 shadow-sm'
-          : 'text-stone-400 light:text-stone-600 hover:text-stone-200 light:hover:text-stone-900'
-      }`}
-      title={showCanticos ? 'Ocultar cânticos' : 'Mostrar cânticos'}
-    >
-      <Music2 className="w-3.5 h-3.5 shrink-0" />
-      <span className="hidden sm:inline">Cânticos</span>
-    </button>
-  </div>
-);
+      {OPTIONS.map(({ mode, label, Icon }) => {
+        const active = current === mode;
+        return (
+          <button
+            key={mode}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            aria-label={label}
+            title={label}
+            onClick={() => onChange(mode)}
+            className={cn(
+              'flex items-center justify-center gap-1.5 min-h-8 min-w-9 px-2.5 !rounded-lg text-xs font-semibold transition-all touch-manipulation',
+              active ? 'bg-brand text-brand-fg shadow-sm' : 'text-fg-muted hover:text-fg',
+            )}
+          >
+            <Icon className="w-3.5 h-3.5 shrink-0" />
+            <span className={cn(!fullWidth && 'hidden sm:inline')}>{label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
 
 export function resolveSongType(song: { songType?: string; number?: number | null }): 'hino' | 'cantico' {
   return (song.songType || (song.number != null ? 'hino' : 'cantico')) as 'hino' | 'cantico';
