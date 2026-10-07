@@ -81,7 +81,26 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
   const containerClass =
     variant === 'pane'
       ? 'relative h-full min-h-0 bg-stone-900 flex flex-col overflow-hidden text-stone-100'
-      : 'fixed inset-0 z-50 bg-stone-900 flex flex-col overflow-hidden animate-in fade-in duration-200 text-stone-100';
+      : 'fixed inset-0 z-50 bg-stone-900 flex flex-col overflow-hidden animate-in fade-in duration-200 text-stone-100 pt-safe';
+  const isOverlay = variant === 'overlay';
+
+  useEffect(() => {
+    if (!isOverlay) return;
+    const { documentElement: html, body } = document;
+    const prev = {
+      htmlOverflow: html.style.overflow,
+      htmlOverscroll: html.style.overscrollBehavior,
+      bodyOverflow: body.style.overflow,
+    };
+    html.style.overflow = 'hidden';
+    html.style.overscrollBehavior = 'none';
+    body.style.overflow = 'hidden';
+    return () => {
+      html.style.overflow = prev.htmlOverflow;
+      html.style.overscrollBehavior = prev.htmlOverscroll;
+      body.style.overflow = prev.bodyOverflow;
+    };
+  }, [isOverlay]);
   const [fontSize, setFontSize] = useState<number>(18);
   const [showChords, setShowChords] = useState<boolean>(false);
   const [semitones, setSemitones] = useState<number>(0);
@@ -163,7 +182,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-stone-400 hover:text-stone-100 rounded-button z-10"
+          className="absolute top-[calc(env(safe-area-inset-top,0px)+1rem)] right-4 p-2 text-stone-400 hover:text-stone-100 rounded-button z-10"
           title="Fechar"
         >
           <X className="w-5 h-5" />
@@ -219,7 +238,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
     <div className={containerClass}>
         
         {/* Header Bar */}
-        <div className="p-4 sm:p-6 bg-stone-900 border-b border-stone-800 flex items-start justify-between gap-4 shrink-0 z-10">
+        <div className="px-3 py-2.5 sm:p-6 bg-stone-900 border-b border-stone-800 flex items-start justify-between gap-3 sm:gap-4 shrink-0 z-10 touch-none sm:touch-auto">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
               {isHino && song.number != null ? (
@@ -238,10 +257,10 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
                 </SongMetaBadge>
               )}
               {song.category && (
-                <SongMetaBadge variant="category">{song.category}</SongMetaBadge>
+                <SongMetaBadge variant="category" className="max-sm:hidden">{song.category}</SongMetaBadge>
               )}
               {isHino && (
-                <SongMetaBadge variant="hymnal">
+                <SongMetaBadge variant="hymnal" className="max-sm:hidden">
                   {song.hymnal || 'Novo Cântico'}
                 </SongMetaBadge>
               )}
@@ -251,10 +270,10 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
                 </SongMetaBadge>
               )}
               {song.timeSignature && (
-                <SongMetaBadge variant="meta">{song.timeSignature}</SongMetaBadge>
+                <SongMetaBadge variant="meta" className="max-sm:hidden">{song.timeSignature}</SongMetaBadge>
               )}
             </div>
-              <h2 className="text-xl sm:text-2xl font-serif font-bold text-emerald-100 light:text-stone-900 mt-1">
+              <h2 className="text-lg leading-snug sm:text-2xl font-serif font-bold text-emerald-100 light:text-stone-900 mt-1">
                 {song.title}
               </h2>
               {song.subtitle && (
@@ -314,8 +333,13 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
           </div>
         </div>
 
+        {/* Área rolável única: no celular a barra de leitura rola junto com a letra. */}
+        <div
+          ref={lyricsScrollRef}
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch] pb-safe"
+        >
         {/* Reader Controls Toolbar */}
-        <div className="bg-stone-950/70 border-b border-stone-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="bg-stone-950 sm:sticky sm:top-0 z-10 border-b border-stone-800 px-3 sm:px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 sm:gap-3 text-xs">
           
           {/* Left Controls: Font size, Chords Toggle, Transposition */}
           <div className="flex items-center gap-2 flex-wrap">
@@ -514,7 +538,6 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
         )}
 
         {/* Lyrics Content Area */}
-        <div ref={lyricsScrollRef} className="overflow-y-auto flex-1">
           {showMedia && mediaCount > 0 && (
             <div
               ref={mediaLinksRef}
