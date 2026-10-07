@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Song, ThemeMode } from '../types';
+import { useLockDocumentScroll } from '../hooks/useLockDocumentScroll';
 import {
   X,
   ChevronLeft,
@@ -37,6 +38,14 @@ interface SongProjectionModalProps {
 
 const LINE_OPTIONS = [2, 3, 4, 5, 6, 8] as const;
 
+const THEME_OPTIONS: { mode: ThemeMode; label: string; Icon: typeof Moon }[] = [
+  { mode: 'dark', label: 'Escuro', Icon: Moon },
+  { mode: 'light', label: 'Claro', Icon: Sun },
+  { mode: 'navy', label: 'Azul', Icon: Palette },
+];
+
+const SWIPE_MIN_PX = 50;
+
 export const SongProjectionModal: React.FC<SongProjectionModalProps> = ({
   songsSequence,
   initialIndex = 0,
@@ -48,6 +57,10 @@ export const SongProjectionModal: React.FC<SongProjectionModalProps> = ({
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [showLayoutMenu, setShowLayoutMenu] = useState(false);
   const [layout, setLayout] = useState<ProjectionLayoutSettings>(() => loadProjectionLayoutSettings());
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const canFullscreen = typeof document !== 'undefined' && Boolean(document.fullscreenEnabled);
+
+  useLockDocumentScroll();
 
   const currentSong = songsSequence[songIdx] || songsSequence[0];
 
@@ -148,6 +161,23 @@ export const SongProjectionModal: React.FC<SongProjectionModalProps> = ({
     }
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStartRef.current = e.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start || showLayoutMenu) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0) handleNextSlide();
+    else handlePrevSlide();
+  };
+
   const setMode = (mode: ProjectionLayoutMode) => {
     setLayout((prev) => ({ ...prev, mode }));
     if (mode === 'scroll') setShowLayoutMenu(false);
@@ -203,27 +233,38 @@ export const SongProjectionModal: React.FC<SongProjectionModalProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 ${currentTheme.bg} ${currentTheme.text} flex flex-col justify-between transition-colors duration-300 select-none`}
+      className={`fixed inset-0 z-50 ${currentTheme.bg} ${currentTheme.text} flex flex-col justify-between transition-colors duration-300 select-none pt-safe`}
     >
-      <div className="p-4 sm:p-6 flex items-center justify-between border-b border-stone-800/40 opacity-80 hover:opacity-100 transition-opacity relative z-20">
-        <div className="flex items-center gap-3 min-w-0">
+      <div className="px-3 py-2 sm:p-6 flex items-center justify-between gap-2 border-b border-stone-800/40 opacity-90 sm:opacity-80 hover:opacity-100 transition-opacity relative z-20 touch-none sm:touch-auto">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {currentSong.number ? (
-            <div className="px-3 py-1 bg-emerald-500/20 text-emerald-300 font-mono font-black rounded-xl text-lg border border-emerald-500/40 shrink-0">
+            <div className="px-2 sm:px-3 py-1 bg-emerald-500/20 text-emerald-300 font-mono font-black rounded-xl text-sm sm:text-lg border border-emerald-500/40 shrink-0">
               #{currentSong.number}
             </div>
           ) : (
-            <div className="px-3 py-1 bg-emerald-500/20 text-emerald-300 font-mono font-bold rounded-xl text-xs uppercase border border-emerald-500/40 shrink-0">
+            <div className="px-2 sm:px-3 py-1 bg-emerald-500/20 text-emerald-300 font-mono font-bold rounded-xl text-[10px] sm:text-xs uppercase border border-emerald-500/40 shrink-0">
               Cântico
             </div>
           )}
           <div className="min-w-0">
-            <h1 className="text-lg sm:text-2xl font-serif font-bold tracking-tight truncate">
+            <h1 className="text-base sm:text-2xl font-serif font-bold tracking-tight truncate">
               {currentSong.title}
             </h1>
-            <p className="text-xs text-emerald-300/80 uppercase tracking-widest font-mono truncate">
+            <p className="hidden sm:block text-xs text-emerald-300/80 uppercase tracking-widest font-mono truncate">
               {currentSong.hymnal ? `${currentSong.hymnal} · ` : ''}
               {currentSong.category}
             </p>
+            {currentSlide && (
+              <LyricSectionHeading
+                label={currentSlide.label}
+                annotation={
+                  currentSlide.partCount > 1
+                    ? `${currentSlide.annotation ? `${currentSlide.annotation} · ` : ''}${currentSlide.partIndex}/${currentSlide.partCount}`
+                    : currentSlide.annotation
+                }
+                className="sm:hidden block truncate text-[10px] font-mono font-bold text-emerald-300/90"
+              />
+            )}
           </div>
 
           {currentSlide && (
@@ -234,7 +275,7 @@ export const SongProjectionModal: React.FC<SongProjectionModalProps> = ({
                   ? `${currentSlide.annotation ? `${currentSlide.annotation} · ` : ''}${currentSlide.partIndex}/${currentSlide.partCount}`
                   : currentSlide.annotation
               }
-              className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-mono font-bold border shrink-0 ${currentTheme.border} ${
+              className={`max-sm:hidden px-3 py-1.5 rounded-full text-xs font-mono font-bold border shrink-0 ${currentTheme.border} ${
                 currentSlide.type === 'chorus'
                   ? 'bg-emerald-500/20 text-emerald-300'
                   : 'bg-stone-800/50 text-stone-300'
@@ -243,9 +284,9 @@ export const SongProjectionModal: React.FC<SongProjectionModalProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {isFontMode && (
-            <div className="flex items-center gap-0.5 bg-stone-800/60 rounded-button p-0.5 mr-1">
+            <div className="max-sm:hidden flex items-center gap-0.5 bg-stone-800/60 rounded-button p-0.5 mr-1">
               <button
                 type="button"
                 onClick={() => nudgeFont(-1)}
@@ -282,7 +323,30 @@ export const SongProjectionModal: React.FC<SongProjectionModalProps> = ({
             </button>
 
             {showLayoutMenu && (
-              <div className="absolute right-0 top-full mt-2 w-72 bg-stone-900 border border-stone-700 rounded-2xl shadow-2xl p-3 z-30">
+              <div className="absolute right-0 top-full mt-2 w-[min(18rem,calc(100vw-1.5rem))] max-h-[min(75dvh,36rem)] overflow-y-auto overscroll-contain bg-stone-900 border border-stone-700 rounded-2xl shadow-2xl p-3 z-30 touch-auto">
+                <div className="sm:hidden mb-3">
+                  <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-stone-500 px-1 mb-2">
+                    Tema
+                  </p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {THEME_OPTIONS.map(({ mode, label, Icon }) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setTheme(mode)}
+                        aria-pressed={theme === mode}
+                        className={`flex flex-col items-center gap-1 py-2 rounded-xl text-[11px] font-bold border ${
+                          theme === mode
+                            ? 'bg-emerald-500 text-stone-950 border-emerald-400'
+                            : 'bg-stone-950 text-stone-300 border-stone-700'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-stone-500 px-1 mb-2">
                   Layout do slide
                 </p>
@@ -392,45 +456,35 @@ export const SongProjectionModal: React.FC<SongProjectionModalProps> = ({
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={() => setTheme('dark')}
-            className={`p-2 rounded-button transition-colors ${theme === 'dark' ? 'bg-emerald-500 text-stone-950' : 'bg-stone-800/60 text-stone-300'}`}
-            title="Tema Escuro"
-          >
-            <Moon className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setTheme('light')}
-            className={`p-2 rounded-button transition-colors ${theme === 'light' ? 'bg-emerald-500 text-stone-950' : 'bg-stone-800/60 text-stone-300'}`}
-            title="Tema Claro"
-          >
-            <Sun className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setTheme('navy')}
-            className={`p-2 rounded-button transition-colors ${theme === 'navy' ? 'bg-emerald-500 text-stone-950' : 'bg-stone-800/60 text-stone-300'}`}
-            title="Tema Azul Sacro"
-          >
-            <Palette className="w-4 h-4" />
-          </button>
+          {THEME_OPTIONS.map(({ mode, label, Icon }) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setTheme(mode)}
+              className={`max-sm:hidden p-2 rounded-button transition-colors ${theme === mode ? 'bg-emerald-500 text-stone-950' : 'bg-stone-800/60 text-stone-300'}`}
+              title={`Tema ${label}`}
+            >
+              <Icon className="w-4 h-4" />
+            </button>
+          ))}
 
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            className="p-2 bg-stone-800/60 hover:bg-stone-700 text-stone-300 rounded-button transition-colors"
-            title="Tela Cheia"
-          >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </button>
+          {canFullscreen && (
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="p-2 bg-stone-800/60 hover:bg-stone-700 text-stone-300 rounded-button transition-colors"
+              title="Tela Cheia"
+            >
+              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </button>
+          )}
 
           <button
             type="button"
             onClick={onClose}
-            className="p-2 bg-rose-950/60 text-rose-300 hover:bg-rose-900 rounded-button transition-colors ml-2"
+            className="p-2 bg-rose-950/60 text-rose-300 hover:bg-rose-900 rounded-button transition-colors sm:ml-2"
             title="Sair do Modo Telão"
+            aria-label="Sair do modo telão"
           >
             <X className="w-5 h-5" />
           </button>
@@ -438,12 +492,14 @@ export const SongProjectionModal: React.FC<SongProjectionModalProps> = ({
       </div>
 
       <div
-        className={`flex-1 min-h-0 flex flex-col items-center px-4 sm:px-8 py-6 sm:py-10 text-center w-full max-w-none ${
+        className={`flex-1 min-h-0 flex flex-col items-center px-4 sm:px-8 py-4 sm:py-10 text-center w-full max-w-none ${
           layout.mode === 'scroll' || isFontMode
-            ? 'justify-start overflow-y-auto'
-            : 'justify-center overflow-hidden'
+            ? 'justify-start overflow-y-auto overscroll-contain touch-pan-y'
+            : 'justify-center overflow-hidden touch-none'
         }`}
         onClick={() => showLayoutMenu && setShowLayoutMenu(false)}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         {currentSlide && (
           <div
@@ -463,8 +519,8 @@ export const SongProjectionModal: React.FC<SongProjectionModalProps> = ({
         )}
       </div>
 
-      <div className="p-4 sm:p-6 border-t border-stone-800/40 flex flex-col sm:flex-row items-center justify-between gap-4 z-10">
-        <div className="flex items-center gap-1 overflow-x-auto max-w-full pb-2 sm:pb-0">
+      <div className="px-3 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] sm:p-6 border-t border-stone-800/40 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4 z-10">
+        <div className="flex items-center gap-1 overflow-x-auto overscroll-x-contain scrollbar-none max-w-full touch-pan-x">
           {slides.map((sec, idx) => (
             <button
               key={sec.id}
@@ -483,12 +539,12 @@ export const SongProjectionModal: React.FC<SongProjectionModalProps> = ({
           ))}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between sm:justify-center gap-3 w-full sm:w-auto touch-none sm:touch-auto">
           <button
             type="button"
             onClick={handlePrevSlide}
             disabled={slideIdx === 0 && songIdx === 0}
-            className="p-3 bg-stone-900 border border-stone-800 hover:bg-emerald-500 hover:text-stone-950 disabled:opacity-30 disabled:pointer-events-none rounded-button transition-all shadow-md"
+            className="flex-1 sm:flex-none flex justify-center p-3 bg-stone-900 border border-stone-800 hover:bg-emerald-500 hover:text-stone-950 disabled:opacity-30 disabled:pointer-events-none rounded-button transition-all shadow-md"
             title="Slide Anterior (Seta Esquerda)"
           >
             <ChevronLeft className="w-6 h-6" />
@@ -502,7 +558,7 @@ export const SongProjectionModal: React.FC<SongProjectionModalProps> = ({
             type="button"
             onClick={handleNextSlide}
             disabled={slideIdx >= slides.length - 1 && songIdx >= songsSequence.length - 1}
-            className="p-3 bg-stone-900 border border-stone-800 hover:bg-emerald-500 hover:text-stone-950 disabled:opacity-30 disabled:pointer-events-none rounded-button transition-all shadow-md"
+            className="flex-1 sm:flex-none flex justify-center p-3 bg-stone-900 border border-stone-800 hover:bg-emerald-500 hover:text-stone-950 disabled:opacity-30 disabled:pointer-events-none rounded-button transition-all shadow-md"
             title="Próximo Slide (Seta Direita / Espaço)"
           >
             <ChevronRight className="w-6 h-6" />

@@ -42,6 +42,7 @@ import { ChordLyricLine } from './ChordLyricLine';
 import { LyricSectionHeading } from './LyricSectionHeading';
 import { SongMetaBadge } from './SongMetaBadge';
 import { getCombinedMediaLinks } from '../utils/mediaUtils';
+import { useLockDocumentScroll } from '../hooks/useLockDocumentScroll';
 
 export interface SongEventVersionInfo {
   title: string;
@@ -82,25 +83,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
     variant === 'pane'
       ? 'relative h-full min-h-0 bg-stone-900 flex flex-col overflow-hidden text-stone-100'
       : 'fixed inset-0 z-50 bg-stone-900 flex flex-col overflow-hidden animate-in fade-in duration-200 text-stone-100 pt-safe';
-  const isOverlay = variant === 'overlay';
-
-  useEffect(() => {
-    if (!isOverlay) return;
-    const { documentElement: html, body } = document;
-    const prev = {
-      htmlOverflow: html.style.overflow,
-      htmlOverscroll: html.style.overscrollBehavior,
-      bodyOverflow: body.style.overflow,
-    };
-    html.style.overflow = 'hidden';
-    html.style.overscrollBehavior = 'none';
-    body.style.overflow = 'hidden';
-    return () => {
-      html.style.overflow = prev.htmlOverflow;
-      html.style.overscrollBehavior = prev.htmlOverscroll;
-      body.style.overflow = prev.bodyOverflow;
-    };
-  }, [isOverlay]);
+  useLockDocumentScroll(variant === 'overlay');
   const [fontSize, setFontSize] = useState<number>(18);
   const [showChords, setShowChords] = useState<boolean>(false);
   const [semitones, setSemitones] = useState<number>(0);
