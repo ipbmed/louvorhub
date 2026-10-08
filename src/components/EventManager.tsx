@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import type { ChurchEvent, MusicGroup } from '../types';
 import { EVENT_TITLE_SUGGESTIONS } from '../constants/eventTitles';
-import { PageHeader } from './PageHeader';
+import { PageShell } from './PageHeader';
 import { EventCard } from './EventCard';
 import { Button, EmptyState, Fab, IconButton, Modal, Tabs, cn } from './ui';
 import { formatDateLong } from '@/utils/dateLabels';
@@ -76,7 +76,7 @@ interface EventManagerProps {
   events: ChurchEvent[];
   musicGroups: MusicGroup[];
   activeChurchId: string;
-  /** Dentro do workspace: oculta o PageHeader (já há título Workspace + abas). */
+  /** Dentro do workspace: oculta o cabeçalho (já há título Workspace + abas). */
   embedded?: boolean;
   onSaveEvent: (event: ChurchEvent) => void | Promise<void>;
   onSaveEventBatch?: (
@@ -383,14 +383,13 @@ export const EventManager: React.FC<EventManagerProps> = ({
   );
 
   return (
-    <div className="w-full space-y-4">
-      {!embedded && (
-        <PageHeader
-          title="Agenda"
-          description={churchName ? `Eventos, escalas e liturgias · ${churchName}` : 'Eventos, escalas e liturgias'}
-        />
-      )}
-
+    <PageShell
+      hideHeader={embedded}
+      width={embedded ? 'full' : 'narrow'}
+      icon={CalendarDays}
+      title="Agenda"
+      description={churchName ? `Eventos, escalas e liturgias · ${churchName}` : 'Eventos, escalas e liturgias'}
+    >
       {toolbar}
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
@@ -833,6 +832,6 @@ export const EventManager: React.FC<EventManagerProps> = ({
               )}
             </form>
       </Modal>
-    </div>
+    </PageShell>
   );
 };

@@ -31,7 +31,7 @@ import {
   listRegisteredUsers,
   rejectUserAccount,
 } from '@/services/accounts';
-import { PageHeader, PageHeaderButton } from './PageHeader';
+import { PageShell, PageHeaderButton } from './PageHeader';
 import { KNOWN_SKILLS } from '@/constants/skills';
 import { getAvatarPublicUrl } from '@/utils/avatarUrl';
 import { AvatarCropDialog } from './AvatarCropDialog';
@@ -383,17 +383,16 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
     .toUpperCase();
 
   return (
-    <div className="w-full space-y-6">
-      <PageHeader
-        icon={Users}
-        title="Contas de usuários"
-        description="Cadastro completo de contas do sistema, aprovações e permissões de administrador."
-        actions={
-          <PageHeaderButton icon={UserPlus} onClick={openCreateModal}>
-            Novo cadastro
-          </PageHeaderButton>
-        }
-      />
+    <PageShell
+      icon={Users}
+      title="Contas de usuários"
+      description="Cadastro completo de contas do sistema, aprovações e permissões de administrador."
+      actions={
+        <PageHeaderButton icon={UserPlus} onClick={openCreateModal}>
+          Novo cadastro
+        </PageHeaderButton>
+      }
+    >
 
       {pendingCount > 0 && (
         <div className="bg-amber-950/30 border border-amber-800/50 rounded-2xl p-4 text-sm text-amber-100 flex items-start gap-3">
@@ -830,6 +829,6 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
           onConfirm={onCropConfirm}
         />
       )}
-    </div>
+    </PageShell>
   );
 };

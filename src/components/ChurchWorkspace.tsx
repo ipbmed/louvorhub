@@ -13,9 +13,9 @@ import {
 } from 'lucide-react';
 import type { Church as ChurchType, ChurchEvent, ViewMode } from '@/types';
 import { todayStr } from '@/utils/dateLabels';
-import { PageHeader } from './PageHeader';
+import { PageHeaderButton, PageShell } from './PageHeader';
 import { EventCard } from './EventCard';
-import { Alert, Button, EmptyState, Field, IconButton, Input, Modal, Tabs, type TabItem } from './ui';
+import { Alert, Button, EmptyState, Field, Input, Modal, Tabs, type TabItem } from './ui';
 
 export const WORKSPACE_VIEWS: ViewMode[] = ['workspace', 'churches', 'users'];
 
@@ -167,8 +167,9 @@ export const ChurchWorkspace: React.FC<ChurchWorkspaceProps> = ({
   const mark = church.sigla?.trim().slice(0, 4).toUpperCase();
 
   return (
-    <div className="w-full space-y-4 animate-in fade-in duration-300">
-      <PageHeader
+    <PageShell
+        width="narrow"
+        icon={Church}
         title={church.name}
         description={
           church.city ? (
@@ -182,16 +183,12 @@ export const ChurchWorkspace: React.FC<ChurchWorkspaceProps> = ({
         backLabel="Voltar para Igrejas"
         actions={
           canEdit ? (
-            <IconButton
-              icon={Edit3}
-              label="Editar igreja"
-              variant="ghost"
-              onClick={openEdit}
-              className="bg-surface shadow-card"
-            />
+            <PageHeaderButton icon={Edit3} onClick={openEdit} title="Editar igreja">
+              Editar
+            </PageHeaderButton>
           ) : undefined
         }
-      />
+    >
 
       <div
         className="rounded-[22px] p-5 text-white shadow-card-lg relative overflow-hidden"
@@ -400,6 +397,6 @@ export const ChurchWorkspace: React.FC<ChurchWorkspaceProps> = ({
           </div>
         </form>
       </Modal>
-    </div>
+    </PageShell>
   );
 };

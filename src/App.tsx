@@ -1216,14 +1216,18 @@ export default function App() {
     };
   });
   const groupNameById = (id?: string) => musicGroups.find((g) => g.id === id)?.name;
-  const NARROW_VIEWS: ViewMode[] = ['home', 'more', 'churchList', 'profile', 'events', 'workspace', 'churches', 'users'];
+  const NARROW_VIEWS: ViewMode[] = ['home', 'more'];
+  /** Views com `PageShell`: a barra do cabeçalho ocupa toda a largura e o próprio shell limita o conteúdo. */
+  const SHELL_VIEWS: ViewMode[] = ['setlist', 'events', 'churchList', 'profile', 'accounts', 'workspace', 'churches', 'users'];
   const contentWidth = !user
     ? 'max-w-none'
     : isEventDetail
       ? 'max-w-6xl'
-      : NARROW_VIEWS.includes(currentView)
-        ? 'max-w-3xl'
-        : 'max-w-7xl';
+      : SHELL_VIEWS.includes(currentView)
+        ? 'max-w-none'
+        : NARROW_VIEWS.includes(currentView)
+          ? 'max-w-3xl'
+          : 'max-w-7xl';
 
   const handleSignOut = async () => {
     await signOut();

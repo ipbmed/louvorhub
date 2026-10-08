@@ -1,6 +1,6 @@
 import React from 'react';
-import { Building2, Check, ChevronRight, KeyRound, MapPin, Plus, Settings2, UsersRound } from 'lucide-react';
-import { PageHeader } from './PageHeader';
+import { Building2, Check, ChevronRight, Church, KeyRound, MapPin, Plus, Settings2, UsersRound } from 'lucide-react';
+import { PageHeaderButton, PageShell } from './PageHeader';
 import { Button, EmptyState, Fab, Input } from './ui';
 
 export interface ChurchListItem {
@@ -52,21 +52,22 @@ export const ChurchesPage: React.FC<ChurchesPageProps> = ({
   onJoinCodeChange,
   onJoin,
 }) => (
-  <div className="space-y-5 animate-in fade-in duration-300">
-    <PageHeader
+  <PageShell
+      width="narrow"
+      icon={Church}
       title="Igrejas"
       description={
         churches.length === 1 ? '1 igreja vinculada à sua conta' : `${churches.length} igrejas vinculadas à sua conta`
       }
       actions={
         onManageAll ? (
-          <Button variant="secondary" size="sm" icon={Settings2} onClick={onManageAll}>
+          <PageHeaderButton icon={Settings2} onClick={onManageAll}>
             <span className="hidden xs:inline">Gerenciar todas</span>
             <span className="xs:hidden">Gerenciar</span>
-          </Button>
+          </PageHeaderButton>
         ) : undefined
       }
-    />
+  >
 
     {churches.length === 0 ? (
       <EmptyState
@@ -160,5 +161,5 @@ export const ChurchesPage: React.FC<ChurchesPageProps> = ({
     </form>
 
     {onCreate && <Fab icon={Plus} label="Nova igreja" onClick={onCreate} />}
-  </div>
+  </PageShell>
 );
