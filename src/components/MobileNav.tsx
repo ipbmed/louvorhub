@@ -10,7 +10,7 @@ interface MobileNavProps {
   hidden?: boolean;
 }
 
-const ITEMS: NavSection[] = ['home', 'agenda', 'songs', 'churches', 'more'];
+const ITEMS: NavSection[] = ['home', 'songs', 'agenda', 'churches', 'more'];
 
 /** Barra de navegação inferior do ambiente privado (celular/tablet). */
 export const MobileNav: React.FC<MobileNavProps> = ({ currentView, onViewChange, hidden = false }) => {

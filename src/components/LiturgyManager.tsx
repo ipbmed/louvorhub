@@ -23,9 +23,10 @@ import {
   X,
   HelpCircle,
   FileDown,
-  Loader2,
+  Check,
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton } from './PageHeader';
+import { ActionButton } from './ui';
 import { SongSearchSelect } from './SongSearchSelect';
 import { useConfirm } from '@/contexts/ConfirmProvider';
 import {
@@ -313,12 +314,9 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
           <p className="text-xs text-stone-500 max-w-sm mx-auto mt-1 mb-4">
             Crie o roteiro do próximo culto com a ordem das leituras, orações, hinos e bênção.
           </p>
-          <button
-            onClick={handleOpenNewModal}
-            className="px-4 py-2 bg-emerald-500 text-stone-950 font-bold rounded-button text-xs"
-          >
-            + Cadastrar Liturgia
-          </button>
+          <ActionButton variant="primary" icon={Plus} onClick={handleOpenNewModal}>
+            Cadastrar liturgia
+          </ActionButton>
         </div>
       ) : (
         <div className={`grid gap-6 ${embedded ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
@@ -356,35 +354,42 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                     )}
 
                     <div className="flex items-center gap-1">
-                      <button
+                      <ActionButton
+                        variant="primary"
+                        icon={Tv}
+                        collapseLabel
                         onClick={() => {
                           setPresentingLiturgy(liturgy);
                           setCurrentSlideIndex(0);
                         }}
-                        className="p-1.5 bg-stone-800 light:bg-emerald-50 hover:bg-emerald-500/20 light:hover:bg-emerald-100 text-emerald-300 light:text-emerald-800 rounded-button border border-stone-700 light:border-emerald-200 text-xs font-medium flex items-center gap-1 transition-colors"
-                        title="Projetar Liturgia no Telão"
+                        title="Projetar liturgia no telão"
                       >
-                        <Tv className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Projetar</span>
-                      </button>
+                        Projetar
+                      </ActionButton>
 
-                      <button
+                      <ActionButton
+                        variant="light"
+                        icon={Printer}
+                        collapseLabel
                         onClick={() => setPrintingLiturgy(liturgy)}
-                        className="p-1.5 bg-stone-800 light:bg-stone-100 hover:bg-stone-700 light:hover:bg-stone-200 text-stone-300 light:text-stone-700 rounded-button border border-stone-700 light:border-stone-300"
-                        title="Ver Boletim Impresso"
+                        title="Ver boletim impresso"
                       >
-                        <Printer className="w-3.5 h-3.5" />
-                      </button>
+                        Boletim
+                      </ActionButton>
 
-                      <button
+                      <ActionButton
+                        variant="light"
+                        icon={Edit3}
                         onClick={() => handleOpenEditModal(liturgy)}
-                        className="p-1.5 text-stone-400 light:text-stone-600 hover:text-emerald-300 light:hover:text-emerald-700 hover:bg-stone-800 light:hover:bg-stone-100 rounded-button"
-                        title="Editar Liturgia"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
+                        title="Editar liturgia"
+                        aria-label="Editar liturgia"
+                      />
 
-                      <button
+                      <ActionButton
+                        variant="danger"
+                        icon={Trash2}
+                        title="Excluir liturgia"
+                        aria-label="Excluir liturgia"
                         onClick={() => {
                           void confirm({
                             title: 'Excluir liturgia',
@@ -394,11 +399,7 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                             if (ok) onDeleteLiturgy(liturgy.id);
                           });
                         }}
-                        className="p-1.5 text-stone-400 light:text-stone-600 hover:text-rose-400 light:hover:text-rose-700 hover:bg-stone-800 light:hover:bg-rose-50 rounded-button"
-                        title="Excluir Liturgia"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      />
                     </div>
                   </div>
 
@@ -492,13 +493,14 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                   {editingLiturgy ? 'Editar Liturgia' : 'Cadastrar Liturgia do Culto'}
                 </span>
               </h3>
-              <button 
+              <ActionButton
+                variant="light"
+                icon={X}
                 onClick={() => !saving && setIsModalOpen(false)}
                 disabled={saving}
-                className="text-stone-400 hover:text-stone-200 text-sm font-mono p-1 rounded-button disabled:opacity-40 shrink-0"
-              >
-                ✕
-              </button>
+                aria-label="Fechar"
+                title="Fechar"
+              />
             </div>
 
             <form onSubmit={handleSaveForm} className="p-3 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1 min-h-0">
@@ -553,40 +555,31 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                     Ordem dos Momentos da Liturgia
                   </label>
                   <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
+                    <ActionButton
+                      variant="light"
+                      icon={HelpCircle}
                       onClick={() => {
                         setMdHelpOpen((v) => !v);
                         if (!mdImportOpen) setMdImportOpen(true);
                       }}
-                      className="p-1.5 text-stone-400 hover:text-emerald-300 hover:bg-stone-800 rounded-button border border-transparent hover:border-stone-700"
                       title="Ajuda do formato Markdown"
                       aria-label="Ajuda do formato Markdown"
-                    >
-                      <HelpCircle className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
+                    />
+                    <ActionButton
+                      variant={mdImportOpen ? 'secondary' : 'light'}
+                      icon={FileDown}
+                      collapseLabel
+                      aria-pressed={mdImportOpen}
                       onClick={() => {
                         setMdImportOpen((v) => !v);
                         setMdImportError('');
                       }}
-                      className={`px-3 py-1 border rounded-button text-xs font-bold inline-flex items-center gap-1.5 ${
-                        mdImportOpen
-                          ? 'bg-emerald-500/25 text-emerald-200 border-emerald-500/40'
-                          : 'bg-stone-800 text-stone-300 hover:bg-stone-700 border-stone-700'
-                      }`}
                     >
-                      <FileDown className="w-3.5 h-3.5" />
                       Importar Markdown
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleAddItemToForm}
-                      className="px-3 py-1 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30 rounded-button text-xs font-bold"
-                    >
-                      + Adicionar Momento
-                    </button>
+                    </ActionButton>
+                    <ActionButton variant="primary" icon={Plus} onClick={handleAddItemToForm}>
+                      Adicionar momento
+                    </ActionButton>
                   </div>
                 </div>
 
@@ -601,16 +594,16 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                       <p className="text-[11px] text-stone-500">
                         Cole a ordem do culto abaixo. A importação substitui os momentos atuais.
                       </p>
-                      <button
-                        type="button"
+                      <ActionButton
+                        variant="light"
+                        icon={FileText}
                         onClick={() => {
                           setMdImportText(LITURGY_MARKDOWN_EXAMPLE);
                           setMdImportError('');
                         }}
-                        className="text-[11px] text-emerald-400 hover:text-emerald-300 font-semibold shrink-0"
                       >
                         Usar modelo
-                      </button>
+                      </ActionButton>
                     </div>
                     <textarea
                       value={mdImportText}
@@ -627,20 +620,12 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                       <p className="text-[11px] text-rose-400">{mdImportError}</p>
                     )}
                     <div className="flex justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setMdImportOpen(false)}
-                        className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold"
-                      >
+                      <ActionButton variant="light" onClick={() => setMdImportOpen(false)}>
                         Fechar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleImportMarkdown}
-                        className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 rounded-button text-xs font-bold"
-                      >
+                      </ActionButton>
+                      <ActionButton variant="primary" icon={Check} onClick={handleImportMarkdown}>
                         Aplicar importação
-                      </button>
+                      </ActionButton>
                     </div>
                   </div>
                 )}
@@ -672,35 +657,29 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                         </select>
 
                         <div className="flex items-center gap-0.5 shrink-0 ml-auto">
-                          <button
-                            type="button"
+                          <ActionButton
+                            variant="light"
+                            icon={MoveUp}
                             onClick={() => handleMoveItem(idx, 'up')}
                             disabled={idx === 0}
-                            className="p-1.5 text-stone-400 hover:text-emerald-300 disabled:opacity-20 rounded-button"
                             title="Mover para cima"
                             aria-label="Mover para cima"
-                          >
-                            <MoveUp className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
+                          />
+                          <ActionButton
+                            variant="light"
+                            icon={MoveDown}
                             onClick={() => handleMoveItem(idx, 'down')}
                             disabled={idx === formItems.length - 1}
-                            className="p-1.5 text-stone-400 hover:text-emerald-300 disabled:opacity-20 rounded-button"
                             title="Mover para baixo"
                             aria-label="Mover para baixo"
-                          >
-                            <MoveDown className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
+                          />
+                          <ActionButton
+                            variant="danger"
+                            icon={Trash2}
                             onClick={() => handleRemoveItemFromForm(item.id)}
-                            className="p-1.5 text-stone-400 hover:text-rose-400 rounded-button"
                             title="Remover momento"
                             aria-label="Remover momento"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          />
                         </div>
                       </div>
 
@@ -752,22 +731,12 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
               </div>
 
               <div className="pt-4 flex items-center justify-end gap-3 border-t border-stone-800">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  disabled={saving}
-                  className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold disabled:opacity-50"
-                >
+                <ActionButton variant="light" onClick={() => setIsModalOpen(false)} disabled={saving}>
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs shadow-md shadow-emerald-500/20 disabled:opacity-60 inline-flex items-center gap-1.5"
-                >
-                  {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  {saving ? 'Salvando…' : 'Salvar Liturgia'}
-                </button>
+                </ActionButton>
+                <ActionButton type="submit" variant="primary" icon={Check} loading={saving}>
+                  {saving ? 'Salvando…' : 'Salvar liturgia'}
+                </ActionButton>
               </div>
 
             </form>

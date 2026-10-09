@@ -146,3 +146,71 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
   ),
 );
 IconButton.displayName = 'IconButton';
+
+export type ActionButtonVariant = 'primary' | 'secondary' | 'light' | 'danger' | 'glass';
+
+const ACTION_VARIANT: Record<ActionButtonVariant, string> = {
+  primary: 'btn-gradient border-transparent',
+  secondary: 'bg-brand-soft text-brand-text border-brand-line hover:brightness-95',
+  light: 'bg-surface text-fg border-line hover:bg-surface-2',
+  danger: 'bg-danger-soft text-danger-text border-danger-line hover:brightness-95',
+  /** Sobre fundos coloridos (banners). */
+  glass: 'bg-white/15 text-white border-white/25 hover:bg-white/25 backdrop-blur',
+};
+
+export interface ActionButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  icon?: LucideIcon;
+  variant?: ActionButtonVariant;
+  /** Esconde o texto abaixo de `sm` (fica só o ícone, com o texto em `title`/`aria-label`). */
+  collapseLabel?: boolean;
+  loading?: boolean;
+}
+
+/**
+ * Botão de ação padronizado (barras de ferramentas, cabeçalhos de cards):
+ * mesma altura, tipografia e ícone em todas as variantes. Sem texto vira quadrado.
+ */
+export const ActionButton = React.forwardRef<HTMLButtonElement, ActionButtonProps>(
+  (
+    {
+      icon: Icon,
+      variant = 'light',
+      collapseLabel = false,
+      loading = false,
+      className,
+      children,
+      disabled,
+      title,
+      'aria-label': ariaLabel,
+      type = 'button',
+      ...rest
+    },
+    ref,
+  ) => {
+    const hasLabel = children != null && children !== '';
+    const labelText = typeof children === 'string' ? children : undefined;
+    return (
+      <button
+        ref={ref}
+        type={type}
+        disabled={disabled || loading}
+        aria-busy={loading || undefined}
+        title={title ?? (collapseLabel ? labelText : undefined)}
+        aria-label={ariaLabel ?? (collapseLabel ? labelText : undefined)}
+        className={cn(
+          'inline-flex items-center justify-center gap-1.5 h-9 shrink-0 rounded-lg border text-xs font-semibold whitespace-nowrap transition-all touch-manipulation select-none',
+          'disabled:opacity-55 disabled:pointer-events-none active:scale-[0.97] [&_svg]:w-4 [&_svg]:h-4 [&_svg]:shrink-0',
+          hasLabel ? 'px-3' : 'w-9',
+          hasLabel && collapseLabel && 'max-sm:w-9 max-sm:px-0',
+          ACTION_VARIANT[variant],
+          className,
+        )}
+        {...rest}
+      >
+        {loading ? <Loader2 className="animate-spin" aria-hidden /> : Icon ? <Icon aria-hidden /> : null}
+        {hasLabel && <span className={cn(collapseLabel && 'max-sm:hidden')}>{children}</span>}
+      </button>
+    );
+  },
+);
+ActionButton.displayName = 'ActionButton';

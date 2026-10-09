@@ -20,8 +20,11 @@ import {
   ShieldCheck,
   CheckCircle2,
   UserCheck,
+  Check,
+  X,
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton } from './PageHeader';
+import { ActionButton } from './ui';
 import { getProfileSkills } from '@/constants/skills';
 import { useConfirm } from '@/contexts/ConfirmProvider';
 
@@ -342,12 +345,9 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
               : 'Peça a um administrador para conceder permissão de editor nesta igreja ou grupo.'}
           </p>
           {isAdmin && (
-            <button
-              onClick={openNewChurchModal}
-              className="px-4 py-2 bg-emerald-500 text-stone-950 font-semibold rounded-button text-sm"
-            >
-              Cadastrar Primeira Igreja
-            </button>
+            <ActionButton variant="primary" icon={Plus} onClick={openNewChurchModal}>
+              Cadastrar primeira igreja
+            </ActionButton>
           )}
         </div>
       ) : (
@@ -449,15 +449,19 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
 
                   {isAdmin && (
                     <div className="flex items-center gap-2 shrink-0">
-                      <button
+                      <ActionButton
+                        variant="light"
+                        icon={Edit3}
                         onClick={() => openEditChurchModal(activeChurch)}
-                        className="p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-emerald-300 rounded-button border border-stone-700 text-xs font-medium flex items-center gap-1.5 transition-colors"
-                        title="Editar dados da Igreja"
+                        title="Editar dados da igreja"
                       >
-                        <Edit3 className="w-4 h-4" />
-                        <span>Editar</span>
-                      </button>
-                      <button
+                        Editar
+                      </ActionButton>
+                      <ActionButton
+                        variant="danger"
+                        icon={Trash2}
+                        title="Excluir igreja"
+                        aria-label="Excluir igreja"
                         onClick={() => {
                           void confirm({
                             title: 'Excluir igreja',
@@ -467,11 +471,7 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
                             if (ok) onDeleteChurch(activeChurch.id);
                           });
                         }}
-                        className="p-2 bg-stone-800 hover:bg-rose-950/80 text-stone-400 hover:text-rose-300 rounded-button border border-stone-700 transition-colors"
-                        title="Excluir Igreja"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      />
                     </div>
                   )}
                 </div>
@@ -486,13 +486,9 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
                 </h3>
 
                 {canManageActiveChurch && (
-                  <button
-                    onClick={openNewMusicGroupModal}
-                    className="px-2.5 py-1.5 sm:px-3.5 sm:py-2 bg-stone-800 hover:bg-stone-700 text-emerald-300 font-semibold rounded-button text-xs border border-stone-700 transition-all flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap"
-                  >
-                    <Plus className="w-4 h-4" />
+                  <ActionButton variant="primary" icon={Plus} onClick={openNewMusicGroupModal}>
                     Novo grupo
-                  </button>
+                  </ActionButton>
                 )}
               </div>
 
@@ -503,12 +499,9 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
                   <p className="text-sm text-stone-400 font-medium">Nenhum grupo de louvor cadastrado para esta igreja.</p>
                   <p className="text-xs text-stone-500 mt-1 mb-3">Exemplo: Banda do Culto Matutino, Grupo de Louvor Jovens UMP, etc.</p>
                   {canManageActiveChurch && (
-                    <button
-                      onClick={openNewMusicGroupModal}
-                      className="px-3 py-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-button text-xs font-semibold"
-                    >
-                      + Criar Grupo
-                    </button>
+                    <ActionButton variant="secondary" icon={Plus} onClick={openNewMusicGroupModal}>
+                      Criar grupo
+                    </ActionButton>
                   )}
                 </div>
               ) : (
@@ -539,17 +532,21 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
                             })()}
                           </div>
 
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5">
                             {canEditGroup(musicGroup.id, musicGroup.churchId) && (
                               <>
-                                <button
+                                <ActionButton
+                                  variant="light"
+                                  icon={Edit3}
                                   onClick={() => openEditMusicGroupModal(musicGroup)}
-                                  className="p-1.5 text-stone-400 hover:text-emerald-300 hover:bg-stone-800 rounded-button transition-colors"
-                                  title="Editar Grupo"
-                                >
-                                  <Edit3 className="w-4 h-4" />
-                                </button>
-                                <button
+                                  title="Editar grupo"
+                                  aria-label="Editar grupo"
+                                />
+                                <ActionButton
+                                  variant="danger"
+                                  icon={Trash2}
+                                  title="Excluir grupo"
+                                  aria-label="Excluir grupo"
                                   onClick={() => {
                                     void confirm({
                                       title: 'Remover grupo',
@@ -559,11 +556,7 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
                                       if (ok) onDeleteMusicGroup(musicGroup.id);
                                     });
                                   }}
-                                  className="p-1.5 text-stone-400 hover:text-rose-400 hover:bg-stone-800 rounded-button transition-colors"
-                                  title="Excluir Grupo"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
+                                />
                               </>
                             )}
                           </div>
@@ -634,13 +627,14 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
 
                       {canEditGroup(musicGroup.id, musicGroup.churchId) && (
                         <div className="pt-2">
-                          <button
+                          <ActionButton
+                            variant="secondary"
+                            icon={UserPlus}
                             onClick={() => openEditMusicGroupModal(musicGroup)}
-                            className="w-full py-2 bg-stone-800 hover:bg-stone-750 text-stone-300 hover:text-stone-100 rounded-button text-xs font-semibold border border-stone-700/80 transition-colors flex items-center justify-center gap-1"
+                            className="w-full"
                           >
-                            <UserPlus className="w-3.5 h-3.5 text-emerald-400" />
-                            Gerenciar Integrantes
-                          </button>
+                            Gerenciar integrantes
+                          </ActionButton>
                         </div>
                       )}
                     </div>
@@ -663,12 +657,13 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
                 <Building2 className="w-5 h-5 text-emerald-400" />
                 {editingChurch ? 'Editar Igreja' : 'Cadastrar Nova Igreja'}
               </h3>
-              <button 
+              <ActionButton
+                variant="light"
+                icon={X}
                 onClick={() => setIsChurchModalOpen(false)}
-                className="text-stone-400 hover:text-stone-200 text-sm font-mono p-1 rounded-button"
-              >
-                ✕
-              </button>
+                aria-label="Fechar"
+                title="Fechar"
+              />
             </div>
 
             <form onSubmit={handleSaveChurch} className="p-6 space-y-4">
@@ -759,19 +754,12 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
               </div>
 
               <div className="pt-4 flex items-center justify-end gap-3 border-t border-stone-800">
-                <button
-                  type="button"
-                  onClick={() => setIsChurchModalOpen(false)}
-                  className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold"
-                >
+                <ActionButton variant="light" onClick={() => setIsChurchModalOpen(false)}>
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs shadow-md shadow-emerald-500/20"
-                >
-                  Salvar Igreja
-                </button>
+                </ActionButton>
+                <ActionButton type="submit" variant="primary" icon={Check}>
+                  Salvar igreja
+                </ActionButton>
               </div>
             </form>
           </div>
@@ -793,12 +781,13 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
                   Vinculado a: <strong className="text-emerald-300">{activeChurch.name}</strong>
                 </p>
               </div>
-              <button 
+              <ActionButton
+                variant="light"
+                icon={X}
                 onClick={() => setIsMusicGroupModalOpen(false)}
-                className="text-stone-400 hover:text-stone-200 text-sm font-mono p-1 rounded-button"
-              >
-                ✕
-              </button>
+                aria-label="Fechar"
+                title="Fechar"
+              />
             </div>
 
             <form onSubmit={handleSaveMusicGroup} className="p-6 space-y-5 overflow-y-auto flex-1">
@@ -886,14 +875,14 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
                               })}
                           </select>
                         </div>
-                        <button
-                          type="button"
+                        <ActionButton
+                          variant="secondary"
+                          icon={Plus}
                           onClick={handleAddMemberToForm}
                           disabled={!selectedUserId}
-                          className="px-3 py-1.5 bg-emerald-500 disabled:opacity-40 text-stone-950 font-bold rounded-button text-xs hover:bg-emerald-400 h-[34px] shrink-0"
                         >
-                          + Adicionar
-                        </button>
+                          Adicionar
+                        </ActionButton>
                       </div>
                       <label className="inline-flex items-center gap-2 text-xs text-stone-300 cursor-pointer select-none">
                         <input
@@ -957,13 +946,13 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
                             <ShieldCheck className="w-3 h-3" />
                             Líder
                           </button>
-                          <button
-                            type="button"
+                          <ActionButton
+                            variant="danger"
+                            icon={Trash2}
                             onClick={() => handleRemoveMemberFromForm(mem.id)}
-                            className="p-1 text-stone-400 hover:text-rose-400 hover:bg-stone-700 rounded transition-colors rounded-button"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                            aria-label={`Remover ${mem.name}`}
+                            title="Remover do grupo"
+                          />
                         </div>
                       </div>
                     ))}
@@ -973,19 +962,12 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
               </div>
 
               <div className="pt-4 flex items-center justify-end gap-3 border-t border-stone-800">
-                <button
-                  type="button"
-                  onClick={() => setIsMusicGroupModalOpen(false)}
-                  className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold"
-                >
+                <ActionButton variant="light" onClick={() => setIsMusicGroupModalOpen(false)}>
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs shadow-md shadow-emerald-500/20"
-                >
-                  Salvar Grupo de Louvor
-                </button>
+                </ActionButton>
+                <ActionButton type="submit" variant="primary" icon={Check}>
+                  Salvar grupo
+                </ActionButton>
               </div>
             </form>
 

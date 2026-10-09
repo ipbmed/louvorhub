@@ -1,6 +1,13 @@
 export { cn } from './cn';
-export { Button, IconButton } from './Button';
-export type { ButtonProps, ButtonVariant, ButtonSize, IconButtonProps } from './Button';
+export { Button, IconButton, ActionButton } from './Button';
+export type {
+  ButtonProps,
+  ButtonVariant,
+  ButtonSize,
+  IconButtonProps,
+  ActionButtonProps,
+  ActionButtonVariant,
+} from './Button';
 export { Field, Input, Textarea, Select } from './Field';
 export { Modal } from './Modal';
 export type { ModalProps, ModalSize } from './Modal';

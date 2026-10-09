@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AlertCircle,
+  ArrowLeft,
+  Cake,
   Calendar,
   Camera,
-  Check,
+  ChevronRight,
   Edit3,
   ImagePlus,
   Loader2,
   Mail,
-  MoreVertical,
   Phone,
   Plus,
   Search,
@@ -36,6 +36,7 @@ import { KNOWN_SKILLS } from '@/constants/skills';
 import { getAvatarPublicUrl } from '@/utils/avatarUrl';
 import { AvatarCropDialog } from './AvatarCropDialog';
 import { useConfirm } from '@/contexts/ConfirmProvider';
+import { ActionButton, Alert, Avatar, Badge, EmptyState, Input, Select, cn } from './ui';
 
 interface AccountManagerProps {
   onAccountsChanged?: () => void;
@@ -47,10 +48,10 @@ const STATUS_LABEL: Record<AccountStatus, string> = {
   rejected: 'Rejeitado',
 };
 
-const STATUS_CLASS: Record<AccountStatus, string> = {
-  pending: 'bg-amber-950/50 text-amber-300 border-amber-800',
-  approved: 'bg-emerald-950/60 text-emerald-300 border-emerald-800',
-  rejected: 'bg-rose-950/50 text-rose-300 border-rose-800',
+const STATUS_TONE: Record<AccountStatus, 'warning' | 'brand' | 'danger'> = {
+  pending: 'warning',
+  approved: 'brand',
+  rejected: 'danger',
 };
 
 type AccountForm = {
@@ -90,8 +91,9 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
   const [form, setForm] = useState<AccountForm>({ ...EMPTY_FORM });
   const [customSkill, setCustomSkill] = useState('');
   const [saving, setSaving] = useState(false);
-  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  /** Celular: a lista dá lugar ao detalhe da conta escolhida. */
+  const [mobileDetail, setMobileDetail] = useState(false);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const [avatarPath, setAvatarPath] = useState<string | null>(null);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
@@ -115,24 +117,6 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
   useEffect(() => {
     void loadAccounts();
   }, []);
-
-  useEffect(() => {
-    if (!menuOpenId) return;
-    const onDoc = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpenId(null);
-      }
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMenuOpenId(null);
-    };
-    document.addEventListener('mousedown', onDoc);
-    window.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDoc);
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [menuOpenId]);
 
   useEffect(() => {
     if (!modalMode) return;
@@ -161,6 +145,14 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
     () => accounts.filter((a) => a.account_status === 'pending').length,
     [accounts],
   );
+
+  const selectedAccount =
+    filteredAccounts.find((a) => a.id === selectedId) ?? filteredAccounts[0] ?? null;
+
+  const selectAccount = (id: string) => {
+    setSelectedId(id);
+    setMobileDetail(true);
+  };
 
   const resetAvatarState = () => {
     if (avatarPreviewUrl?.startsWith('blob:')) URL.revokeObjectURL(avatarPreviewUrl);
@@ -259,7 +251,6 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
   };
 
   const handleDelete = async (account: RegisteredUser) => {
-    setMenuOpenId(null);
     const ok = await confirm({
       title: 'Excluir conta',
       message: `A conta de ${account.display_name} (${account.email}) será excluída e o acesso ao LouvorHub removido.`,
@@ -270,6 +261,8 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
     setErrorMsg('');
     try {
       await adminDeleteUser(account.id);
+      setSelectedId(null);
+      setMobileDetail(false);
       await loadAccounts();
       onAccountsChanged?.();
     } catch (err) {
@@ -382,8 +375,129 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
     .slice(0, 2)
     .toUpperCase();
 
+  const formatDate = (value?: string | null) => {
+    if (!value) return '';
+    const d = new Date(String(value).length <= 10 ? `${value}T12:00:00` : value);
+    return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('pt-BR');
+  };
+
+  const renderDetail = (account: RegisteredUser) => {
+    const busy = actionId === account.id;
+    const info = [
+      { icon: Mail, label: 'E-mail', value: account.email },
+      { icon: Phone, label: 'Telefone', value: account.phone || '' },
+      { icon: Cake, label: 'Nascimento', value: formatDate(account.birth_date) },
+      { icon: Calendar, label: 'Cadastro em', value: formatDate(account.created_at) },
+      { icon: UserCheck, label: 'Aprovado em', value: formatDate(account.approved_at) },
+    ].filter((i) => i.value);
+    const skills = account.skills || [];
+    return (
+      <div className="bg-surface border border-line rounded-xl p-3 sm:p-4 space-y-4">
+        <div className="flex flex-col 2xl:flex-row items-start 2xl:items-center justify-between gap-3 pb-3 border-b border-line">
+          <div className="flex items-center gap-3 min-w-0">
+            <Avatar
+              name={account.display_name || account.email}
+              src={getAvatarPublicUrl(account.avatar_path, account.created_at)}
+              size={56}
+            />
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold text-fg truncate">{account.display_name}</h2>
+              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                <Badge tone={STATUS_TONE[account.account_status]} dot>
+                  {STATUS_LABEL[account.account_status]}
+                </Badge>
+                {account.is_admin && (
+                  <Badge tone="info">
+                    <ShieldCheck className="w-3 h-3" />
+                    Admin
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {account.account_status === 'pending' && (
+              <>
+                <ActionButton
+                  variant="primary"
+                  icon={UserCheck}
+                  loading={busy}
+                  disabled={busy}
+                  onClick={() => void handleApprove(account.id)}
+                >
+                  Aprovar
+                </ActionButton>
+                <ActionButton
+                  variant="light"
+                  icon={UserX}
+                  disabled={busy}
+                  onClick={() => void handleReject(account.id)}
+                >
+                  Rejeitar
+                </ActionButton>
+              </>
+            )}
+            <ActionButton
+              variant={account.account_status === 'pending' ? 'light' : 'secondary'}
+              icon={Edit3}
+              disabled={busy}
+              onClick={() => openEditModal(account)}
+            >
+              Editar
+            </ActionButton>
+            <ActionButton
+              variant="danger"
+              icon={Trash2}
+              disabled={busy}
+              onClick={() => void handleDelete(account)}
+              aria-label={`Excluir conta de ${account.display_name}`}
+              title="Excluir conta"
+            />
+          </div>
+        </div>
+
+        {account.account_status === 'pending' && (
+          <Alert tone="warning">Cadastro aguardando aprovação para poder entrar com magic link.</Alert>
+        )}
+        {account.account_status === 'rejected' && (
+          <Alert tone="danger">Cadastro rejeitado: esta pessoa não consegue entrar no sistema.</Alert>
+        )}
+
+        <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-3">
+          {info.map(({ icon: Icon, label, value }) => (
+            <div key={label} className="flex items-start gap-2.5 min-w-0">
+              <span className="w-8 h-8 rounded-lg bg-surface-2 text-fg-muted flex items-center justify-center shrink-0">
+                <Icon className="w-4 h-4" />
+              </span>
+              <div className="min-w-0">
+                <dt className="text-[11px] font-semibold text-fg-subtle">{label}</dt>
+                <dd className="text-sm text-fg truncate">{value}</dd>
+              </div>
+            </div>
+          ))}
+        </dl>
+
+        <div className="pt-3 border-t border-line">
+          <p className="text-xs font-semibold text-fg-subtle mb-2">Habilidades</p>
+          {skills.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {skills.map((s) => (
+                <Badge key={s} tone="brand" className="text-[11px] py-1">
+                  {s}
+                </Badge>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-fg-muted">Nenhuma habilidade informada.</p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <PageShell
+      width="full"
       icon={Users}
       title="Contas de usuários"
       description="Cadastro completo de contas do sistema, aprovações e permissões de administrador."
@@ -393,183 +507,136 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
         </PageHeaderButton>
       }
     >
-
-      {pendingCount > 0 && (
-        <div className="bg-amber-950/30 border border-amber-800/50 rounded-2xl p-4 text-sm text-amber-100 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-          <p>
-            <strong>{pendingCount}</strong> cadastro(s) aguardando aprovação para poder entrar com
-            magic link.
-          </p>
-        </div>
-      )}
-
-      {errorMsg && !modalMode && (
-        <div className="bg-rose-950/60 border border-rose-800/60 rounded-2xl p-3 text-xs text-rose-300">
-          {errorMsg}
-        </div>
-      )}
-
-      <div className="bg-stone-900/80 border border-stone-800 p-4 rounded-2xl flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-stone-500 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Buscar por nome, e-mail ou telefone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-stone-950 border border-stone-800 rounded-xl pl-9 pr-3 py-2 text-xs text-stone-100"
-          />
-        </div>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value as 'all' | AccountStatus)}
-          className="bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-200"
+      <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[24rem_minmax(0,1fr)] 2xl:grid-cols-[26rem_minmax(0,1fr)] lg:items-start lg:-mt-3 lg:-ml-4 lg:-mb-8">
+        <aside
+          className={cn(
+            'lg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)] flex flex-col bg-surface border border-line rounded-xl overflow-hidden lg:rounded-none lg:border-0 lg:border-r',
+            mobileDetail && 'max-lg:hidden',
+          )}
         >
-          <option value="all">Todos os status</option>
-          <option value="pending">Pendentes</option>
-          <option value="approved">Aprovados</option>
-          <option value="rejected">Rejeitados</option>
-        </select>
-      </div>
-
-      {loading ? (
-        <div className="py-16 flex justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-emerald-400" />
-        </div>
-      ) : filteredAccounts.length === 0 ? (
-        <div className="text-center py-16 text-stone-500 text-sm">Nenhum usuário encontrado.</div>
-      ) : (
-        <div className="space-y-3">
-          {filteredAccounts.map((account) => (
-            <div
-              key={account.id}
-              className="bg-stone-900 border border-stone-800 rounded-2xl p-4 relative"
-            >
-              <div
-                className="absolute top-3 right-3 z-10"
-                ref={menuOpenId === account.id ? menuRef : undefined}
-              >
-                <button
-                  type="button"
-                  disabled={actionId === account.id}
-                  onClick={() =>
-                    setMenuOpenId((id) => (id === account.id ? null : account.id))
-                  }
-                  className="p-2 bg-stone-800 hover:bg-stone-700 light:bg-stone-100 light:hover:bg-stone-200 text-stone-300 light:text-stone-700 rounded-button border border-stone-700 light:border-stone-300 disabled:opacity-60"
-                  title="Ações do usuário"
-                  aria-label={`Ações de ${account.display_name}`}
-                  aria-haspopup="menu"
-                  aria-expanded={menuOpenId === account.id}
-                >
-                  {actionId === account.id ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <MoreVertical className="w-4 h-4" />
-                  )}
+          <div className="shrink-0 px-3 lg:px-4 pt-3 pb-3 space-y-2 border-b border-line">
+            {errorMsg && !modalMode && (
+              <Alert tone="danger" className="lg:hidden">
+                {errorMsg}
+              </Alert>
+            )}
+            <p className="flex items-center gap-2 text-xs font-semibold text-fg-subtle">
+              Contas · {filteredAccounts.length}
+              {pendingCount > 0 && (
+                <button type="button" onClick={() => setFilterStatus('pending')} title="Ver pendentes">
+                  <Badge tone="warning" dot>
+                    {pendingCount} {pendingCount === 1 ? 'pendente' : 'pendentes'}
+                  </Badge>
                 </button>
-
-                {menuOpenId === account.id && (
-                  <div
-                    role="menu"
-                    className="absolute right-0 top-full mt-1 z-30 min-w-[10.5rem] py-1 rounded-xl border border-stone-700 light:border-stone-200 bg-stone-900 light:bg-white shadow-xl overflow-hidden"
-                  >
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setMenuOpenId(null);
-                        openEditModal(account);
-                      }}
-                      className="w-full px-3 py-2.5 text-left text-xs font-semibold text-stone-200 light:text-stone-800 hover:bg-stone-800 light:hover:bg-stone-100 flex items-center gap-2.5"
-                    >
-                      <Edit3 className="w-3.5 h-3.5 text-emerald-400 light:text-emerald-600" />
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => void handleDelete(account)}
-                      className="w-full px-3 py-2.5 text-left text-xs font-semibold text-rose-300 light:text-rose-700 hover:bg-rose-950/40 light:hover:bg-rose-50 flex items-center gap-2.5"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Excluir
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className="min-w-0 pr-10">
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <p className="font-display font-bold text-stone-100 truncate">
-                    {account.display_name}
-                  </p>
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-button border text-[10px] font-bold ${STATUS_CLASS[account.account_status]}`}
-                  >
-                    {STATUS_LABEL[account.account_status]}
-                  </span>
-                  {account.is_admin && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-button border text-[10px] font-bold bg-violet-950/50 text-violet-300 border-violet-800">
-                      <ShieldCheck className="w-3 h-3" />
-                      Admin
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-stone-400 flex items-center gap-1.5 truncate">
-                  <Mail className="w-3.5 h-3.5 shrink-0" />
-                  {account.email}
-                </p>
-                {account.phone && (
-                  <p className="text-xs text-stone-500 flex items-center gap-1.5 truncate mt-0.5">
-                    <Phone className="w-3.5 h-3.5 shrink-0" />
-                    {account.phone}
-                  </p>
-                )}
-              </div>
-
-              {(account.account_status === 'pending' ||
-                account.account_status === 'approved') && (
-                <div className="flex items-center gap-2 flex-wrap mt-3 pt-3 border-t border-stone-800">
-                  {account.account_status === 'pending' && (
-                    <>
-                      <button
-                        type="button"
-                        disabled={actionId === account.id}
-                        onClick={() => void handleApprove(account.id)}
-                        className="px-3 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-stone-950 font-bold rounded-button text-xs inline-flex items-center gap-1.5"
-                      >
-                        {actionId === account.id ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <UserCheck className="w-3.5 h-3.5" />
-                        )}
-                        Aprovar
-                      </button>
-                      <button
-                        type="button"
-                        disabled={actionId === account.id}
-                        onClick={() => void handleReject(account.id)}
-                        className="px-3 py-2 bg-stone-800 hover:bg-stone-700 disabled:opacity-60 text-rose-300 rounded-button text-xs inline-flex items-center gap-1.5 border border-stone-700"
-                      >
-                        <UserX className="w-3.5 h-3.5" />
-                        Rejeitar
-                      </button>
-                    </>
-                  )}
-
-                  {account.account_status === 'approved' && (
-                    <span className="text-xs text-emerald-400 light:text-emerald-700 inline-flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5" />
-                      Pode entrar
-                    </span>
-                  )}
-                </div>
               )}
+            </p>
+            <div className="relative">
+              <Search className="w-4 h-4 text-fg-subtle absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Input
+                type="search"
+                placeholder="Buscar nome, e-mail ou telefone"
+                aria-label="Buscar contas"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 text-xs"
+              />
             </div>
-          ))}
+            <Select
+              value={filterStatus}
+              aria-label="Filtrar por status"
+              onChange={(e) => setFilterStatus(e.target.value as 'all' | AccountStatus)}
+              className="h-9 py-0 text-xs"
+            >
+              <option value="all">Todos os status</option>
+              <option value="pending">Pendentes</option>
+              <option value="approved">Aprovados</option>
+              <option value="rejected">Rejeitados</option>
+            </Select>
+          </div>
+
+          {loading ? (
+            <div className="py-12 flex justify-center">
+              <Loader2 className="w-6 h-6 animate-spin text-brand-text" />
+            </div>
+          ) : filteredAccounts.length === 0 ? (
+            <p className="px-4 py-10 text-center text-xs text-fg-muted">Nenhum usuário encontrado.</p>
+          ) : (
+            <nav
+              aria-label="Contas de usuários"
+              className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-2 space-y-0.5"
+            >
+              {filteredAccounts.map((account) => {
+                const selected = selectedAccount?.id === account.id;
+                return (
+                  <button
+                    key={account.id}
+                    type="button"
+                    onClick={() => selectAccount(account.id)}
+                    aria-current={selected ? 'true' : undefined}
+                    className={cn(
+                      'w-full flex items-center gap-3 px-3 py-2.5 text-left !rounded-lg transition-colors',
+                      selected ? 'lg:bg-brand-soft' : 'hover:bg-surface-2',
+                    )}
+                  >
+                    <Avatar
+                      name={account.display_name || account.email}
+                      src={getAvatarPublicUrl(account.avatar_path, account.created_at)}
+                      size={44}
+                    />
+                    <span className="min-w-0 flex-1 border-b border-line/70 pb-2.5 -mb-2.5">
+                      <span className="flex items-center gap-1.5 min-w-0">
+                        <span
+                          className={cn(
+                            'truncate text-[15px] font-semibold',
+                            selected ? 'lg:text-brand-text text-fg' : 'text-fg',
+                          )}
+                        >
+                          {account.display_name}
+                        </span>
+                        {account.is_admin && (
+                          <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-info-text" aria-label="Admin" />
+                        )}
+                      </span>
+                      <span className="flex items-center gap-1.5 mt-0.5 text-xs font-medium text-fg-subtle min-w-0">
+                        <span className="truncate">{account.email}</span>
+                        {account.account_status !== 'approved' && (
+                          <Badge tone={STATUS_TONE[account.account_status]} className="shrink-0">
+                            {STATUS_LABEL[account.account_status]}
+                          </Badge>
+                        )}
+                      </span>
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-fg-subtle shrink-0 lg:hidden" />
+                  </button>
+                );
+              })}
+            </nav>
+          )}
+        </aside>
+
+        <div className={cn('min-w-0 lg:pl-4 lg:pt-3 lg:pb-8 space-y-3', !mobileDetail && 'max-lg:hidden')}>
+          <button
+            type="button"
+            onClick={() => setMobileDetail(false)}
+            className="lg:hidden inline-flex items-center gap-1.5 text-xs font-semibold text-fg-muted hover:text-fg"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar para a lista
+          </button>
+
+          {errorMsg && !modalMode && <Alert tone="danger">{errorMsg}</Alert>}
+
+          {selectedAccount ? (
+            renderDetail(selectedAccount)
+          ) : !loading ? (
+            <EmptyState
+              icon={Users}
+              title="Nenhuma conta selecionada"
+              description="Escolha uma conta na lista para ver os detalhes."
+            />
+          ) : null}
         </div>
-      )}
+      </div>
 
       {modalMode && (
         <div

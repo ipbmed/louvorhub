@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Check, ListMusic, Loader2, Search, X } from 'lucide-react';
+import { Check, ListMusic, Search, X } from 'lucide-react';
 import type { Song } from '../types';
+import { ActionButton } from './ui';
 
 interface AddSongsToEventSetlistModalProps {
   songs: Song[];
@@ -82,14 +83,14 @@ export const AddSongsToEventSetlistModal: React.FC<AddSongsToEventSetlistModalPr
               Selecione as músicas do catálogo para este evento.
             </p>
           </div>
-          <button
-            type="button"
+          <ActionButton
+            variant="light"
+            icon={X}
             onClick={onClose}
             disabled={saving}
-            className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button disabled:opacity-50"
-          >
-            <X className="w-4 h-4" />
-          </button>
+            aria-label="Fechar"
+            title="Fechar"
+          />
         </div>
 
         <div className="p-4 border-b border-stone-800 shrink-0">
@@ -155,23 +156,18 @@ export const AddSongsToEventSetlistModal: React.FC<AddSongsToEventSetlistModalPr
               {selected.size} selecionada{selected.size === 1 ? '' : 's'}
             </p>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={saving}
-                className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold disabled:opacity-50"
-              >
+              <ActionButton variant="light" onClick={onClose} disabled={saving}>
                 Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirm}
-                disabled={saving || selected.size === 0}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs inline-flex items-center gap-1.5 disabled:opacity-50"
+              </ActionButton>
+              <ActionButton
+                variant="primary"
+                icon={Check}
+                onClick={() => void handleConfirm()}
+                loading={saving}
+                disabled={selected.size === 0}
               >
-                {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 Adicionar{selected.size > 0 ? ` (${selected.size})` : ''}
-              </button>
+              </ActionButton>
             </div>
           </div>
         </div>

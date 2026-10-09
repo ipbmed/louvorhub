@@ -343,7 +343,6 @@ export type ViewMode =
   | 'workspace'
   | 'setlist'
   | 'churches'
-  | 'organizations'
   | 'events'
   | 'schedules'
   | 'liturgies'

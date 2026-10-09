@@ -139,16 +139,20 @@ interface FabProps {
   icon: LucideIcon;
   label: string;
   onClick: () => void;
+  className?: string;
 }
 
 /** Botão flutuante de criação: acima da barra inferior no celular; com texto no desktop. */
-export const Fab: React.FC<FabProps> = ({ icon: Icon, label, onClick }) => (
+export const Fab: React.FC<FabProps> = ({ icon: Icon, label, onClick, className }) => (
   <button
     type="button"
     onClick={onClick}
     aria-label={label}
     title={label}
-    className="btn-gradient fixed z-30 right-4 lg:right-8 bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px)+1rem)] lg:bottom-8 inline-flex items-center justify-center gap-2 h-14 min-w-14 px-4 lg:px-5 !rounded-[18px] font-bold text-sm shadow-card-lg active:scale-95 transition-transform touch-manipulation"
+    className={cn(
+      'btn-gradient fixed z-30 right-4 lg:right-8 bottom-[calc(4.25rem+env(safe-area-inset-bottom,0px)+1rem)] lg:bottom-8 inline-flex items-center justify-center gap-2 h-14 min-w-14 px-4 lg:px-5 !rounded-[18px] font-bold text-sm shadow-card-lg active:scale-95 transition-transform touch-manipulation',
+      className,
+    )}
   >
     <Icon className="w-6 h-6 shrink-0" />
     <span className="hidden lg:inline">{label}</span>

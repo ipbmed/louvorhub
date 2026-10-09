@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Building2,
   ChevronRight,
   Download,
   HelpCircle,
@@ -25,7 +24,6 @@ interface MorePageProps {
   userAvatarUrl?: string | null;
   roleLabel: string;
   canManageSongs: boolean;
-  canManageChurches: boolean;
   canManageUsers: boolean;
   onNavigate: (view: ViewMode) => void;
   onOpenHelp: () => void;
@@ -39,7 +37,6 @@ export const MorePage: React.FC<MorePageProps> = ({
   userAvatarUrl,
   roleLabel,
   canManageSongs,
-  canManageChurches,
   canManageUsers,
   onNavigate,
   onOpenHelp,
@@ -72,9 +69,6 @@ export const MorePage: React.FC<MorePageProps> = ({
         <ListRow icon={ListMusic} label="Playlists" description="Suas listas e as compartilhadas com você" onClick={() => onNavigate('setlist')} />
         {canManageSongs && (
           <ListRow icon={Music2} label="Gerenciar músicas" description="Cadastro, categorias e importação" onClick={() => onNavigate('admin')} />
-        )}
-        {canManageChurches && (
-          <ListRow icon={Building2} label="Todas as igrejas" description="Cadastro das igrejas do sistema" onClick={() => onNavigate('organizations')} />
         )}
         {canManageUsers && (
           <ListRow icon={UsersRound} label="Usuários" description="Contas e permissões gerais" onClick={() => onNavigate('accounts')} />

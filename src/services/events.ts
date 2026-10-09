@@ -37,6 +37,18 @@ export async function listEvents(orgId: string): Promise<ChurchEvent[]> {
   return ((data || []) as DbEvent[]).map(dbEventToUi);
 }
 
+export async function listEventsForOrgs(orgIds: string[]): Promise<ChurchEvent[]> {
+  if (!orgIds.length) return [];
+  const sb = requireSupabase();
+  const { data, error } = await sb
+    .from('events')
+    .select(EVENT_SELECT)
+    .in('org_id', orgIds)
+    .order('service_date', { ascending: true });
+  if (error) throw error;
+  return ((data || []) as DbEvent[]).map(dbEventToUi);
+}
+
 export async function getEvent(eventId: string): Promise<ChurchEvent | null> {
   if (!isUuid(eventId)) return null;
   const sb = requireSupabase();

@@ -1,7 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  ArrowLeft,
   Calendar,
   Check,
+  ChevronRight,
+  Church,
+  Clock,
+  MoreVertical,
+  Music2,
   Copy,
   CopyPlus,
   Edit3,
@@ -45,8 +51,35 @@ import { EventLiturgySetlistSync, getLiturgySetlistDiff } from './EventLiturgySe
 import { AddSongsToEventSetlistModal } from './AddSongsToEventSetlistModal';
 import { ScheduleSongEditorModal } from './ScheduleSongEditorModal';
 import { EVENT_TITLE_SUGGESTIONS } from '../constants/eventTitles';
+import { ActionButton, Badge, IconButton, cn } from './ui';
 
 type EventTab = 'team' | 'liturgy' | 'setlist';
+
+const EVENT_TAB_KEY = 'louvorhub_event_tab';
+const EVENT_TABS: EventTab[] = ['team', 'liturgy', 'setlist'];
+
+function readStoredTab(): EventTab {
+  try {
+    const stored = localStorage.getItem(EVENT_TAB_KEY) as EventTab | null;
+    return stored && EVENT_TABS.includes(stored) ? stored : 'team';
+  } catch {
+    return 'team';
+  }
+}
+
+function eventCountdown(
+  date: string,
+): { label: string; tone: 'brand' | 'warning' | 'neutral' } | null {
+  const day = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(day.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = Math.round((day.getTime() - today.getTime()) / 86_400_000);
+  if (diff === 0) return { label: 'Hoje', tone: 'warning' };
+  if (diff === 1) return { label: 'Amanhã', tone: 'brand' };
+  if (diff > 1) return { label: `Em ${diff} dias`, tone: 'brand' };
+  return { label: 'Realizado', tone: 'neutral' };
+}
 
 function toDatetimeLocalValue(iso: string): string {
   const d = new Date(iso);
@@ -92,9 +125,11 @@ interface EventDetailProps {
   onResetSongVersion?: (songId: string) => void | Promise<void>;
   onSelectSong?: (song: Song, options?: { eventSongId?: string }) => void;
   onShareUpdated?: () => void | Promise<void>;
+  onBack?: () => void;
 }
 
 export const EventDetail: React.FC<EventDetailProps> = ({
+  onBack,
   event,
   schedule,
   liturgy,
@@ -120,7 +155,16 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 }) => {
   const { showToast } = useToast();
   const { withBusy } = useApiBusy();
-  const [tab, setTab] = useState<EventTab>('team');
+  const [tab, setTabState] = useState<EventTab>(readStoredTab);
+  const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
+  const setTab = (next: EventTab) => {
+    setTabState(next);
+    try {
+      localStorage.setItem(EVENT_TAB_KEY, next);
+    } catch {
+      /* armazenamento indisponível */
+    }
+  };
   const [addSongsOpen, setAddSongsOpen] = useState(false);
   const [savingSetlist, setSavingSetlist] = useState(false);
   const [isEditEventOpen, setIsEditEventOpen] = useState(false);
@@ -258,7 +302,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
   useEffect(() => {
     if (tab === 'team' && !canManageTeam) {
-      setTab(canManageLiturgy ? 'liturgy' : 'setlist');
+      setTabState(canManageLiturgy ? 'liturgy' : 'setlist');
+    } else if (tab === 'liturgy' && !canManageLiturgy) {
+      setTabState('setlist');
     }
   }, [tab, canManageTeam, canManageLiturgy]);
 
@@ -472,68 +518,255 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     },
   ];
 
+  const copyShareLink = () => {
+    void navigator.clipboard.writeText(eventShareUrl(event.shareCode || activeShareCode));
+    setShareCopied(true);
+    setTimeout(() => setShareCopied(false), 2000);
+  };
+
+  const shareOnWhatsApp = () => {
+    const url = eventShareUrl(event.shareCode || activeShareCode);
+    const text = `📅 *${event.title}*\n🔗 ${url}\n\n✨ LouvorHub`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const eventDay = new Date(`${event.date}T00:00:00`);
+  const countdown = eventCountdown(event.date);
+  const groupName = musicGroups.find((g) => g.id === event.musicGroupId)?.name;
+  const subtitle = [churchName, groupName].filter(Boolean).join(' · ');
+
+  const assignments = scheduleForEvent?.assignments ?? [];
+  const confirmedCount = assignments.filter((a) => a.status === 'confirmed').length;
+  const declinedCount = assignments.filter((a) => a.status === 'declined').length;
+  const liturgyItemCount = liturgy?.items.length ?? 0;
+
+  type ChecklistStatus = 'done' | 'pending' | 'alert';
+  const checklist: {
+    id: string;
+    label: string;
+    detail: string;
+    status: ChecklistStatus;
+    icon: React.ComponentType<{ className?: string }>;
+    onClick: () => void;
+  }[] = [
+    ...(canManageTeam
+      ? [
+          {
+            id: 'team',
+            label: 'Equipe de louvor',
+            icon: Users,
+            onClick: () => setTab('team'),
+            ...(!scheduleForEvent
+              ? { detail: 'Escala não criada', status: 'pending' as const }
+              : scheduleForEvent.isFinalized
+                ? { detail: `Finalizada · ${assignments.length} integrantes`, status: 'done' as const }
+                : assignments.length === 0
+                  ? { detail: 'Nenhum integrante escalado', status: 'pending' as const }
+                  : {
+                      detail: `${confirmedCount}/${assignments.length} confirmados${
+                        declinedCount ? ` · ${declinedCount} indisponível${declinedCount > 1 ? 'is' : ''}` : ''
+                      }`,
+                      status: (declinedCount
+                        ? 'alert'
+                        : confirmedCount === assignments.length
+                          ? 'done'
+                          : 'pending') as ChecklistStatus,
+                    }),
+          },
+        ]
+      : []),
+    ...(canManageLiturgy
+      ? [
+          {
+            id: 'liturgy',
+            label: 'Liturgia',
+            icon: FileText,
+            onClick: () => setTab('liturgy'),
+            detail: !liturgy
+              ? 'Não criada'
+              : liturgyTabAlert
+                ? 'Diferente do repertório'
+                : `${liturgyItemCount} momento${liturgyItemCount === 1 ? '' : 's'}`,
+            status: (!liturgy || liturgyItemCount === 0
+              ? 'pending'
+              : liturgyTabAlert
+                ? 'alert'
+                : 'done') as ChecklistStatus,
+          },
+        ]
+      : []),
+    {
+      id: 'setlist',
+      label: 'Repertório',
+      icon: ListMusic,
+      onClick: () => setTab('setlist'),
+      detail: setlistTabAlert
+        ? 'Diferente da liturgia'
+        : `${setlistItems.length} música${setlistItems.length === 1 ? '' : 's'}`,
+      status: (setlistItems.length === 0
+        ? 'pending'
+        : setlistTabAlert
+          ? 'alert'
+          : 'done') as ChecklistStatus,
+    },
+    {
+      id: 'share',
+      label: 'Link público',
+      icon: Link2,
+      onClick: () => setSharePanelOpen(true),
+      detail: shareEnabled ? 'Ativo' : 'Desativado',
+      status: (shareEnabled ? 'done' : 'pending') as ChecklistStatus,
+    },
+  ];
+  const doneCount = checklist.filter((c) => c.status === 'done').length;
+
+  const CHECK_TONE: Record<ChecklistStatus, string> = {
+    done: 'bg-brand-soft text-brand-text',
+    pending: 'bg-muted text-fg-subtle',
+    alert: 'bg-warning-soft text-warning-text',
+  };
+
   return (
     <div className="w-full max-w-[1600px] mx-auto space-y-4 sm:space-y-5">
-      <div className="min-w-0">
-        <div className="flex items-start gap-2 text-emerald-400 text-[11px] sm:text-xs font-bold uppercase tracking-wider">
-          <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 mt-0.5" />
-          <span className="leading-snug">
-            <span className="sm:hidden">
-              {new Date(event.date + 'T00:00:00').toLocaleDateString('pt-BR', {
-                weekday: 'short',
-                day: '2-digit',
-                month: 'short',
-                year: '2-digit',
-              })}
-            </span>
-            <span className="hidden sm:inline">
-              {new Date(event.date + 'T00:00:00').toLocaleDateString('pt-BR', {
-                weekday: 'long',
-                day: '2-digit',
-                month: 'long',
-                year: 'numeric',
-              })}
-            </span>
-            {event.time ? ` · ${event.time}` : ''}
-          </span>
-        </div>
-        <div className="mt-1 flex items-center gap-1.5 min-w-0">
-          {onSaveEvent ? (
-            <button
-              type="button"
-              onClick={openEditEvent}
-              title="Editar evento"
-              className="group inline-flex items-center gap-2 min-w-0 max-w-full text-left rounded-button hover:opacity-90 transition-opacity"
-            >
-              <h1 className="text-xl sm:text-2xl xl:text-3xl font-display font-bold text-stone-100 leading-tight truncate">
-                {event.title}
-              </h1>
-              <Edit3 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-500 group-hover:text-emerald-400 shrink-0 transition-colors" />
-            </button>
-          ) : (
-            <h1 className="text-xl sm:text-2xl xl:text-3xl font-display font-bold text-stone-100 leading-tight truncate">
-              {event.title}
-            </h1>
-          )}
-          <button
-            type="button"
-            onClick={() => setSharePanelOpen((v) => !v)}
-            title={shareEnabled ? 'Compartilhamento ativo' : 'Compartilhar evento'}
-            aria-label="Compartilhar evento"
-            aria-pressed={sharePanelOpen}
-            className={`shrink-0 p-1.5 rounded-button transition-colors ${
-              sharePanelOpen || shareEnabled
-                ? 'text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10'
-                : 'text-stone-500 hover:text-stone-300 hover:bg-stone-800/80'
-            }`}
-          >
-            <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-          </button>
-        </div>
-        {event.theme && (
-          <p className="text-sm text-stone-400 mt-1">Tema: {event.theme}</p>
+      <header className="flex items-start gap-3 min-w-0">
+        {onBack && (
+          <IconButton
+            icon={ArrowLeft}
+            label="Voltar"
+            variant="ghost"
+            onClick={onBack}
+            className="-ml-1 mt-1 shrink-0 bg-surface shadow-card"
+          />
         )}
-      </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand-text">
+            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <span className="leading-snug">
+              <span className="sm:hidden">
+                {eventDay.toLocaleDateString('pt-BR', {
+                  weekday: 'short',
+                  day: '2-digit',
+                  month: 'short',
+                })}
+              </span>
+              <span className="hidden sm:inline">
+                {eventDay.toLocaleDateString('pt-BR', {
+                  weekday: 'long',
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </span>
+              {event.time ? ` · ${event.time}` : ''}
+            </span>
+            {countdown && (
+              <Badge tone={countdown.tone} className="normal-case tracking-normal">
+                {countdown.label}
+              </Badge>
+            )}
+          </div>
+          <h1 className="mt-1 text-[22px] sm:text-2xl xl:text-3xl font-extrabold text-fg leading-tight tracking-tight truncate">
+            {event.title}
+          </h1>
+          {(subtitle || event.theme) && (
+            <p className="mt-0.5 text-[13px] sm:text-sm text-fg-muted leading-snug line-clamp-2">
+              {subtitle}
+              {subtitle && event.theme ? ' · ' : ''}
+              {event.theme ? `Tema: ${event.theme}` : ''}
+            </p>
+          )}
+        </div>
+        <div className="hidden sm:flex items-center gap-2 shrink-0 mt-1">
+          {onSaveEvent && (
+            <ActionButton variant="light" icon={Edit3} onClick={openEditEvent}>
+              Editar
+            </ActionButton>
+          )}
+          <ActionButton
+            variant={sharePanelOpen || shareEnabled ? 'secondary' : 'light'}
+            icon={Share2}
+            onClick={() => setSharePanelOpen((v) => !v)}
+            aria-pressed={sharePanelOpen}
+            title={shareEnabled ? 'Compartilhamento ativo' : 'Compartilhar evento'}
+          >
+            Compartilhar
+          </ActionButton>
+        </div>
+        <div className="relative sm:hidden shrink-0 mt-1">
+          <ActionButton
+            variant="light"
+            icon={MoreVertical}
+            onClick={() => setActionsMenuOpen((v) => !v)}
+            aria-label="Ações do evento"
+            aria-haspopup="menu"
+            aria-expanded={actionsMenuOpen}
+          />
+          {actionsMenuOpen && (
+            <>
+              <button
+                type="button"
+                aria-hidden
+                tabIndex={-1}
+                className="fixed inset-0 z-30 cursor-default"
+                onClick={() => setActionsMenuOpen(false)}
+              />
+              <div
+                role="menu"
+                className="absolute right-0 top-full mt-1.5 z-40 w-52 rounded-xl border border-line bg-surface shadow-card-lg p-1"
+              >
+                {onSaveEvent && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setActionsMenuOpen(false);
+                      openEditEvent();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-fg hover:bg-surface-2"
+                  >
+                    <Edit3 className="w-4 h-4 text-fg-muted" />
+                    Editar evento
+                  </button>
+                )}
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setActionsMenuOpen(false);
+                    setSharePanelOpen(true);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-fg hover:bg-surface-2"
+                >
+                  <Share2 className="w-4 h-4 text-fg-muted" />
+                  Compartilhar
+                  {shareEnabled && (
+                    <Badge tone="brand" className="ml-auto">
+                      Ativo
+                    </Badge>
+                  )}
+                </button>
+                {shareEnabled && shareUrl && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setActionsMenuOpen(false);
+                      copyShareLink();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-fg hover:bg-surface-2"
+                  >
+                    <Copy className="w-4 h-4 text-fg-muted" />
+                    Copiar link
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </header>
+
+      <div className="space-y-4 sm:space-y-5 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem] lg:gap-6 lg:items-start">
+      <div className="min-w-0 space-y-4 sm:space-y-5">
 
       {sharePanelOpen && (
         <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 space-y-4">
@@ -547,9 +780,11 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                 Quem tiver o link verá apenas as seções marcadas abaixo.
               </p>
             </div>
-            <button
-              type="button"
-              disabled={shareSaving}
+            <ActionButton
+              variant={shareEnabled ? 'secondary' : 'light'}
+              icon={shareEnabled ? Globe : Lock}
+              loading={shareSaving}
+              aria-pressed={shareEnabled}
               onClick={() => {
                 const next = !shareEnabled;
                 if (next) {
@@ -580,22 +815,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   includeTeam: shareIncludeTeam,
                 });
               }}
-              className={`px-3 py-1.5 rounded-button text-[11px] font-bold border inline-flex items-center gap-1.5 ${
-                shareEnabled
-                  ? 'bg-emerald-500 text-stone-950 border-emerald-400'
-                  : 'bg-stone-950 text-stone-300 border-stone-700'
-              }`}
             >
-              {shareEnabled ? (
-                <>
-                  <Globe className="w-3.5 h-3.5" /> Ativo
-                </>
-              ) : (
-                <>
-                  <Lock className="w-3.5 h-3.5" /> Desativado
-                </>
-              )}
-            </button>
+              {shareEnabled ? 'Ativo' : 'Desativado'}
+            </ActionButton>
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -694,24 +916,19 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={shareSaving}
-              onClick={saveShareLinkDetails}
-              className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 border border-stone-700 rounded-button text-[11px] font-semibold text-stone-200"
-            >
+            <ActionButton variant="secondary" icon={Check} disabled={shareSaving} onClick={saveShareLinkDetails}>
               Salvar nome e validade
-            </button>
-            <button
-              type="button"
+            </ActionButton>
+            <ActionButton
+              variant="light"
+              icon={Calendar}
               disabled={shareSaving}
               onClick={() =>
                 setShareExpiresLocal(suggestedShareExpiryLocal(event.date, event.time))
               }
-              className="px-3 py-1.5 text-[11px] font-semibold text-emerald-400 hover:text-emerald-300"
             >
               Usar sugestão (+1 dia)
-            </button>
+            </ActionButton>
           </div>
 
           {shareEnabled && shareUrl ? (
@@ -733,40 +950,16 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                 </p>
               )}
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    void navigator.clipboard.writeText(
-                      eventShareUrl(event.shareCode || activeShareCode),
-                    );
-                    setShareCopied(true);
-                    setTimeout(() => setShareCopied(false), 2000);
-                  }}
-                  className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 border border-stone-700 rounded-button text-[11px] font-semibold inline-flex items-center gap-1.5"
+                <ActionButton
+                  variant="light"
+                  icon={shareCopied ? Check : Copy}
+                  onClick={copyShareLink}
                 >
-                  {shareCopied ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  ) : (
-                    <Copy className="w-3.5 h-3.5" />
-                  )}
-                  Copiar link
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const url = eventShareUrl(event.shareCode || activeShareCode);
-                    const text = `📅 *${event.title}*\n🔗 ${url}\n\n✨ LouvorHub`;
-                    window.open(
-                      `https://wa.me/?text=${encodeURIComponent(text)}`,
-                      '_blank',
-                      'noopener,noreferrer',
-                    );
-                  }}
-                  className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 rounded-button text-[11px] font-bold inline-flex items-center gap-1.5"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
+                  {shareCopied ? 'Copiado' : 'Copiar link'}
+                </ActionButton>
+                <ActionButton variant="primary" icon={MessageCircle} onClick={shareOnWhatsApp}>
                   WhatsApp
-                </button>
+                </ActionButton>
               </div>
             </div>
           ) : (
@@ -778,6 +971,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
         </div>
       )}
 
+      <div className="sticky top-[calc(60px+env(safe-area-inset-top,0px))] lg:top-0 z-20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 pt-2 pb-1 -mt-2 bg-app/90 backdrop-blur-md">
       <div className="flex flex-row gap-1 bg-stone-950 border border-stone-800 p-1 rounded-xl w-full">
         {tabs
           .filter((t) => t.show)
@@ -809,6 +1003,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             );
           })}
       </div>
+      </div>
 
       {tab === 'team' && canManageTeam && (
         <div className="w-full space-y-4">
@@ -818,14 +1013,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               <p className="text-sm text-stone-300 font-semibold mb-3">
                 Ainda não há escala neste evento
               </p>
-              <button
-                type="button"
-                onClick={() => ensureTeamSchedule()}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs inline-flex items-center gap-1.5"
-              >
-                <Plus className="w-3.5 h-3.5" />
+              <ActionButton variant="primary" icon={Plus} onClick={() => void ensureTeamSchedule()}>
                 Criar equipe de louvor
-              </button>
+              </ActionButton>
             </div>
           ) : (
             <ScheduleManager
@@ -866,14 +1056,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               <p className="text-sm text-stone-300 font-semibold mb-3">
                 Ainda não há liturgia neste evento
               </p>
-              <button
-                type="button"
-                onClick={() => onEnsureLiturgy()}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs inline-flex items-center gap-1.5"
-              >
-                <Plus className="w-3.5 h-3.5" />
+              <ActionButton variant="primary" icon={Plus} onClick={() => void onEnsureLiturgy()}>
                 Criar liturgia
-              </button>
+              </ActionButton>
             </div>
           ) : (
             <LiturgyManager
@@ -920,14 +1105,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           <div className="bg-stone-900 border border-stone-800 rounded-2xl p-3 sm:p-4 shadow-md w-full">
           {canManageSetlist && setlist && (
             <div className="mb-3">
-              <button
-                type="button"
-                onClick={() => setAddSongsOpen(true)}
-                className="px-3 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs inline-flex items-center gap-1.5"
-              >
-                <Plus className="w-3.5 h-3.5" />
+              <ActionButton variant="primary" icon={Plus} onClick={() => setAddSongsOpen(true)}>
                 Selecionar músicas
-              </button>
+              </ActionButton>
             </div>
           )}
 
@@ -941,14 +1121,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                 Nenhuma música neste repertório.
               </p>
               {canManageSetlist && (
-                <button
-                  type="button"
-                  onClick={() => setAddSongsOpen(true)}
-                  className="px-3 py-2 bg-stone-800 hover:bg-stone-700 text-emerald-300 font-semibold rounded-button text-xs inline-flex items-center gap-1.5 border border-stone-700"
-                >
-                  <Plus className="w-3.5 h-3.5" />
+                <ActionButton variant="secondary" icon={Plus} onClick={() => setAddSongsOpen(true)}>
                   Selecionar músicas
-                </button>
+                </ActionButton>
               )}
             </div>
           ) : (
@@ -1005,65 +1180,50 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                         </span>
                       )}
                     </button>
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {canManageSetlist && (
                         <>
-                          <button
-                            type="button"
+                          <ActionButton
+                            variant="light"
+                            icon={ArrowUp}
                             onClick={() => void moveItem(index, 'up')}
                             disabled={index === 0 || savingSetlist}
-                            className="p-1.5 text-stone-500 light:text-stone-600 hover:text-stone-200 light:hover:text-stone-900 border border-transparent hover:border-stone-700 light:hover:border-stone-300 rounded-button disabled:opacity-25"
                             title="Mover para cima"
                             aria-label="Mover para cima"
-                          >
-                            <ArrowUp className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
+                          />
+                          <ActionButton
+                            variant="light"
+                            icon={ArrowDown}
                             onClick={() => void moveItem(index, 'down')}
                             disabled={index === setlistItems.length - 1 || savingSetlist}
-                            className="p-1.5 text-stone-500 light:text-stone-600 hover:text-stone-200 light:hover:text-stone-900 border border-transparent hover:border-stone-700 light:hover:border-stone-300 rounded-button disabled:opacity-25"
                             title="Mover para baixo"
                             aria-label="Mover para baixo"
-                          >
-                            <ArrowDown className="w-3.5 h-3.5" />
-                          </button>
+                          />
                         </>
                       )}
                       {canManageSetlist && song && (
-                        <button
-                          type="button"
+                        <ActionButton
+                          variant={isCustomized ? 'light' : 'secondary'}
+                          icon={isCustomized ? Edit3 : CopyPlus}
+                          collapseLabel
                           onClick={() => requestVersionForEvent(song, isCustomized)}
-                          className={`px-2.5 py-1.5 rounded-button text-[11px] font-bold inline-flex items-center gap-1 border transition-colors ${
-                            isCustomized
-                              ? 'bg-stone-800 text-emerald-300 border-stone-700 hover:border-emerald-700/50'
-                              : 'bg-emerald-500/15 text-emerald-300 border-emerald-700/40 hover:bg-emerald-500/25'
-                          }`}
                           title={
                             isCustomized
                               ? 'Editar versão deste evento'
                               : 'Criar versão exclusiva para o evento'
                           }
                         >
-                          {isCustomized ? (
-                            <Edit3 className="w-3.5 h-3.5" />
-                          ) : (
-                            <CopyPlus className="w-3.5 h-3.5" />
-                          )}
-                          <span className="hidden sm:inline">
-                            {isCustomized ? 'Editar versão' : 'Criar versão'}
-                          </span>
-                        </button>
+                          {isCustomized ? 'Editar versão' : 'Criar versão'}
+                        </ActionButton>
                       )}
                       {canManageSetlist && (
-                        <button
-                          type="button"
-                          onClick={() => removeItem(item.id)}
-                          className="p-1.5 text-stone-500 light:text-stone-600 hover:text-rose-400 light:hover:text-rose-600 rounded-button"
+                        <ActionButton
+                          variant="danger"
+                          icon={Trash2}
+                          onClick={() => void removeItem(item.id)}
                           title="Remover do repertório"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                          aria-label="Remover do repertório"
+                        />
                       )}
                     </div>
                   </li>
@@ -1074,19 +1234,147 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           </div>
         </div>
       )}
+      </div>
+
+      <aside className="hidden lg:block lg:sticky lg:top-6 space-y-4">
+        <section className="bg-surface border border-line rounded-2xl shadow-card p-4">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <h2 className="text-sm font-bold text-fg">Preparação</h2>
+            <span className="text-[11px] font-semibold text-fg-muted">
+              {doneCount} de {checklist.length} prontos
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full bg-muted overflow-hidden mb-3">
+            <div
+              className="h-full rounded-full bg-brand transition-all duration-500"
+              style={{ width: `${(doneCount / checklist.length) * 100}%` }}
+            />
+          </div>
+          <ul className="-mx-2 space-y-0.5">
+            {checklist.map((item) => {
+              const Icon = item.status === 'done' ? Check : item.status === 'alert' ? AlertTriangle : item.icon;
+              const isActive = item.id === tab || (item.id === 'share' && sharePanelOpen);
+              return (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    onClick={item.onClick}
+                    className={cn(
+                      'w-full flex items-center gap-3 px-2 py-2 rounded-xl text-left transition-colors hover:bg-surface-2',
+                      isActive && 'bg-surface-2',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
+                        CHECK_TONE[item.status],
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[13px] font-semibold text-fg truncate">{item.label}</span>
+                      <span
+                        className={cn(
+                          'block text-[11px] truncate',
+                          item.status === 'alert' ? 'text-warning-text' : 'text-fg-muted',
+                        )}
+                      >
+                        {item.detail}
+                      </span>
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-fg-subtle shrink-0" />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {shareEnabled && shareUrl && (
+            <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-line">
+              <ActionButton variant="light" icon={shareCopied ? Check : Copy} onClick={copyShareLink}>
+                {shareCopied ? 'Copiado' : 'Copiar link'}
+              </ActionButton>
+              <ActionButton variant="primary" icon={MessageCircle} onClick={shareOnWhatsApp}>
+                WhatsApp
+              </ActionButton>
+            </div>
+          )}
+        </section>
+
+        <section className="bg-surface border border-line rounded-2xl shadow-card p-4">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="text-sm font-bold text-fg">Detalhes</h2>
+            {onSaveEvent && (
+              <ActionButton variant="light" icon={Edit3} onClick={openEditEvent} aria-label="Editar evento" />
+            )}
+          </div>
+          <dl className="space-y-3 text-[13px]">
+            <div className="flex gap-3">
+              <dt className="sr-only">Data</dt>
+              <Calendar className="w-4 h-4 text-fg-subtle shrink-0 mt-0.5" />
+              <dd className="text-fg first-letter:uppercase">
+                {eventDay.toLocaleDateString('pt-BR', {
+                  weekday: 'long',
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </dd>
+            </div>
+            {event.time && (
+              <div className="flex gap-3">
+                <dt className="sr-only">Horário</dt>
+                <Clock className="w-4 h-4 text-fg-subtle shrink-0 mt-0.5" />
+                <dd className="text-fg">{event.time}</dd>
+              </div>
+            )}
+            {churchName && (
+              <div className="flex gap-3">
+                <dt className="sr-only">Igreja</dt>
+                <Church className="w-4 h-4 text-fg-subtle shrink-0 mt-0.5" />
+                <dd className="text-fg min-w-0 break-words">{churchName}</dd>
+              </div>
+            )}
+            {groupName && (
+              <div className="flex gap-3">
+                <dt className="sr-only">Grupo musical</dt>
+                <Music2 className="w-4 h-4 text-fg-subtle shrink-0 mt-0.5" />
+                <dd className="text-fg min-w-0 break-words">{groupName}</dd>
+              </div>
+            )}
+            {event.theme && (
+              <div className="flex gap-3">
+                <dt className="sr-only">Tema</dt>
+                <Sparkles className="w-4 h-4 text-fg-subtle shrink-0 mt-0.5" />
+                <dd className="text-fg min-w-0 break-words">{event.theme}</dd>
+              </div>
+            )}
+            {event.notes && (
+              <div className="flex gap-3">
+                <dt className="sr-only">Observações</dt>
+                <Info className="w-4 h-4 text-fg-subtle shrink-0 mt-0.5" />
+                <dd className="text-fg-muted min-w-0 break-words whitespace-pre-line line-clamp-6">
+                  {event.notes}
+                </dd>
+              </div>
+            )}
+          </dl>
+        </section>
+      </aside>
+      </div>
 
       {isEditEventOpen && (
         <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl max-h-[92vh] flex flex-col">
             <div className="p-5 border-b border-stone-800 flex items-center justify-between shrink-0">
               <h3 className="text-lg font-display font-bold text-stone-100">Editar Evento</h3>
-              <button
-                type="button"
+              <ActionButton
+                variant="light"
+                icon={X}
                 onClick={() => setIsEditEventOpen(false)}
-                className="text-stone-400 hover:text-stone-200"
-              >
-                <X className="w-4 h-4" />
-              </button>
+                aria-label="Fechar"
+                title="Fechar"
+              />
             </div>
             <form onSubmit={handleSaveEventForm} className="p-5 space-y-4 overflow-y-auto flex-1">
               <div>
@@ -1161,21 +1449,12 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                 />
               </div>
               <div className="pt-2 flex justify-end gap-2 border-t border-stone-800">
-                <button
-                  type="button"
-                  disabled={isSavingEvent}
-                  onClick={() => setIsEditEventOpen(false)}
-                  className="px-4 py-2 bg-stone-800 text-stone-300 rounded-button text-xs font-semibold"
-                >
+                <ActionButton variant="light" disabled={isSavingEvent} onClick={() => setIsEditEventOpen(false)}>
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSavingEvent}
-                  className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs disabled:opacity-50"
-                >
+                </ActionButton>
+                <ActionButton type="submit" variant="primary" icon={Check} loading={isSavingEvent}>
                   {isSavingEvent ? 'Salvando...' : 'Salvar'}
-                </button>
+                </ActionButton>
               </div>
             </form>
           </div>
@@ -1212,13 +1491,13 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
+              <ActionButton
+                variant="light"
+                icon={X}
                 onClick={() => setVersionConfirmSong(null)}
-                className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
-              >
-                <X className="w-4 h-4" />
-              </button>
+                aria-label="Fechar"
+                title="Fechar"
+              />
             </div>
 
             <div className="p-5 space-y-4">
@@ -1237,21 +1516,12 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               </div>
 
               <div className="flex justify-end gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setVersionConfirmSong(null)}
-                  className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold"
-                >
+                <ActionButton variant="light" onClick={() => setVersionConfirmSong(null)}>
                   Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openVersionEditor(versionConfirmSong)}
-                  className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs inline-flex items-center gap-1.5"
-                >
-                  <CopyPlus className="w-3.5 h-3.5" />
+                </ActionButton>
+                <ActionButton variant="primary" icon={CopyPlus} onClick={() => openVersionEditor(versionConfirmSong)}>
                   Continuar
-                </button>
+                </ActionButton>
               </div>
             </div>
           </div>

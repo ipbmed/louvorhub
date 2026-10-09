@@ -41,7 +41,6 @@ const SECTION_OF_VIEW: Partial<Record<ViewMode, NavSection>> = {
   workspace: 'churches',
   churches: 'churches',
   users: 'churches',
-  organizations: 'churches',
   accounts: 'accounts',
   more: 'more',
   profile: 'more',

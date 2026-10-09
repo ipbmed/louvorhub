@@ -95,7 +95,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         'w-full',
         // Fundo e borda inferior estendidos até as bordas da janela sem gerar rolagem horizontal.
         bar &&
-          'lg:sticky lg:top-0 lg:z-20 lg:-mt-8 lg:-mx-8 lg:w-auto lg:px-8 lg:py-2.5 lg:bg-surface lg:[clip-path:inset(0_-100vmax_-1px)] lg:shadow-[0_0_0_100vmax_var(--surface),0_1px_0_100vmax_var(--line)]',
+          'lg:sticky lg:top-0 lg:z-20 lg:-mt-8 lg:-mx-8 lg:w-auto lg:min-h-16 lg:flex lg:flex-col lg:justify-center lg:px-8 lg:py-2 lg:bg-surface lg:[clip-path:inset(0_-100vmax_-1px)] lg:shadow-[0_0_0_100vmax_var(--surface),0_1px_0_100vmax_var(--line)]',
         className,
       )}
     >

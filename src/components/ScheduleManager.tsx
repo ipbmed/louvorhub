@@ -39,8 +39,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Repeat,
+  X,
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton } from './PageHeader';
+import { ActionButton } from './ui';
 import {
   SCHEDULE_ROLE_OPTIONS,
   getProfileSkills,
@@ -800,13 +802,9 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
               )}
             </p>
             {selectedDay && (
-              <button
-                type="button"
-                onClick={() => handleOpenNewModal(selectedDay)}
-                className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs"
-              >
-                + Escala neste dia
-              </button>
+              <ActionButton variant="primary" icon={Plus} onClick={() => handleOpenNewModal(selectedDay)}>
+                Escala neste dia
+              </ActionButton>
             )}
           </div>
         </div>
@@ -830,12 +828,13 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
               ? 'Clique duas vezes em um dia vazio ou use o botão abaixo para criar uma escala.'
               : 'Crie uma escala de louvor para que os integrantes do grupo possam confirmar a presença nos próximos cultos.'}
           </p>
-          <button
+          <ActionButton
+            variant="primary"
+            icon={Plus}
             onClick={() => handleOpenNewModal(displayMode === 'month' ? selectedDay || undefined : undefined)}
-            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs shadow-md shadow-emerald-500/20"
           >
-            + Criar Escala para Próximo Culto
-          </button>
+            Criar escala para o próximo culto
+          </ActionButton>
         </div>
       ) : (
         <div className={`grid gap-6 ${embedded ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
@@ -902,27 +901,13 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
                       )}
                     </div>
 
-                    <button
-                      type="button"
+                    <ActionButton
+                      variant={sched.isFinalized ? 'light' : 'primary'}
+                      icon={sched.isFinalized ? Unlock : ShieldCheck}
                       onClick={() => handleToggleFinalizeSchedule(sched)}
-                      className={`px-3 py-1.5 rounded-button text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm ${
-                        sched.isFinalized
-                          ? 'bg-stone-800 text-stone-300 hover:bg-stone-700 border border-stone-700'
-                          : 'bg-emerald-500 hover:bg-emerald-400 text-stone-950 shadow-emerald-500/20'
-                      }`}
                     >
-                      {sched.isFinalized ? (
-                        <>
-                          <Unlock className="w-3.5 h-3.5" />
-                          <span>Reabrir Escala</span>
-                        </>
-                      ) : (
-                        <>
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>Finalizar Escala do Dia</span>
-                        </>
-                      )}
-                    </button>
+                      {sched.isFinalized ? 'Reabrir escala' : 'Finalizar escala do dia'}
+                    </ActionButton>
                   </div>
 
                   {/* Top Bar */}
@@ -954,38 +939,30 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
                       </div>
                     )}
 
-                    <div className="flex items-center gap-1">
-                      <button
+                    <div className="flex items-center gap-1.5">
+                      <ActionButton
+                        variant={copiedScheduleId === sched.id ? 'secondary' : 'light'}
+                        icon={copiedScheduleId === sched.id ? Check : Share2}
+                        collapseLabel
                         onClick={() => handleCopyWhatsApp(sched)}
-                        className={`p-1.5 rounded-button border text-xs font-medium flex items-center gap-1 transition-all ${
-                          copiedScheduleId === sched.id 
-                            ? 'bg-emerald-950 text-emerald-300 border-emerald-700' 
-                            : 'bg-stone-800 text-stone-300 hover:bg-stone-750 border-stone-700'
-                        }`}
                         title="Copiar para WhatsApp"
                       >
-                        {copiedScheduleId === sched.id ? (
-                          <>
-                            <Check className="w-3.5 h-3.5 text-emerald-400" />
-                            <span className="text-[10px]">Copiado!</span>
-                          </>
-                        ) : (
-                          <>
-                            <Share2 className="w-3.5 h-3.5 text-emerald-400" />
-                            <span className="text-[10px] hidden sm:inline">WhatsApp</span>
-                          </>
-                        )}
-                      </button>
+                        {copiedScheduleId === sched.id ? 'Copiado!' : 'WhatsApp'}
+                      </ActionButton>
 
-                      <button
+                      <ActionButton
+                        variant="light"
+                        icon={Edit3}
                         onClick={() => handleOpenEditModal(sched)}
-                        className="p-1.5 text-stone-400 hover:text-emerald-300 hover:bg-stone-800 rounded-button"
-                        title="Editar Escala"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
+                        title="Editar escala"
+                        aria-label="Editar escala"
+                      />
 
-                      <button
+                      <ActionButton
+                        variant="danger"
+                        icon={Trash2}
+                        title="Excluir escala"
+                        aria-label="Excluir escala"
                         onClick={() => {
                           void confirm({
                             title: 'Excluir escala',
@@ -995,11 +972,7 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
                             if (ok) onDeleteSchedule(sched.id);
                           });
                         }}
-                        className="p-1.5 text-stone-400 hover:text-rose-400 hover:bg-stone-800 rounded-button"
-                        title="Excluir Escala"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      />
                     </div>
                   </div>
 
@@ -1088,25 +1061,22 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
                               </div>
 
                               {/* Availability Control Buttons */}
-                              <div className="flex items-center gap-1 shrink-0 self-end sm:self-auto">
-                                {/* Confirm Button */}
-                                <button
-                                  type="button"
+                              <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+                                <ActionButton
+                                  variant={isConfirmed ? 'primary' : 'light'}
+                                  icon={UserCheck}
+                                  aria-pressed={isConfirmed}
                                   onClick={() => handleUpdateMemberStatus(sched, i, 'confirmed')}
-                                  className={`px-2.5 py-1 rounded-button text-[11px] font-bold flex items-center gap-1 transition-all ${
-                                    isConfirmed
-                                      ? 'bg-emerald-500 text-stone-950 shadow-sm'
-                                      : 'bg-stone-900 hover:bg-emerald-950/80 text-stone-400 hover:text-emerald-300 border border-stone-800'
-                                  }`}
                                   title="Indicar que POSSO participar"
                                 >
-                                  <UserCheck className="w-3 h-3" />
-                                  <span>Posso</span>
-                                </button>
+                                  Posso
+                                </ActionButton>
 
-                                {/* Decline Button */}
-                                <button
-                                  type="button"
+                                <ActionButton
+                                  variant={isDeclined ? 'danger' : 'light'}
+                                  icon={UserX}
+                                  aria-pressed={isDeclined}
+                                  title="Indicar que NÃO posso participar"
                                   onClick={() => {
                                     setDeclineModal({
                                       isOpen: true,
@@ -1116,20 +1086,15 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
                                       reason: ass.declineReason || '',
                                     });
                                   }}
-                                  className={`px-2 py-1 rounded-button text-[11px] font-bold flex items-center gap-1 transition-all ${
-                                    isDeclined
-                                      ? 'bg-rose-600 text-white shadow-sm'
-                                      : 'bg-stone-900 hover:bg-rose-950/80 text-stone-400 hover:text-rose-300 border border-stone-800'
-                                  }`}
-                                  title="Indicar que NÃO posso participar"
                                 >
-                                  <UserX className="w-3 h-3" />
-                                  <span>Não Posso</span>
-                                </button>
+                                  Não posso
+                                </ActionButton>
 
-                                {/* WhatsApp Share to Member */}
-                                <button
-                                  type="button"
+                                <ActionButton
+                                  variant="light"
+                                  icon={MessageSquare}
+                                  title="Solicitar confirmação via WhatsApp"
+                                  aria-label="Solicitar confirmação via WhatsApp"
                                   onClick={() => {
                                     const dateFormatted = new Date(sched.date + 'T00:00:00').toLocaleDateString('pt-BR', {
                                       weekday: 'long',
@@ -1139,11 +1104,7 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
                                     const msg = `Olá *${ass.memberName}*! 👋\nVocê foi escalado(a) para tocar/cantar no *${sched.serviceType}*.\n📅 *Data:* ${dateFormatted} às ${sched.time || '19:00'}\n🎸 *Sua Função:* ${ass.role}\n\nPor favor, confirme se poderá participar na escala de louvor! Deus abençoe. 🙏`;
                                     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
                                   }}
-                                  className="p-1.5 text-stone-400 hover:text-emerald-400 hover:bg-stone-900 rounded-button"
-                                  title="Solicitar confirmação via WhatsApp"
-                                >
-                                  <MessageSquare className="w-3.5 h-3.5" />
-                                </button>
+                                />
                               </div>
                             </div>
                           );
@@ -1282,12 +1243,13 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
                 <Calendar className="w-5 h-5 text-emerald-400" />
                 {editingSchedule ? 'Editar Escala de Louvor' : 'Nova Escala de Louvor'}
               </h3>
-              <button 
+              <ActionButton
+                variant="light"
+                icon={X}
                 onClick={() => setIsModalOpen(false)}
-                className="text-stone-400 hover:text-stone-200 text-sm font-mono p-1 rounded-button"
-              >
-                ✕
-              </button>
+                aria-label="Fechar"
+                title="Fechar"
+              />
             </div>
 
             <form onSubmit={handleSaveForm} className="p-6 space-y-5 overflow-y-auto flex-1">
@@ -1552,13 +1514,9 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
                     <UserCheck className="w-4 h-4 text-emerald-400" />
                     Membros Escala por Função
                   </label>
-                  <button
-                    type="button"
-                    onClick={handleAddAssignmentRow}
-                    className="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-emerald-300 rounded-button text-xs font-semibold border border-stone-700"
-                  >
-                    + Add Função
-                  </button>
+                  <ActionButton variant="secondary" icon={Plus} onClick={handleAddAssignmentRow}>
+                    Adicionar função
+                  </ActionButton>
                 </div>
 
                 {!formMusicGroupId ? (
@@ -1650,13 +1608,14 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
                               ))}
                             </optgroup>
                           </select>
-                          <button
-                            type="button"
+                          <ActionButton
+                            variant="danger"
+                            icon={Trash2}
                             onClick={() => handleRemoveAssignmentRow(i)}
-                            className="p-1 text-stone-400 hover:text-rose-400 rounded-button self-end sm:self-auto"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                            className="self-end sm:self-auto"
+                            aria-label="Remover função"
+                            title="Remover função"
+                          />
                         </div>
                       );
                     })}
@@ -1685,25 +1644,16 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
               </div>
 
               <div className="pt-4 flex items-center justify-end gap-3 border-t border-stone-800">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  disabled={isSavingBatch}
-                  className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold disabled:opacity-50"
-                >
+                <ActionButton variant="light" onClick={() => setIsModalOpen(false)} disabled={isSavingBatch}>
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSavingBatch}
-                  className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs shadow-md shadow-emerald-500/20 disabled:opacity-50"
-                >
+                </ActionButton>
+                <ActionButton type="submit" variant="primary" icon={Check} loading={isSavingBatch}>
                   {isSavingBatch
                     ? 'Salvando...'
                     : !editingSchedule && formRepeatEnabled && formRepeatCount > 1
-                      ? `Criar ${formRepeatCount} Escalas`
-                      : 'Salvar Escala'}
-                </button>
+                      ? `Criar ${formRepeatCount} escalas`
+                      : 'Salvar escala'}
+                </ActionButton>
               </div>
 
             </form>
@@ -1721,12 +1671,13 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
                 <UserX className="w-4 h-4 text-rose-400" />
                 Indisponibilidade de {declineModal.memberName}
               </h4>
-              <button
+              <ActionButton
+                variant="light"
+                icon={X}
                 onClick={() => setDeclineModal({ ...declineModal, isOpen: false })}
-                className="text-stone-400 hover:text-stone-100 p-1 rounded-button"
-              >
-                ✕
-              </button>
+                aria-label="Fechar"
+                title="Fechar"
+              />
             </div>
 
             <p className="text-xs text-stone-300">
@@ -1760,15 +1711,12 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
             />
 
             <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setDeclineModal({ ...declineModal, isOpen: false })}
-                className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold"
-              >
+              <ActionButton variant="light" onClick={() => setDeclineModal({ ...declineModal, isOpen: false })}>
                 Cancelar
-              </button>
-              <button
-                type="button"
+              </ActionButton>
+              <ActionButton
+                variant="danger"
+                icon={UserX}
                 onClick={() => {
                   if (declineModal.schedule) {
                     handleUpdateMemberStatus(
@@ -1780,10 +1728,9 @@ export const ScheduleManager: React.FC<ScheduleManagerProps> = ({
                   }
                   setDeclineModal({ ...declineModal, isOpen: false });
                 }}
-                className="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-button text-xs font-bold shadow-md shadow-rose-600/20"
               >
-                Salvar Indisponibilidade
-              </button>
+                Salvar indisponibilidade
+              </ActionButton>
             </div>
           </div>
         </div>

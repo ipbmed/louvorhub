@@ -21,6 +21,7 @@ import { transposeLyrics, transposeNote, parseLyricSections } from '../utils/cho
 import { LyricSectionHeading } from './LyricSectionHeading';
 import { ChordLyricLine } from './ChordLyricLine';
 import { useConfirm } from '@/contexts/ConfirmProvider';
+import { ActionButton } from './ui';
 
 interface ScheduleSongEditorModalProps {
   schedule: WorshipSchedule;
@@ -173,12 +174,7 @@ export const ScheduleSongEditorModal: React.FC<ScheduleSongEditorModalProps> = (
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 text-stone-400 hover:text-stone-100 hover:bg-stone-800 rounded-button transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <ActionButton variant="light" icon={X} onClick={onClose} aria-label="Fechar" title="Fechar" />
         </div>
 
         {/* Navigation Tabs */}
@@ -212,8 +208,11 @@ export const ScheduleSongEditorModal: React.FC<ScheduleSongEditorModalProps> = (
           </div>
 
           {isCustomized && onResetToOriginal && (
-            <button
-              type="button"
+            <ActionButton
+              variant="danger"
+              icon={RotateCcw}
+              collapseLabel
+              className="mb-1.5"
               onClick={() => {
                 void confirm({
                   title: 'Restaurar versão original',
@@ -227,11 +226,9 @@ export const ScheduleSongEditorModal: React.FC<ScheduleSongEditorModalProps> = (
                   onClose();
                 });
               }}
-              className="text-[11px] text-rose-400 hover:text-rose-300 hover:underline flex items-center gap-1 font-semibold pb-1 rounded-button"
             >
-              <RotateCcw className="w-3 h-3" />
-              <span>Restaurar Original</span>
-            </button>
+              Restaurar original
+            </ActionButton>
           )}
         </div>
 
@@ -341,22 +338,20 @@ export const ScheduleSongEditorModal: React.FC<ScheduleSongEditorModalProps> = (
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
+                    <ActionButton
+                      variant="light"
                       onClick={() => handleTransposeLyrics(-1)}
-                      className="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-button text-xs font-mono font-bold border border-stone-700 transition-colors"
-                      title="Transpor -1 Semitom na cifra"
+                      title="Transpor -1 semitom na cifra"
                     >
-                      -1 Semitom
-                    </button>
-                    <button
-                      type="button"
+                      -1 semitom
+                    </ActionButton>
+                    <ActionButton
+                      variant="light"
                       onClick={() => handleTransposeLyrics(1)}
-                      className="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-button text-xs font-mono font-bold border border-stone-700 transition-colors"
-                      title="Transpor +1 Semitom na cifra"
+                      title="Transpor +1 semitom na cifra"
                     >
-                      +1 Semitom
-                    </button>
+                      +1 semitom
+                    </ActionButton>
                   </div>
                 </div>
 
@@ -495,21 +490,13 @@ export const ScheduleSongEditorModal: React.FC<ScheduleSongEditorModalProps> = (
 
           {/* Modal Footer Buttons */}
           <div className="pt-4 border-t border-stone-800 flex items-center justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-stone-800 hover:bg-stone-750 text-stone-300 rounded-button text-xs font-semibold transition-colors"
-            >
+            <ActionButton variant="light" onClick={onClose}>
               Cancelar
-            </button>
+            </ActionButton>
 
-            <button
-              type="submit"
-              className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/10 transition-all"
-            >
-              <Save className="w-4 h-4" />
-              <span>Salvar Versão para Esta Escala</span>
-            </button>
+            <ActionButton type="submit" variant="primary" icon={Save}>
+              Salvar versão para esta escala
+            </ActionButton>
           </div>
         </form>
 
