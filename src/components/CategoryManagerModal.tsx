@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Category } from '../types';
-import { Plus, Tag, Trash2 } from 'lucide-react';
+import { Check, Plus, Tag, Trash2 } from 'lucide-react';
 import { useConfirm } from '@/contexts/ConfirmProvider';
-import { Button, EmptyState, IconButton, Input, Modal } from './ui';
+import { ActionButton, EmptyState, Input, Modal } from './ui';
 
 interface CategoryManagerModalProps {
   categories: Category[];
@@ -67,7 +67,11 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
       title="Categorias de músicas"
       subtitle="Agrupe hinos e cânticos para facilitar a busca no catálogo."
       size="md"
-      footer={<Button onClick={onClose}>Concluir</Button>}
+      footer={
+        <ActionButton variant="primary" icon={Check} onClick={onClose}>
+          Concluir
+        </ActionButton>
+      }
     >
       <div className="space-y-5">
         <form
@@ -96,9 +100,15 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
           {duplicate && (
             <p className="text-[11px] text-danger-text font-medium">Já existe uma categoria com este nome.</p>
           )}
-          <Button type="submit" icon={Plus} block size="sm" disabled={!newCatName.trim() || duplicate}>
+          <ActionButton
+            type="submit"
+            variant="primary"
+            icon={Plus}
+            className="w-full"
+            disabled={!newCatName.trim() || duplicate}
+          >
             Adicionar categoria
-          </Button>
+          </ActionButton>
         </form>
 
         {catList.length === 0 ? (
@@ -122,13 +132,12 @@ export const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
                     <p className="text-[11px] text-fg-muted truncate">{cat.description}</p>
                   )}
                 </div>
-                <IconButton
+                <ActionButton
                   icon={Trash2}
-                  label={`Excluir categoria ${cat.name}`}
-                  size="sm"
-                  variant="ghost"
-                  className="hover:!bg-danger-soft hover:!text-danger-text"
+                  variant="danger"
                   onClick={() => void handleDeleteCategory(cat)}
+                  aria-label={`Excluir categoria ${cat.name}`}
+                  title={`Excluir categoria ${cat.name}`}
                 />
               </li>
             ))}

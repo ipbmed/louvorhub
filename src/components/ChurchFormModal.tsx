@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Church } from 'lucide-react';
+import { Check, Church, Plus } from 'lucide-react';
 import type { Church as ChurchType } from '@/types';
-import { Alert, Button, Field, Input, Modal } from './ui';
+import { ActionButton, Alert, Field, Input, Modal } from './ui';
 
 type ChurchForm = {
   name: string;
@@ -94,12 +94,12 @@ export const ChurchFormModal: React.FC<ChurchFormModalProps> = ({ open, church, 
       subtitle="Dados exibidos no cabeçalho e nos links públicos."
       footer={
         <>
-          <Button variant="ghost" onClick={close} disabled={saving}>
+          <ActionButton variant="light" onClick={close} disabled={saving}>
             Cancelar
-          </Button>
-          <Button type="submit" form="church-form" loading={saving}>
+          </ActionButton>
+          <ActionButton type="submit" form="church-form" variant="primary" icon={isNew ? Plus : Check} loading={saving}>
             {isNew ? 'Criar igreja' : 'Salvar alterações'}
-          </Button>
+          </ActionButton>
         </>
       }
     >

@@ -4,6 +4,7 @@ import {
   Cake,
   Calendar,
   Camera,
+  Check,
   ChevronRight,
   Edit3,
   ImagePlus,
@@ -654,14 +655,7 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
                 <UserPlus className="w-5 h-5 text-emerald-400" />
                 {modalMode === 'create' ? 'Cadastrar usuário' : 'Editar usuário'}
               </h3>
-              <button
-                type="button"
-                onClick={closeModal}
-                className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
-                aria-label="Fechar"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <ActionButton variant="light" icon={X} onClick={closeModal} aria-label="Fechar" title="Fechar" />
             </div>
 
             <form
@@ -698,22 +692,17 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
                     Foto de perfil
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
+                    <ActionButton
+                      variant="light"
+                      icon={ImagePlus}
                       onClick={() => galleryInputRef.current?.click()}
-                      className="px-2.5 py-1.5 bg-stone-800 hover:bg-stone-700 border border-stone-700 rounded-button text-[11px] font-semibold inline-flex items-center gap-1"
                     >
-                      <ImagePlus className="w-3.5 h-3.5" />
                       {modalAvatarDisplay ? 'Trocar foto' : 'Adicionar foto'}
-                    </button>
+                    </ActionButton>
                     {modalAvatarDisplay && (
-                      <button
-                        type="button"
-                        onClick={clearAvatarSelection}
-                        className="px-2.5 py-1.5 text-rose-300 hover:bg-rose-950/40 border border-transparent hover:border-rose-800/50 rounded-button text-[11px] font-semibold"
-                      >
+                      <ActionButton variant="danger" icon={Trash2} onClick={clearAvatarSelection}>
                         Remover
-                      </button>
+                      </ActionButton>
                     )}
                   </div>
                   <input
@@ -821,15 +810,14 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
                     placeholder="Outra habilidade…"
                     className="flex-1 bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100"
                   />
-                  <button
-                    type="button"
+                  <ActionButton
+                    variant="secondary"
+                    icon={Plus}
                     onClick={addCustomSkill}
                     disabled={!customSkill.trim()}
-                    className="px-3 py-2 bg-stone-800 hover:bg-stone-700 disabled:opacity-40 border border-stone-700 rounded-button text-xs font-semibold inline-flex items-center gap-1"
                   >
-                    <Plus className="w-3.5 h-3.5" />
                     Adicionar
-                  </button>
+                  </ActionButton>
                 </div>
               </div>
 
@@ -864,22 +852,12 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
               </label>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-stone-800">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  disabled={saving}
-                  className="px-4 py-2 bg-stone-800 text-stone-300 rounded-button text-xs font-semibold"
-                >
+                <ActionButton variant="light" onClick={closeModal} disabled={saving}>
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-4 py-2 bg-emerald-500 text-stone-950 font-bold rounded-button text-xs inline-flex items-center gap-1.5"
-                >
-                  {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                </ActionButton>
+                <ActionButton type="submit" variant="primary" icon={Check} loading={saving}>
                   Salvar
-                </button>
+                </ActionButton>
               </div>
             </form>
           </div>

@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { registerSW } from 'virtual:pwa-register';
 import { Download, RefreshCw, WifiOff, X } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { ActionButton } from '@/components/ui';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -178,12 +178,12 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
               Atualize para receber as últimas melhorias e correções.
             </p>
             <div className="mt-2.5 flex gap-2">
-              <Button size="sm" icon={RefreshCw} onClick={() => void updateApp()}>
+              <ActionButton variant="primary" icon={RefreshCw} onClick={() => void updateApp()}>
                 Atualizar agora
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setNeedRefresh(false)}>
+              </ActionButton>
+              <ActionButton variant="light" onClick={() => setNeedRefresh(false)}>
                 Depois
-              </Button>
+              </ActionButton>
             </div>
           </div>
         </div>
@@ -203,8 +203,8 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
               Acesso rápido na tela inicial, tela cheia e funciona sem internet.
             </p>
             <div className="mt-2.5 flex gap-2">
-              <Button
-                size="sm"
+              <ActionButton
+                variant="primary"
                 icon={Download}
                 onClick={() => {
                   void install().then((ok) => {
@@ -213,20 +213,20 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
                 }}
               >
                 Instalar
-              </Button>
-              <Button size="sm" variant="ghost" onClick={dismissInstallBanner}>
+              </ActionButton>
+              <ActionButton variant="light" onClick={dismissInstallBanner}>
                 Agora não
-              </Button>
+              </ActionButton>
             </div>
           </div>
-          <button
-            type="button"
+          <ActionButton
+            variant="light"
+            icon={X}
             onClick={dismissInstallBanner}
             aria-label="Fechar"
-            className="shrink-0 -mr-1.5 -mt-1.5 p-1.5 rounded-button text-fg-subtle hover:text-fg hover:bg-muted"
-          >
-            <X className="w-4 h-4" />
-          </button>
+            title="Fechar"
+            className="-mr-1.5 -mt-1.5"
+          />
         </div>
       )}
     </PwaContext.Provider>

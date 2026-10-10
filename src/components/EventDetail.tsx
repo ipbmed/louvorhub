@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowLeft,
   Calendar,
   Check,
   ChevronRight,
@@ -45,13 +44,14 @@ import {
   eventShareUrl,
   updateEventShareSettings,
 } from '@/services/eventShare';
-import { ScheduleManager } from './ScheduleManager';
-import { LiturgyManager } from './LiturgyManager';
+import { EventTeamPanel } from './EventTeamPanel';
+import { EventLiturgyPanel } from './EventLiturgyPanel';
 import { EventLiturgySetlistSync, getLiturgySetlistDiff } from './EventLiturgySetlistSync';
 import { AddSongsToEventSetlistModal } from './AddSongsToEventSetlistModal';
 import { ScheduleSongEditorModal } from './ScheduleSongEditorModal';
 import { EVENT_TITLE_SUGGESTIONS } from '../constants/eventTitles';
-import { ActionButton, Badge, IconButton, cn } from './ui';
+import { ActionButton, Badge, EmptyState, cn } from './ui';
+import { PageHeaderButton, PageShell } from './PageHeader';
 
 type EventTab = 'team' | 'liturgy' | 'setlist';
 
@@ -349,18 +349,6 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     }
   };
 
-  const churchStub = useMemo(
-    () => [
-      {
-        id: event.churchId,
-        name: churchName?.trim() || 'Igreja',
-        city: '',
-        createdAt: event.createdAt,
-      },
-    ],
-    [event.churchId, event.createdAt, churchName],
-  );
-
   const scheduleForEvent: WorshipSchedule | null = schedule
     ? {
         ...schedule,
@@ -384,8 +372,6 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       theme: event.theme,
       assignments: [],
       songIds: [],
-      notes: event.notes,
-      status: 'confirmed',
       createdAt: new Date().toISOString(),
     });
   };
@@ -533,8 +519,6 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const eventDay = new Date(`${event.date}T00:00:00`);
   const countdown = eventCountdown(event.date);
   const groupName = musicGroups.find((g) => g.id === event.musicGroupId)?.name;
-  const subtitle = [churchName, groupName].filter(Boolean).join(' · ');
-
   const assignments = scheduleForEvent?.assignments ?? [];
   const confirmedCount = assignments.filter((a) => a.status === 'confirmed').length;
   const declinedCount = assignments.filter((a) => a.status === 'declined').length;
@@ -626,73 +610,81 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     alert: 'bg-warning-soft text-warning-text',
   };
 
-  return (
-    <div className="w-full max-w-[1600px] mx-auto space-y-4 sm:space-y-5">
-      <header className="flex items-start gap-3 min-w-0">
-        {onBack && (
-          <IconButton
-            icon={ArrowLeft}
-            label="Voltar"
-            variant="ghost"
-            onClick={onBack}
-            className="-ml-1 mt-1 shrink-0 bg-surface shadow-card"
-          />
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-brand-text">
-            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-            <span className="leading-snug">
-              <span className="sm:hidden">
-                {eventDay.toLocaleDateString('pt-BR', {
-                  weekday: 'short',
-                  day: '2-digit',
-                  month: 'short',
-                })}
-              </span>
-              <span className="hidden sm:inline">
-                {eventDay.toLocaleDateString('pt-BR', {
-                  weekday: 'long',
-                  day: '2-digit',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </span>
-              {event.time ? ` · ${event.time}` : ''}
+  const metaItemClass = 'inline-flex items-center gap-1.5 min-w-0';
+  const metaIconClass = 'w-4 h-4 text-fg-subtle shrink-0';
+
+  const headerDescription = (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] sm:text-sm text-fg-muted">
+        <span className={cn(metaItemClass, 'font-semibold text-brand-text')}>
+          <Calendar className="w-4 h-4 shrink-0" />
+          <span className="inline-block first-letter:uppercase">
+            <span className="sm:hidden">
+              {eventDay.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
             </span>
-            {countdown && (
-              <Badge tone={countdown.tone} className="normal-case tracking-normal">
-                {countdown.label}
-              </Badge>
-            )}
-          </div>
-          <h1 className="mt-1 text-[22px] sm:text-2xl xl:text-3xl font-extrabold text-fg leading-tight tracking-tight truncate">
-            {event.title}
-          </h1>
-          {(subtitle || event.theme) && (
-            <p className="mt-0.5 text-[13px] sm:text-sm text-fg-muted leading-snug line-clamp-2">
-              {subtitle}
-              {subtitle && event.theme ? ' · ' : ''}
-              {event.theme ? `Tema: ${event.theme}` : ''}
-            </p>
-          )}
-        </div>
-        <div className="hidden sm:flex items-center gap-2 shrink-0 mt-1">
+            <span className="hidden sm:inline">
+              {eventDay.toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+              })}
+            </span>
+          </span>
+        </span>
+        {event.time && (
+          <span className={cn(metaItemClass, 'font-semibold text-fg')}>
+            <Clock className={metaIconClass} />
+            {event.time}
+          </span>
+        )}
+        {countdown && <Badge tone={countdown.tone}>{countdown.label}</Badge>}
+        {churchName && (
+          <span className={metaItemClass}>
+            <Church className={metaIconClass} />
+            <span className="truncate">{churchName}</span>
+          </span>
+        )}
+        {groupName && (
+          <span className={metaItemClass}>
+            <Music2 className={metaIconClass} />
+            <span className="truncate">{groupName}</span>
+          </span>
+        )}
+        {event.theme && (
+          <span className={metaItemClass}>
+            <Sparkles className={metaIconClass} />
+            <span className="truncate">{event.theme}</span>
+          </span>
+        )}
+      </div>
+      {event.notes && (
+        <p className="flex gap-1.5 text-[13px] text-fg-muted leading-snug">
+          <Info className={cn(metaIconClass, 'mt-px')} />
+          <span className="min-w-0 whitespace-pre-line line-clamp-2">{event.notes}</span>
+        </p>
+      )}
+    </div>
+  );
+
+  const headerActions = (
+    <>
+        <div className="hidden sm:flex items-center gap-2">
           {onSaveEvent && (
-            <ActionButton variant="light" icon={Edit3} onClick={openEditEvent}>
+            <PageHeaderButton variant="secondary" icon={Edit3} onClick={openEditEvent}>
               Editar
-            </ActionButton>
+            </PageHeaderButton>
           )}
-          <ActionButton
-            variant={sharePanelOpen || shareEnabled ? 'secondary' : 'light'}
+          <PageHeaderButton
             icon={Share2}
             onClick={() => setSharePanelOpen((v) => !v)}
             aria-pressed={sharePanelOpen}
             title={shareEnabled ? 'Compartilhamento ativo' : 'Compartilhar evento'}
           >
             Compartilhar
-          </ActionButton>
+          </PageHeaderButton>
         </div>
-        <div className="relative sm:hidden shrink-0 mt-1">
+        <div className="relative sm:hidden">
           <ActionButton
             variant="light"
             icon={MoreVertical}
@@ -763,8 +755,18 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             </>
           )}
         </div>
-      </header>
+    </>
+  );
 
+  return (
+    <PageShell
+      icon={Calendar}
+      title={event.title}
+      onBack={onBack}
+      actions={headerActions}
+      contentClassName="sm:space-y-5"
+    >
+      {headerDescription}
       <div className="space-y-4 sm:space-y-5 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem] lg:gap-6 lg:items-start">
       <div className="min-w-0 space-y-4 sm:space-y-5">
 
@@ -971,7 +973,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
         </div>
       )}
 
-      <div className="sticky top-[calc(60px+env(safe-area-inset-top,0px))] lg:top-0 z-20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 pt-2 pb-1 -mt-2 bg-app/90 backdrop-blur-md">
+      <div className="sticky top-[calc(60px+env(safe-area-inset-top,0px))] lg:top-16 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 pt-2 pb-1 -mt-2 bg-app/90 backdrop-blur-md">
       <div className="flex flex-row gap-1 bg-stone-950 border border-stone-800 p-1 rounded-xl w-full">
         {tabs
           .filter((t) => t.show)
@@ -1008,27 +1010,25 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       {tab === 'team' && canManageTeam && (
         <div className="w-full space-y-4">
           {!scheduleForEvent ? (
-            <div className="text-center py-10 bg-stone-900/40 rounded-2xl border border-dashed border-stone-800">
-              <Users className="w-10 h-10 text-stone-600 mx-auto mb-3" />
-              <p className="text-sm text-stone-300 font-semibold mb-3">
-                Ainda não há escala neste evento
-              </p>
-              <ActionButton variant="primary" icon={Plus} onClick={() => void ensureTeamSchedule()}>
-                Criar equipe de louvor
-              </ActionButton>
-            </div>
+            <EmptyState
+              icon={Users}
+              title="Ainda não há equipe neste evento"
+              description="Crie a escala para marcar o ensaio e adicionar as pessoas."
+              action={
+                <ActionButton variant="primary" icon={Plus} onClick={() => void ensureTeamSchedule()}>
+                  Criar equipe de louvor
+                </ActionButton>
+              }
+            />
           ) : (
-            <ScheduleManager
-              schedules={[scheduleForEvent]}
-              churches={churchStub}
+            <EventTeamPanel
+              schedule={scheduleForEvent}
               musicGroups={musicGroups}
-              songs={songs}
               systemUsers={systemUsers}
-              activeChurchId={event.churchId}
-              embedded
-              onSaveSchedule={onSaveSchedule}
-              onDeleteSchedule={onDeleteSchedule}
-              onSelectSong={onSelectSong}
+              songs={songs}
+              churchName={churchName}
+              onSave={onSaveSchedule}
+              onDelete={onDeleteSchedule}
             />
           )}
         </div>
@@ -1051,35 +1051,29 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             eventDate={event.date}
           />
           {!liturgy ? (
-            <div className="text-center py-10 bg-stone-900/40 rounded-2xl border border-dashed border-stone-800">
-              <FileText className="w-10 h-10 text-stone-600 mx-auto mb-3" />
-              <p className="text-sm text-stone-300 font-semibold mb-3">
-                Ainda não há liturgia neste evento
-              </p>
-              <ActionButton variant="primary" icon={Plus} onClick={() => void onEnsureLiturgy()}>
-                Criar liturgia
-              </ActionButton>
-            </div>
+            <EmptyState
+              icon={FileText}
+              title="Ainda não há liturgia neste evento"
+              description="Crie a liturgia para montar a ordem do culto."
+              action={
+                <ActionButton variant="primary" icon={Plus} onClick={() => void onEnsureLiturgy()}>
+                  Criar liturgia
+                </ActionButton>
+              }
+            />
           ) : (
-            <LiturgyManager
-              liturgies={[
-                {
-                  ...liturgy,
-                  eventId: event.id,
-                  churchId: event.churchId,
-                  date: liturgy.date || event.date,
-                  serviceTitle: event.title || liturgy.serviceTitle,
-                },
-              ]}
-              churches={churchStub}
+            <EventLiturgyPanel
+              liturgy={{
+                ...liturgy,
+                eventId: event.id,
+                churchId: event.churchId,
+                date: event.date,
+                serviceTitle: event.title || liturgy.serviceTitle,
+              }}
               songs={songs}
-              activeChurchId={event.churchId}
-              linkedEventTitle={event.title}
-              linkedEventDate={event.date}
-              embedded
-              canManageLiturgies={() => true}
-              onSaveLiturgy={onSaveLiturgy}
-              onDeleteLiturgy={onDeleteLiturgy}
+              churchName={churchName}
+              onSave={onSaveLiturgy}
+              onDelete={onDeleteLiturgy}
               onSelectSong={onSelectSong}
             />
           )}
@@ -1236,7 +1230,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       )}
       </div>
 
-      <aside className="hidden lg:block lg:sticky lg:top-6 space-y-4">
+      <aside className="hidden lg:block lg:sticky lg:top-20 space-y-4">
         <section className="bg-surface border border-line rounded-2xl shadow-card p-4">
           <div className="flex items-center justify-between gap-2 mb-1">
             <h2 className="text-sm font-bold text-fg">Preparação</h2>
@@ -1299,66 +1293,6 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               </ActionButton>
             </div>
           )}
-        </section>
-
-        <section className="bg-surface border border-line rounded-2xl shadow-card p-4">
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <h2 className="text-sm font-bold text-fg">Detalhes</h2>
-            {onSaveEvent && (
-              <ActionButton variant="light" icon={Edit3} onClick={openEditEvent} aria-label="Editar evento" />
-            )}
-          </div>
-          <dl className="space-y-3 text-[13px]">
-            <div className="flex gap-3">
-              <dt className="sr-only">Data</dt>
-              <Calendar className="w-4 h-4 text-fg-subtle shrink-0 mt-0.5" />
-              <dd className="text-fg first-letter:uppercase">
-                {eventDay.toLocaleDateString('pt-BR', {
-                  weekday: 'long',
-                  day: '2-digit',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </dd>
-            </div>
-            {event.time && (
-              <div className="flex gap-3">
-                <dt className="sr-only">Horário</dt>
-                <Clock className="w-4 h-4 text-fg-subtle shrink-0 mt-0.5" />
-                <dd className="text-fg">{event.time}</dd>
-              </div>
-            )}
-            {churchName && (
-              <div className="flex gap-3">
-                <dt className="sr-only">Igreja</dt>
-                <Church className="w-4 h-4 text-fg-subtle shrink-0 mt-0.5" />
-                <dd className="text-fg min-w-0 break-words">{churchName}</dd>
-              </div>
-            )}
-            {groupName && (
-              <div className="flex gap-3">
-                <dt className="sr-only">Grupo musical</dt>
-                <Music2 className="w-4 h-4 text-fg-subtle shrink-0 mt-0.5" />
-                <dd className="text-fg min-w-0 break-words">{groupName}</dd>
-              </div>
-            )}
-            {event.theme && (
-              <div className="flex gap-3">
-                <dt className="sr-only">Tema</dt>
-                <Sparkles className="w-4 h-4 text-fg-subtle shrink-0 mt-0.5" />
-                <dd className="text-fg min-w-0 break-words">{event.theme}</dd>
-              </div>
-            )}
-            {event.notes && (
-              <div className="flex gap-3">
-                <dt className="sr-only">Observações</dt>
-                <Info className="w-4 h-4 text-fg-subtle shrink-0 mt-0.5" />
-                <dd className="text-fg-muted min-w-0 break-words whitespace-pre-line line-clamp-6">
-                  {event.notes}
-                </dd>
-              </div>
-            )}
-          </dl>
         </section>
       </aside>
       </div>
@@ -1540,7 +1474,6 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               serviceType: event.serviceType || event.title,
               assignments: [],
               songIds: repertoireSongIds,
-              status: 'confirmed',
               createdAt: event.createdAt,
             }
           }
@@ -1554,6 +1487,6 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           onClose={() => setVersionEditor(null)}
         />
       )}
-    </div>
+    </PageShell>
   );
 };

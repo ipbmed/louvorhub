@@ -22,7 +22,7 @@ import type { ChurchEvent, MusicGroup } from '../types';
 import { EVENT_TITLE_SUGGESTIONS } from '../constants/eventTitles';
 import { PageHeaderButton, PageShell } from './PageHeader';
 import { EventCard } from './EventCard';
-import { Button, EmptyState, IconButton, Modal, Tabs, cn } from './ui';
+import { ActionButton, Button, EmptyState, IconButton, Modal, Tabs, cn } from './ui';
 import { formatDateLong, relativeDay } from '@/utils/dateLabels';
 import { useConfirm } from '@/contexts/ConfirmProvider';
 
@@ -1090,14 +1090,20 @@ export const EventManager: React.FC<EventManagerProps> = ({
         title={editing ? 'Editar evento' : 'Novo evento'}
         footer={
           <>
-            <Button variant="ghost" disabled={isSaving} onClick={() => setIsModalOpen(false)}>
+            <ActionButton variant="light" disabled={isSaving} onClick={() => setIsModalOpen(false)}>
               Cancelar
-            </Button>
-            <Button type="submit" form="event-form" loading={isSaving}>
+            </ActionButton>
+            <ActionButton
+              type="submit"
+              form="event-form"
+              variant="primary"
+              icon={!editing && formRepeatEnabled && formRepeatCount > 1 ? Plus : Check}
+              loading={isSaving}
+            >
               {!editing && formRepeatEnabled && formRepeatCount > 1
                 ? `Criar ${formRepeatCount} eventos`
                 : 'Salvar'}
-            </Button>
+            </ActionButton>
           </>
         }
       >

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Category } from '../types';
 import { Search, Filter, RotateCcw, Check } from 'lucide-react';
-import { Button, Field, Input, Modal, Select } from './ui';
+import { ActionButton, Field, Input, Modal, Select } from './ui';
 
 export interface SearchFilters {
   keyword: string;
@@ -171,8 +171,8 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
       size="md"
       footer={
         <>
-          <Button
-            variant="ghost"
+          <ActionButton
+            variant="light"
             icon={RotateCcw}
             onClick={() => {
               onResetFilters();
@@ -181,10 +181,10 @@ export const AdvancedSearchModal: React.FC<AdvancedSearchModalProps> = ({
             className="mr-auto"
           >
             Limpar
-          </Button>
-          <Button type="submit" form="advanced-search-form" icon={Check}>
+          </ActionButton>
+          <ActionButton type="submit" form="advanced-search-form" variant="primary" icon={Check}>
             {activeCount > 0 ? `Aplicar (${activeCount})` : 'Aplicar filtros'}
-          </Button>
+          </ActionButton>
         </>
       }
     >

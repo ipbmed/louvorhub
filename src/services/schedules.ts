@@ -8,8 +8,9 @@ import {
   listForEvent,
 } from '@/services/eventSongs';
 
-const SCHEDULE_SELECT = `
+export const SCHEDULE_SELECT = `
   *,
+  events(title, service_date, service_time, service_type, theme),
   schedule_assignments(*, profiles(*))
 `;
 
@@ -26,29 +27,6 @@ async function withEventRepertoire(schedule: DbSchedule): Promise<WorshipSchedul
     songIds: versions.map((v) => v.songId),
     customSongs,
   });
-}
-
-export async function listSchedules(orgId: string): Promise<WorshipSchedule[]> {
-  const sb = requireSupabase();
-  const { data, error } = await sb
-    .from('schedules')
-    .select(SCHEDULE_SELECT)
-    .eq('org_id', orgId)
-    .order('service_date', { ascending: false });
-  if (error) throw error;
-  return Promise.all(((data || []) as DbSchedule[]).map(withEventRepertoire));
-}
-
-export async function listSchedulesForOrgs(orgIds: string[]): Promise<WorshipSchedule[]> {
-  if (!orgIds.length) return [];
-  const sb = requireSupabase();
-  const { data, error } = await sb
-    .from('schedules')
-    .select(SCHEDULE_SELECT)
-    .in('org_id', orgIds)
-    .order('service_date', { ascending: false });
-  if (error) throw error;
-  return Promise.all(((data || []) as DbSchedule[]).map(withEventRepertoire));
 }
 
 async function syncAssignments(scheduleId: string, schedule: WorshipSchedule): Promise<void> {
@@ -84,15 +62,9 @@ export async function upsertSchedule(
   const payload = {
     org_id: schedule.churchId,
     event_id: eventId,
-    title: schedule.serviceType || 'Culto',
-    service_date: schedule.date,
-    service_time: schedule.time ?? null,
-    service_type: schedule.serviceType,
-    theme: schedule.theme ?? null,
     rehearsal_date: schedule.rehearsalDate || null,
     rehearsal_time: schedule.rehearsalTime ?? null,
     notes: schedule.notes ?? null,
-    status: schedule.status,
     is_finalized: Boolean(schedule.isFinalized),
     finalized_at: schedule.finalizedAt ?? null,
     finalized_by: isUuid(schedule.finalizedBy) ? schedule.finalizedBy : userId ?? null,

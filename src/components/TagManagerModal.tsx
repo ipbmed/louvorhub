@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Song } from '../types';
 import { Check, Pencil, Tags, Trash2, X } from 'lucide-react';
 import { useConfirm } from '@/contexts/ConfirmProvider';
-import { Badge, Button, EmptyState, IconButton, Input, Modal } from './ui';
+import { ActionButton, Badge, EmptyState, Input, Modal } from './ui';
 
 interface TagManagerModalProps {
   songs: Song[];
@@ -87,7 +87,11 @@ export const TagManagerModal: React.FC<TagManagerModalProps> = ({
       title="Tags das músicas"
       subtitle="Renomear ou remover uma tag atualiza todas as músicas vinculadas."
       size="md"
-      footer={<Button onClick={onClose} disabled={busy}>Concluir</Button>}
+      footer={
+        <ActionButton variant="primary" icon={Check} onClick={onClose} disabled={busy}>
+          Concluir
+        </ActionButton>
+      }
     >
       <div className="space-y-3">
         {tagStats.length > 6 && (
@@ -133,21 +137,21 @@ export const TagManagerModal: React.FC<TagManagerModalProps> = ({
                       className="!min-h-9 !text-xs"
                       aria-label="Novo nome da tag"
                     />
-                    <IconButton
+                    <ActionButton
                       type="submit"
                       icon={Check}
-                      label="Salvar"
-                      size="sm"
                       variant="primary"
                       loading={busy}
+                      aria-label="Salvar"
+                      title="Salvar"
                     />
-                    <IconButton
+                    <ActionButton
                       icon={X}
-                      label="Cancelar"
-                      size="sm"
-                      variant="ghost"
+                      variant="light"
                       disabled={busy}
                       onClick={() => setEditingTag(null)}
+                      aria-label="Cancelar"
+                      title="Cancelar"
                     />
                   </form>
                 ) : (
@@ -159,22 +163,21 @@ export const TagManagerModal: React.FC<TagManagerModalProps> = ({
                       </Badge>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <IconButton
+                      <ActionButton
                         icon={Pencil}
-                        label={`Renomear tag ${name}`}
-                        size="sm"
-                        variant="ghost"
+                        variant="light"
                         disabled={busy}
                         onClick={() => startEdit(name)}
+                        aria-label={`Renomear tag ${name}`}
+                        title={`Renomear tag ${name}`}
                       />
-                      <IconButton
+                      <ActionButton
                         icon={Trash2}
-                        label={`Excluir tag ${name}`}
-                        size="sm"
-                        variant="ghost"
-                        className="hover:!bg-danger-soft hover:!text-danger-text"
+                        variant="danger"
                         disabled={busy}
                         onClick={() => void removeTag(name, count)}
+                        aria-label={`Excluir tag ${name}`}
+                        title={`Excluir tag ${name}`}
                       />
                     </div>
                   </>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Song } from '../types';
-import { ArrowRight, Delete, Hash, Music } from 'lucide-react';
-import { Button, Modal, cn } from './ui';
+import { Delete, Hash, Music } from 'lucide-react';
+import { ActionButton, Modal, cn } from './ui';
 
 interface NumericKeypadModalProps {
   songs: Song[];
@@ -134,9 +134,9 @@ export const NumericKeypadModal: React.FC<NumericKeypadModalProps> = ({
           </button>
         </div>
 
-        <Button size="lg" block icon={Music} iconRight={ArrowRight} disabled={!matchedSong} onClick={handleSubmit}>
+        <ActionButton variant="primary" className="w-full" icon={Music} disabled={!matchedSong} onClick={handleSubmit}>
           {matchedSong ? `Abrir hino #${numberInput}` : 'Abrir hino'}
-        </Button>
+        </ActionButton>
       </div>
     </Modal>
   );

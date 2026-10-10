@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Check, ListMusic, ListPlus } from 'lucide-react';
 import type { Setlist, Song } from '@/types';
 import { isGroupSetlist } from '@/services/playlists';
-import { Alert, Badge, Button, EmptyState, Modal, cn } from './ui';
+import { ActionButton, Alert, Badge, EmptyState, Modal, cn } from './ui';
 
 interface AddToSetlistModalProps {
   song: Song;
@@ -62,17 +62,18 @@ export const AddToSetlistModal: React.FC<AddToSetlistModalProps> = ({
       zIndexClassName="z-[60]"
       footer={
         <>
-          <Button variant="ghost" onClick={onClose} disabled={saving}>
+          <ActionButton variant="light" onClick={onClose} disabled={saving}>
             Cancelar
-          </Button>
-          <Button
+          </ActionButton>
+          <ActionButton
+            variant="primary"
             icon={ListPlus}
             disabled={!selectedId || options.length === 0}
             loading={saving}
             onClick={() => void handleConfirm()}
           >
             Adicionar
-          </Button>
+          </ActionButton>
         </>
       }
     >

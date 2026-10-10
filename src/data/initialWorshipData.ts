@@ -262,7 +262,6 @@ export const INITIAL_SCHEDULES: WorshipSchedule[] = [
     ],
     songIds: ['Song-1', 'Song-2', 'Song-3'],
     notes: 'Chegar 45 min antes do culto para passagem de som e oração.',
-    status: 'confirmed',
     createdAt: new Date().toISOString(),
   },
   {
@@ -282,7 +281,6 @@ export const INITIAL_SCHEDULES: WorshipSchedule[] = [
     ],
     songIds: ['Song-1', 'Song-4'],
     notes: 'Usar hinos tradicionais da Harpa / Hinário.',
-    status: 'pending',
     createdAt: new Date().toISOString(),
   },
 ];

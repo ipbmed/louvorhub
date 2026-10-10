@@ -27,6 +27,7 @@ import { ChordLyricLine } from './ChordLyricLine';
 import { SongDetailModal } from './SongDetailModal';
 import { SongProjectionModal } from './SongProjectionModal';
 import { ThemeToggle } from './ThemeToggle';
+import { ActionButton } from './ui';
 
 interface PublicSetlistPageProps {
   shareCode?: string;
@@ -367,14 +368,13 @@ export const PublicSetlistPage: React.FC<PublicSetlistPageProps> = ({ shareCode:
                 <Share2 className="w-5 h-5 text-emerald-400 light:text-emerald-600" />
                 Compartilhar
               </h3>
-              <button
-                type="button"
+              <ActionButton
+                variant="light"
+                icon={X}
                 onClick={() => setShowShareOptions(false)}
-                className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
                 aria-label="Fechar"
-              >
-                <X className="w-4 h-4" />
-              </button>
+                title="Fechar"
+              />
             </div>
 
             <p className="text-xs text-stone-400 light:text-stone-500">
@@ -449,14 +449,13 @@ export const PublicSetlistPage: React.FC<PublicSetlistPageProps> = ({ shareCode:
                 <QrCode className="w-5 h-5 text-emerald-400 light:text-emerald-600" />
                 QR Code
               </h3>
-              <button
-                type="button"
+              <ActionButton
+                variant="light"
+                icon={X}
                 onClick={() => setShowQr(false)}
-                className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
                 aria-label="Fechar"
-              >
-                <X className="w-4 h-4" />
-              </button>
+                title="Fechar"
+              />
             </div>
 
             <p className="text-xs text-stone-400 light:text-stone-500">
@@ -471,25 +470,12 @@ export const PublicSetlistPage: React.FC<PublicSetlistPageProps> = ({ shareCode:
             <p className="text-[11px] text-stone-500 break-all text-center font-mono">{shareUrl}</p>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-stone-800">
-              <button
-                type="button"
-                onClick={() => copyLink()}
-                className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold inline-flex items-center gap-1.5"
-              >
-                {copied ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                ) : (
-                  <Link2 className="w-3.5 h-3.5" />
-                )}
+              <ActionButton variant="light" icon={copied ? Check : Link2} onClick={() => copyLink()}>
                 Copiar link
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowQr(false)}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs"
-              >
+              </ActionButton>
+              <ActionButton variant="light" onClick={() => setShowQr(false)}>
                 Fechar
-              </button>
+              </ActionButton>
             </div>
           </div>
         </div>

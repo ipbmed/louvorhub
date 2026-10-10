@@ -12,6 +12,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import { ActionButton } from './ui';
 
 export type HelpTopicId =
   | 'start'
@@ -205,14 +206,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button shrink-0"
-            aria-label="Fechar ajuda"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <ActionButton variant="light" icon={X} onClick={onClose} aria-label="Fechar ajuda" title="Fechar ajuda" />
         </div>
 
         <div className="flex-1 min-h-0 flex flex-col sm:flex-row">

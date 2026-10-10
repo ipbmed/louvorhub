@@ -1,8 +1,8 @@
 import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, HelpCircle, Trash2 } from 'lucide-react';
+import { AlertTriangle, Check, HelpCircle, Trash2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
+import { ActionButton } from '@/components/ui/Button';
 
 export interface ConfirmOptions {
   title: React.ReactNode;
@@ -83,18 +83,18 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
         footer={
           <>
             {!pending?.alertOnly && (
-              <Button variant="ghost" size="md" onClick={() => settle(false)}>
+              <ActionButton variant="light" onClick={() => settle(false)}>
                 {pending?.cancelLabel ?? 'Cancelar'}
-              </Button>
+              </ActionButton>
             )}
-            <Button
+            <ActionButton
               variant={tone === 'danger' ? 'danger' : 'primary'}
-              size="md"
+              icon={tone === 'danger' ? Trash2 : Check}
               onClick={() => settle(true)}
               autoFocus
             >
               {pending?.confirmLabel ?? (pending?.alertOnly ? 'Entendi' : 'Confirmar')}
-            </Button>
+            </ActionButton>
           </>
         }
       >

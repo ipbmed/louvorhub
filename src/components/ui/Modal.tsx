@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from './cn';
+import { ActionButton } from './Button';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
@@ -171,17 +172,15 @@ export const Modal: React.FC<ModalProps> = ({
             </div>
             {headerActions}
             {!hideClose && (
-              <button
-                type="button"
+              <ActionButton
+                variant="light"
+                icon={X}
                 data-modal-close
                 onClick={onClose}
                 disabled={locked}
                 aria-label="Fechar"
                 title="Fechar"
-                className="shrink-0 -mr-1.5 -mt-1 w-9 h-9 inline-flex items-center justify-center rounded-button text-fg-subtle hover:text-fg hover:bg-muted transition-colors disabled:opacity-40"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              />
             )}
           </div>
         )}

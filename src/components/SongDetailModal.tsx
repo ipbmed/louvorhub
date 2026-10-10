@@ -21,13 +21,13 @@ import {
   CalendarDays,
   Sparkles,
   AlertTriangle,
-  Maximize2,
   Radio,
 } from 'lucide-react';
 import { transposeLyrics, transposeNote, parseLyricSections, filterSectionsForView, stripChords } from '../utils/chordTransposer';
 import { isManualSlideBreak } from '../utils/projectionSlides';
 import { playReferenceTone, stopReferenceTone } from '../utils/audioTone';
 import { MetronomeTool } from './MetronomeTool';
+import { ActionButton } from './ui';
 
 function transposeSongKey(key: string, semitones: number): string {
   const trimmed = (key || 'C').trim() || 'C';
@@ -162,14 +162,14 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
   if (isLoading || !song) {
     return (
       <div className={containerClass}>
-        <button
-          type="button"
+        <ActionButton
+          variant="light"
+          icon={X}
           onClick={onClose}
-          className="absolute top-[calc(env(safe-area-inset-top,0px)+1rem)] right-4 p-2 text-stone-400 hover:text-stone-100 rounded-button z-10"
+          className="absolute top-[calc(env(safe-area-inset-top,0px)+1rem)] right-4 z-10"
+          aria-label="Fechar"
           title="Fechar"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        />
         <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6">
           <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
           <p className="text-xs font-medium text-stone-400">Carregando música…</p>
@@ -268,51 +268,46 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
 
           <div className="flex items-center gap-1">
             {/* Projection Mode */}
-            <button
-              type="button"
+            <ActionButton
+              variant="primary"
+              icon={Tv}
+              collapseLabel
               onClick={() => onOpenProjection(song)}
-              className="group/tv px-3 py-2 bg-emerald-500 text-stone-950 font-bold rounded-button text-xs flex items-center gap-1.5 shadow-md hover:bg-emerald-400 focus-visible:bg-emerald-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
               title="Abrir no Telão / Projeção"
+              aria-label="Abrir no Telão / Projeção"
             >
-              <Tv className="w-4 h-4 group-hover/tv:hidden group-focus-visible/tv:hidden" aria-hidden />
-              <Maximize2 className="w-4 h-4 hidden group-hover/tv:block group-focus-visible/tv:block" aria-hidden />
-              <span className="hidden sm:inline">Telão</span>
-            </button>
+              Telão
+            </ActionButton>
 
-            <button
-              type="button"
+            <ActionButton
+              variant="light"
+              icon={linkCopied ? Check : Link2}
               onClick={() => void handleCopyLink()}
-              className="p-2 text-stone-400 hover:text-emerald-300 hover:bg-stone-800 rounded-button transition-colors"
               title="Copiar link da música"
-            >
-              {linkCopied ? (
-                <Check className="w-5 h-5 text-emerald-400" />
-              ) : (
-                <Link2 className="w-5 h-5" />
-              )}
-            </button>
+              aria-label="Copiar link da música"
+            />
 
             {/* Favorite */}
             {onToggleFavorite && (
-              <button
+              <ActionButton
+                variant="light"
+                icon={Heart}
                 onClick={() => onToggleFavorite(song.id)}
-                className="p-2 text-stone-400 hover:text-rose-400 hover:bg-stone-800 rounded-button transition-colors"
+                className={isFavorite ? '[&_svg]:fill-rose-500 [&_svg]:text-rose-500' : undefined}
+                aria-pressed={isFavorite}
                 title="Favorito"
-              >
-                <Heart className={`w-5 h-5 ${isFavorite ? 'fill-rose-500 text-rose-500' : ''}`} />
-              </button>
+                aria-label="Favorito"
+              />
             )}
 
             {/* Close */}
-            <button
-              type="button"
+            <ActionButton
+              variant="light"
+              icon={X}
               onClick={onClose}
-              className="p-2 text-stone-400 hover:text-stone-100 hover:bg-stone-800 rounded-button transition-colors"
               title="Fechar"
               aria-label="Fechar música"
-            >
-              <X className="w-6 h-6" />
-            </button>
+            />
           </div>
         </div>
 
@@ -444,35 +439,34 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
             </button>
 
             {/* Copy Lyrics */}
-            <button
+            <ActionButton
+              variant="light"
+              icon={copied ? Check : Copy}
               onClick={handleCopyLyrics}
-              className="p-1.5 bg-stone-900 hover:bg-stone-800 text-stone-300 rounded-button border border-stone-800 transition-colors"
               title="Copiar Letra"
-            >
-              {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-            </button>
+              aria-label="Copiar Letra"
+            />
 
             {/* Add to Setlist */}
             {onAddToSetlist && (
-              <button
+              <ActionButton
+                variant="secondary"
+                icon={ListMusic}
                 onClick={() => onAddToSetlist(song)}
-                className="p-1.5 bg-stone-900 hover:bg-stone-800 text-emerald-300 rounded-button border border-stone-800 transition-colors"
                 title="Adicionar à playlist"
                 aria-label="Adicionar à playlist"
-              >
-                <ListMusic className="w-4 h-4" />
-              </button>
+              />
             )}
 
             {/* Admin Edit */}
             {isAdmin && onEditSong && (
-              <button
+              <ActionButton
+                variant="light"
+                icon={Edit3}
                 onClick={() => onEditSong(song)}
-                className="p-1.5 bg-blue-950/60 hover:bg-blue-900 text-blue-300 rounded-button border border-blue-800/60 transition-colors"
                 title="Editar Música"
-              >
-                <Edit3 className="w-4 h-4" />
-              </button>
+                aria-label="Editar Música"
+              />
             )}
 
           </div>
@@ -501,15 +495,13 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
                 )}
               </span>
             </p>
-            <button
-              type="button"
+            <ActionButton
+              variant="light"
+              icon={X}
               onClick={() => setShowEventVersionBanner(false)}
-              className="p-1 rounded-button text-amber-200/80 hover:text-amber-50 hover:bg-amber-500/20 transition-colors shrink-0"
               title="Fechar"
               aria-label="Fechar aviso da versão"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            />
           </div>
         )}
 
@@ -634,13 +626,9 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
                 </div>
               </div>
               <div className="mt-5 flex justify-end">
-                <button
-                  type="button"
-                  onClick={dismissUnreviewedDialog}
-                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold rounded-button shadow-sm"
-                >
+                <ActionButton variant="primary" icon={Check} onClick={dismissUnreviewedDialog}>
                   Entendi
-                </button>
+                </ActionButton>
               </div>
             </div>
           </div>

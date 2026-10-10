@@ -278,6 +278,7 @@ export interface WorshipSchedule {
   churchId: string;
   eventId?: string;
   musicGroupId?: string;
+  /** date, time, serviceType e theme vêm do evento (somente leitura). */
   date: string;
   time?: string;
   serviceType: string;
@@ -290,7 +291,6 @@ export interface WorshipSchedule {
   /** @deprecated repertório vive em event_songs por eventId */
   setlistId?: string;
   notes?: string;
-  status: 'pending' | 'confirmed' | 'completed';
   isFinalized?: boolean;
   finalizedAt?: string;
   finalizedBy?: string;

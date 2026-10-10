@@ -3,7 +3,7 @@ import { ArrowLeft, Mail, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Logo } from './Logo';
-import { Alert, Button, Field, Input, Modal } from './ui';
+import { ActionButton, Alert, Field, Input, Modal } from './ui';
 
 interface AdminLoginModalProps {
   onClose: () => void;
@@ -117,9 +117,9 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             <h1 className="text-2xl font-extrabold tracking-tight text-fg">Verifique seu e-mail</h1>
             {sentMessage}
             <div className="pt-4">
-              <Button block size="lg" onClick={handleClose}>
+              <ActionButton variant="light" className="w-full" onClick={handleClose}>
                 Voltar ao catálogo
-              </Button>
+              </ActionButton>
             </div>
           </div>
         ) : (
@@ -134,9 +134,9 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             <form onSubmit={(e) => void handleLogin(e)} className="space-y-4">
               {errorMsg && <Alert tone="danger">{errorMsg}</Alert>}
               {emailField}
-              <Button type="submit" block size="lg" loading={loading} icon={Mail}>
+              <ActionButton type="submit" variant="primary" className="w-full" loading={loading} icon={Mail}>
                 Enviar link de acesso
-              </Button>
+              </ActionButton>
             </form>
             {handleRegister && (
               <p className="mt-6 text-center text-sm text-fg-muted">
@@ -170,19 +170,19 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       size="sm"
       footer={
         sent ? (
-          <Button block onClick={handleClose}>
+          <ActionButton variant="light" className="w-full" onClick={handleClose}>
             Fechar
-          </Button>
+          </ActionButton>
         ) : (
           <>
             {handleRegister && (
-              <Button variant="ghost" onClick={handleRegister} className="mr-auto">
+              <ActionButton variant="light" onClick={handleRegister} className="mr-auto">
                 Criar conta
-              </Button>
+              </ActionButton>
             )}
-            <Button type="submit" form="login-form" loading={loading} icon={Mail}>
+            <ActionButton type="submit" form="login-form" variant="primary" loading={loading} icon={Mail}>
               Enviar link de acesso
-            </Button>
+            </ActionButton>
           </>
         )
       }
@@ -226,15 +226,9 @@ const LoginScreen: React.FC<{ onClose: () => void; locked: boolean; children: Re
       className="fixed inset-0 z-50 bg-app text-fg overflow-y-auto overscroll-contain pt-safe pb-safe animate-in fade-in slide-in-from-bottom-2 duration-200"
     >
       <div className="flex items-center h-14 px-2">
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={locked}
-          className="inline-flex items-center gap-1.5 h-10 px-3 rounded-button text-sm font-semibold text-fg-muted hover:text-fg hover:bg-muted disabled:opacity-40"
-        >
-          <ArrowLeft className="w-5 h-5" />
+        <ActionButton variant="light" icon={ArrowLeft} onClick={onClose} disabled={locked}>
           Voltar
-        </button>
+        </ActionButton>
       </div>
       <div className="w-full max-w-sm mx-auto px-6 pb-10">{children}</div>
     </div>

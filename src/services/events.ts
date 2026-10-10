@@ -9,6 +9,7 @@ import {
   getEventSetlist,
   listCustomizationsForEvent,
 } from '@/services/eventSongs';
+import { SCHEDULE_SELECT } from '@/services/schedules';
 
 const EVENT_SELECT = `
   *,
@@ -100,7 +101,7 @@ export async function getEventBundle(eventId: string): Promise<EventBundle | nul
   if (event.scheduleId) {
     const { data, error } = await sb
       .from('schedules')
-      .select(`*, schedule_assignments(*, profiles(*))`)
+      .select(SCHEDULE_SELECT)
       .eq('id', event.scheduleId)
       .maybeSingle();
     if (error) throw error;
@@ -125,13 +126,6 @@ async function ensureEventChildren(
       .insert({
         org_id: event.churchId,
         event_id: event.id,
-        title: event.serviceType || event.title || 'Culto',
-        service_date: event.date,
-        service_time: event.time ?? null,
-        service_type: event.serviceType || event.title || 'Culto',
-        theme: event.theme ?? null,
-        notes: event.notes ?? null,
-        status: 'confirmed',
         playlist_id: null,
         group_id: isUuid(event.musicGroupId) ? event.musicGroupId : null,
         created_by: userId ?? null,

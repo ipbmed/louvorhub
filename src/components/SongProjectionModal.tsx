@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { parseLyricSections, stripChords, filterSectionsForView } from '../utils/chordTransposer';
 import { LyricSectionHeading } from './LyricSectionHeading';
+import { ActionButton } from './ui';
 import {
   buildProjectionSlides,
   bumpFontPx,
@@ -479,15 +480,14 @@ export const SongProjectionModal: React.FC<SongProjectionModalProps> = ({
             </button>
           )}
 
-          <button
-            type="button"
+          <ActionButton
+            variant={theme === 'light' ? 'light' : 'glass'}
+            icon={X}
             onClick={onClose}
-            className="p-2 bg-rose-950/60 text-rose-300 hover:bg-rose-900 rounded-button transition-colors sm:ml-2"
+            className="sm:ml-2"
             title="Sair do Modo Telão"
             aria-label="Sair do modo telão"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          />
         </div>
       </div>
 

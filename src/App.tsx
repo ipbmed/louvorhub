@@ -1266,9 +1266,7 @@ export default function App() {
   const SHELL_VIEWS: ViewMode[] = ['setlist', 'events', 'churchList', 'profile', 'accounts', 'workspace', 'churches', 'users'];
   const contentWidth = !user
     ? 'max-w-none'
-    : isEventDetail
-      ? 'max-w-7xl'
-      : SHELL_VIEWS.includes(currentView)
+    : isEventDetail || SHELL_VIEWS.includes(currentView)
         ? 'max-w-none'
         : NARROW_VIEWS.includes(currentView)
           ? 'max-w-3xl'
