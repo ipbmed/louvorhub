@@ -42,25 +42,27 @@ const TYPE_ALIASES: Record<string, LiturgyItemType> = {
 export const LITURGY_MARKDOWN_HELP = `Cada linha é um momento. Formatos aceitos:
 
 • Lista Markdown
-  - [música] Cântico de Louvor | responsável: Equipe | hino: 258
+  - [música] Cântico de Louvor | responsável: Equipe | música: 258
+  - [música] Louvor | música: Aclame ao Senhor
   - [oração] Oração de Invocação | responsável: Pr. João
   - [leitura] Salmo 95 | detalhes: Salmo 95:1-7
   - [pregação] A Palavra | responsável: Rev. Marcos
 
 • Numerada com pipes
-  1. hymn | Cântico de Louvor | Equipe | hino:258
+  1. hymn | Cântico de Louvor | Equipe | música:258
   2. prayer | Oração de Invocação | Pr. João
 
 Tipos: música, oração, leitura, pregação, ofertas, ceia, bênção, anúncios, outro
 Campos opcionais após o título (separados por |):
   responsável: Nome
   detalhes: texto
-  hino: 258   (ou #258)
+  música: 258 (ou #258) ou o título, ex.: música: Aclame ao Senhor
+    (hino: também é aceito)
   duração: 5 min
 
 Linhas em branco e títulos (# …) são ignorados.`;
 
-export const LITURGY_MARKDOWN_EXAMPLE = `- [música] Prelúdio & Cântico de Louvor | responsável: Equipe | hino: 258
+export const LITURGY_MARKDOWN_EXAMPLE = `- [música] Prelúdio & Cântico de Louvor | responsável: Equipe | música: 258
 - [oração] Oração de Invocação | responsável: Pr. Carlos
 - [leitura] Leitura Bíblica | detalhes: Salmo 95:1-7
 - [música] Cântico Congregacional | responsável: Equipe
@@ -83,11 +85,34 @@ function resolveType(raw: string): LiturgyItemType {
   return TYPE_ALIASES[key] || TYPE_ALIASES[key.replace(/_/g, '')] || 'custom';
 }
 
+function normalizeTitle(raw: string): string {
+  return raw
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
 function findSongId(ref: string | undefined, songs: Song[]): string | undefined {
-  if (!ref) return undefined;
-  const num = Number.parseInt(ref.replace(/[^\d]/g, ''), 10);
-  if (!Number.isFinite(num)) return undefined;
-  return songs.find((s) => s.number === num)?.id;
+  const value = ref?.trim();
+  if (!value) return undefined;
+
+  const numeric = value.match(/^(?:#|n[º°o.]?\s*|hino\s*)?(\d+)$/i);
+  if (numeric) {
+    const num = Number.parseInt(numeric[1], 10);
+    return songs.find((s) => s.number === num)?.id;
+  }
+
+  const target = normalizeTitle(value);
+  if (!target) return undefined;
+  const exact = songs.find((s) => normalizeTitle(s.title) === target);
+  if (exact) return exact.id;
+  const partial = songs.find((s) => normalizeTitle(s.title).includes(target));
+  if (partial) return partial.id;
+
+  const digits = Number.parseInt(value.replace(/[^\d]/g, ''), 10);
+  return Number.isFinite(digits) ? songs.find((s) => s.number === digits)?.id : undefined;
 }
 
 type ParsedFields = {
@@ -107,15 +132,15 @@ function applyNamedField(target: ParsedFields, keyRaw: string, value: string) {
     target.details = value;
   } else if (['duracao', 'duration', 'tempo'].includes(key)) {
     target.duration = value;
-  } else if (['hino', 'song', 'musica', 'número', 'numero', 'n'].includes(key)) {
+  } else if (['musica', 'hino', 'cantico', 'louvor', 'song', 'numero', 'n'].includes(key)) {
     target.songRef = value;
   }
 }
 
 /**
  * Aceita:
- * - [hino] Título | responsável: X | hino: 12
- * - 1. hymn | Título | X | hino:12
+ * - [música] Título | responsável: X | música: 12 (ou título)
+ * - 1. hymn | Título | X | música:12
  * - hymn: Título | responsável: X
  */
 function parseLine(line: string): ParsedFields | null {

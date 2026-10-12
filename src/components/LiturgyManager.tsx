@@ -24,6 +24,9 @@ import {
   HelpCircle,
   FileDown,
   Loader2,
+  Copy,
+  Check,
+  MessageCircle,
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton } from './PageHeader';
 import { SongSearchSelect } from './SongSearchSelect';
@@ -95,6 +98,7 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
   const [mdHelpOpen, setMdHelpOpen] = useState(false);
   const [mdImportError, setMdImportError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [copiedLiturgyId, setCopiedLiturgyId] = useState<string | null>(null);
 
   const resolvedServiceTitle = (fallback?: string) =>
     (linkedEventTitle || fallback || 'Culto').trim() || 'Culto';
@@ -280,6 +284,59 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
     }
   };
 
+  const buildShareText = (liturgy: Liturgy) => {
+    const church = churches.find((c) => c.id === liturgy.churchId);
+    const dateFormatted = new Date((linkedEventDate || liturgy.date) + 'T00:00:00').toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+
+    let text = `📋 *LITURGIA — ${linkedEventTitle || liturgy.serviceTitle}*\n`;
+    if (church) text += `⛪ *${church.name}*\n`;
+    text += `📅 ${dateFormatted}\n`;
+    if (liturgy.theme) text += `💡 *Tema:* ${liturgy.theme}\n`;
+    if (liturgy.bibleVerse) text += `📖 *Texto bíblico:* ${liturgy.bibleVerse}\n`;
+    if (liturgy.preacher) text += `🎤 *Pregador:* ${liturgy.preacher}\n`;
+    if (liturgy.leader) text += `🙋 *Dirigente:* ${liturgy.leader}\n`;
+
+    text += `\n*ORDEM DO CULTO*\n`;
+    if (liturgy.items.length === 0) {
+      text += `_Nenhum momento definido_\n`;
+    } else {
+      liturgy.items.forEach((item, idx) => {
+        text += `${idx + 1}. *${item.title}* (${getItemBadge(item.type).label})\n`;
+        const song = item.songId ? songs.find((s) => s.id === item.songId) : null;
+        if (song) {
+          const songLabel = song.songType === 'hino' && song.number
+            ? `Hino nº ${song.number} — ${song.title}`
+            : song.title;
+          text += `   └ 🎵 ${songLabel}${song.originalKey ? ` (Tom: ${song.originalKey})` : ''}\n`;
+        }
+        if (item.details) text += `   └ ${item.details}\n`;
+        if (item.responsible) text += `   └ Resp.: ${item.responsible}\n`;
+      });
+    }
+
+    text += `\n✨ LouvorHub`;
+    return text;
+  };
+
+  const handleCopyLiturgy = (liturgy: Liturgy) => {
+    void navigator.clipboard.writeText(buildShareText(liturgy));
+    setCopiedLiturgyId(liturgy.id);
+    setTimeout(() => setCopiedLiturgyId(null), 2500);
+  };
+
+  const handleWhatsAppLiturgy = (liturgy: Liturgy) => {
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(buildShareText(liturgy))}`,
+      '_blank',
+      'noopener,noreferrer',
+    );
+  };
+
   return (
     <div className="w-full">
       {!embedded && (
@@ -287,7 +344,7 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
         <PageHeader
           icon={FileText}
           title="Liturgias"
-          description="Monte a ordem do culto, leituras, orações e hinos com projeção e boletim impresso."
+          description="Monte a ordem do culto, leituras, orações e músicas com projeção e boletim impresso."
           actions={
             <PageHeaderButton icon={Plus} onClick={handleOpenNewModal}>
               Adicionar
@@ -309,7 +366,7 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
           <FileText className="w-12 h-12 text-stone-600 mx-auto mb-3" />
           <h3 className="text-base font-bold text-stone-300">Nenhuma liturgia cadastrada</h3>
           <p className="text-xs text-stone-500 max-w-sm mx-auto mt-1 mb-4">
-            Crie o roteiro do próximo culto com a ordem das leituras, orações, hinos e bênção.
+            Crie o roteiro do próximo culto com a ordem das leituras, orações, músicas e bênção.
           </p>
           <button
             onClick={handleOpenNewModal}
@@ -372,6 +429,38 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                         title="Ver Boletim Impresso"
                       >
                         <Printer className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleCopyLiturgy(liturgy)}
+                        className={`p-1.5 rounded-button border text-xs font-medium flex items-center gap-1 transition-colors ${
+                          copiedLiturgyId === liturgy.id
+                            ? 'bg-emerald-950 light:bg-emerald-50 text-emerald-300 light:text-emerald-800 border-emerald-700 light:border-emerald-300'
+                            : 'bg-stone-800 light:bg-stone-100 hover:bg-stone-700 light:hover:bg-stone-200 text-stone-300 light:text-stone-700 border-stone-700 light:border-stone-300'
+                        }`}
+                        title="Copiar liturgia"
+                        aria-label="Copiar liturgia"
+                      >
+                        {copiedLiturgyId === liturgy.id ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span className="text-[10px]">Copiado!</span>
+                          </>
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleWhatsAppLiturgy(liturgy)}
+                        className="p-1.5 bg-stone-800 light:bg-emerald-50 hover:bg-emerald-500/20 light:hover:bg-emerald-100 text-emerald-300 light:text-emerald-800 rounded-button border border-stone-700 light:border-emerald-200 text-xs font-medium flex items-center gap-1 transition-colors"
+                        title="Enviar pelo WhatsApp"
+                        aria-label="Enviar pelo WhatsApp"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">WhatsApp</span>
                       </button>
 
                       <button
@@ -452,9 +541,10 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                             {linkedSong ? (
                               <button
                                 onClick={() => onSelectSong && onSelectSong(linkedSong)}
-                                className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-mono font-bold shrink-0 hover:bg-emerald-500/30 rounded-button"
+                                className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-mono font-bold shrink-0 hover:bg-emerald-500/30 rounded-button truncate max-w-[160px]"
+                                title={linkedSong.number != null ? `#${linkedSong.number} · ${linkedSong.title}` : linkedSong.title}
                               >
-                                Hino #{linkedSong.number}
+                                {linkedSong.number != null ? `♪ #${linkedSong.number}` : `♪ ${linkedSong.title}`}
                               </button>
                             ) : item.responsible ? (
                               <span className="text-[10px] text-stone-400 truncate max-w-[120px]">
@@ -717,19 +807,24 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                         />
 
                         {item.type === 'hymn' ? (
-                          <SongSearchSelect
-                            songs={songs}
-                            value={item.songId || ''}
-                            onChange={(songId) =>
-                              handleUpdateItemField(
-                                idx,
-                                'songId',
-                                songId.trim() ? songId : undefined,
-                              )
-                            }
-                            placeholder="Buscar por título, número ou artista…"
-                            className="w-full min-w-0"
-                          />
+                          <div className="min-w-0 space-y-1">
+                            <label className="block text-[10px] font-semibold text-stone-400 uppercase tracking-wider">
+                              Música
+                            </label>
+                            <SongSearchSelect
+                              songs={songs}
+                              value={item.songId || ''}
+                              onChange={(songId) =>
+                                handleUpdateItemField(
+                                  idx,
+                                  'songId',
+                                  songId.trim() ? songId : undefined,
+                                )
+                              }
+                              placeholder="Buscar hino ou cântico por título, número ou artista…"
+                              className="w-full min-w-0"
+                            />
+                          </div>
                         ) : (
                           <input
                             type="text"
@@ -832,7 +927,7 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                         className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-sm shadow-xl transition-transform hover:scale-105 inline-flex items-center gap-2"
                       >
                         <Music className="w-5 h-5" />
-                        Abrir Hino #{song.number} - {song.title}
+                        Abrir Música: {song.number != null ? `#${song.number} · ` : ''}{song.title}
                       </button>
                     );
                   })()}

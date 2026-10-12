@@ -1,14 +1,13 @@
 {
-  "updated": [
+  "updated": [],
+  "inserted": [
     {
-      "id": "31e95546-c8d1-46c7-bd88-ade2e42b7a97",
-      "title": "Reina",
-      "pageUrl": "https://www.cifraclub.com.br/paulo-cesar-baruk/reina/",
-      "tone": "D",
-      "youtubeUrl": null
+      "title": "Da Vida, o Melhor",
+      "pageUrl": "https://www.cifraclub.com.br/projeto-sola/da-vida-o-melhor/",
+      "tone": "Db",
+      "youtubeUrl": "https://www.youtube.com/watch?v=wEO1YRxqG1A"
     }
   ],
-  "inserted": [],
   "errors": [],
   "skipped": []
 }

@@ -5,8 +5,20 @@ import type { Song } from '@/types';
 
 function songLabel(song: Song): string {
   return song.number != null
-    ? `Hino #${song.number} — ${song.title}`
-    : song.title;
+    ? `#${song.number} · ${song.title}`
+    : `♪ ${song.title}`;
+}
+
+type SongTypeFilter = 'all' | 'hino' | 'cantico';
+
+const TYPE_FILTERS: { id: SongTypeFilter; label: string }[] = [
+  { id: 'all', label: 'Todas' },
+  { id: 'hino', label: 'Hinos' },
+  { id: 'cantico', label: 'Cânticos' },
+];
+
+function isHymn(song: Song): boolean {
+  return song.songType ? song.songType === 'hino' : song.number != null;
 }
 
 interface SongSearchSelectProps {
@@ -34,6 +46,7 @@ export const SongSearchSelect: React.FC<SongSearchSelectProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<SongTypeFilter>('all');
   const [menuPos, setMenuPos] = useState<MenuPlacement>({
     left: 0,
     width: 240,
@@ -50,17 +63,18 @@ export const SongSearchSelect: React.FC<SongSearchSelectProps> = ({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const list = !q
-      ? songs
-      : songs.filter(
-          (s) =>
-            s.title.toLowerCase().includes(q) ||
-            (s.number != null && String(s.number).includes(q)) ||
-            (s.author && s.author.toLowerCase().includes(q)) ||
-            (s.composer && s.composer.toLowerCase().includes(q)),
-        );
-    return list.slice(0, 80);
-  }, [songs, query]);
+    return songs.filter((s) => {
+      if (typeFilter === 'hino' && !isHymn(s)) return false;
+      if (typeFilter === 'cantico' && isHymn(s)) return false;
+      if (!q) return true;
+      return (
+        s.title.toLowerCase().includes(q) ||
+        (s.number != null && String(s.number).includes(q)) ||
+        Boolean(s.author && s.author.toLowerCase().includes(q)) ||
+        Boolean(s.composer && s.composer.toLowerCase().includes(q))
+      );
+    });
+  }, [songs, query, typeFilter]);
 
   const updateMenuPos = () => {
     const el = rootRef.current;
@@ -127,7 +141,7 @@ export const SongSearchSelect: React.FC<SongSearchSelectProps> = ({
           aria-haspopup="listbox"
         >
           <span className={`truncate flex-1 ${selected ? '' : 'text-stone-500'}`}>
-            {selected ? songLabel(selected) : 'Sem hino vinculado'}
+            {selected ? songLabel(selected) : 'Nenhuma música vinculada'}
           </span>
           <ChevronsUpDown className="w-3.5 h-3.5 shrink-0 text-stone-500" />
         </button>
@@ -175,6 +189,25 @@ export const SongSearchSelect: React.FC<SongSearchSelectProps> = ({
                   className="w-full bg-stone-900 border border-stone-700 rounded-lg pl-7 pr-2 py-1.5 text-xs text-stone-100 focus:outline-none focus:border-emerald-600/50"
                 />
               </div>
+              <div className="mt-2 flex items-center gap-1">
+                {TYPE_FILTERS.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setTypeFilter(f.id)}
+                    className={`px-2 py-0.5 rounded-full border text-[10px] font-semibold ${
+                      typeFilter === f.id
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                        : 'text-stone-400 border-stone-700 hover:text-stone-200'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+                <span className="ml-auto text-[10px] text-stone-500 font-mono">
+                  {filtered.length}
+                </span>
+              </div>
             </div>
             <ul className="overflow-y-auto py-1 min-h-0 flex-1">
               <li>
@@ -188,7 +221,7 @@ export const SongSearchSelect: React.FC<SongSearchSelectProps> = ({
                     !value ? 'text-emerald-300' : 'text-stone-400'
                   }`}
                 >
-                  Sem hino vinculado
+                  Nenhuma música vinculada
                 </button>
               </li>
               {filtered.length === 0 ? (
@@ -213,11 +246,9 @@ export const SongSearchSelect: React.FC<SongSearchSelectProps> = ({
                         }`}
                         title={songLabel(song)}
                       >
-                        {song.number != null && (
-                          <span className="font-mono text-emerald-400/90 mr-1.5">
-                            #{song.number}
-                          </span>
-                        )}
+                        <span className="font-mono text-emerald-400/90 mr-1.5">
+                          {song.number != null ? `#${song.number}` : '♪'}
+                        </span>
                         {song.title}
                         {song.author ? (
                           <span className="text-stone-500"> · {song.author}</span>
