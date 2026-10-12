@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { AlertTriangle, ListMusic, FileText, Plus, Loader2 } from 'lucide-react';
+import { AlertTriangle, ListMusic, FileText, Plus } from 'lucide-react';
 import type { Liturgy, LiturgyItem, Setlist, Song } from '@/types';
+import { ActionButton } from './ui';
 
 function songLabel(song: Song | undefined): string {
   if (!song) return 'Música';
@@ -180,14 +181,9 @@ export const EventLiturgySetlistSync: React.FC<EventLiturgySetlistSyncProps> = (
             criada.
           </p>
           {canManageLiturgy && onEnsureLiturgy && (
-            <button
-              type="button"
-              onClick={() => void onEnsureLiturgy()}
-              className="px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-[11px] inline-flex items-center gap-1 shrink-0"
-            >
-              <FileText className="w-3.5 h-3.5" />
+            <ActionButton variant="primary" icon={FileText} onClick={() => void onEnsureLiturgy()}>
               Criar liturgia
-            </button>
+            </ActionButton>
           )}
         </div>
       )}
@@ -200,19 +196,14 @@ export const EventLiturgySetlistSync: React.FC<EventLiturgySetlistSyncProps> = (
               Pendentes ({missingInSetlist.length})
             </p>
             {canManageSetlist && missingInSetlist.length > 1 && (
-              <button
-                type="button"
-                disabled={busyId === 'all-setlist'}
+              <ActionButton
+                variant="primary"
+                icon={Plus}
+                loading={busyId === 'all-setlist'}
                 onClick={() => void addToSetlist(missingInSetlist)}
-                className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-stone-950 font-bold rounded-button text-[10px] inline-flex items-center gap-1"
               >
-                {busyId === 'all-setlist' ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                  <Plus className="w-3 h-3" />
-                )}
                 Adicionar todas
-              </button>
+              </ActionButton>
             )}
           </div>
           <ul className="space-y-1.5">
@@ -227,19 +218,15 @@ export const EventLiturgySetlistSync: React.FC<EventLiturgySetlistSyncProps> = (
                     {songLabel(song)}
                   </span>
                   {canManageSetlist ? (
-                    <button
-                      type="button"
-                      disabled={busyId === songId || busyId === 'all-setlist'}
+                    <ActionButton
+                      variant="secondary"
+                      icon={Plus}
+                      loading={busyId === songId}
+                      disabled={busyId === 'all-setlist'}
                       onClick={() => void addToSetlist([songId])}
-                      className="shrink-0 px-2 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 light:text-emerald-800 border border-emerald-700/40 light:border-emerald-300 rounded-button text-[10px] font-bold inline-flex items-center gap-1 disabled:opacity-50"
                     >
-                      {busyId === songId ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <Plus className="w-3 h-3" />
-                      )}
                       Adicionar
-                    </button>
+                    </ActionButton>
                   ) : (
                     <span className="text-[10px] text-stone-500 shrink-0">Sem permissão</span>
                   )}
@@ -258,19 +245,14 @@ export const EventLiturgySetlistSync: React.FC<EventLiturgySetlistSyncProps> = (
               Pendentes ({missingInLiturgy.length})
             </p>
             {canManageLiturgy && missingInLiturgy.length > 1 && (
-              <button
-                type="button"
-                disabled={busyId === 'all-liturgy'}
+              <ActionButton
+                variant="primary"
+                icon={Plus}
+                loading={busyId === 'all-liturgy'}
                 onClick={() => void addToLiturgy(missingInLiturgy)}
-                className="px-2.5 py-1 bg-sky-500 hover:bg-sky-400 disabled:opacity-60 text-stone-950 font-bold rounded-button text-[10px] inline-flex items-center gap-1"
               >
-                {busyId === 'all-liturgy' ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                  <Plus className="w-3 h-3" />
-                )}
                 Incluir todas
-              </button>
+              </ActionButton>
             )}
           </div>
           <ul className="space-y-1.5">
@@ -285,19 +267,15 @@ export const EventLiturgySetlistSync: React.FC<EventLiturgySetlistSyncProps> = (
                     {songLabel(song)}
                   </span>
                   {canManageLiturgy ? (
-                    <button
-                      type="button"
-                      disabled={busyId === songId || busyId === 'all-liturgy'}
+                    <ActionButton
+                      variant="secondary"
+                      icon={Plus}
+                      loading={busyId === songId}
+                      disabled={busyId === 'all-liturgy'}
                       onClick={() => void addToLiturgy([songId])}
-                      className="shrink-0 px-2 py-1 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 light:text-sky-800 border border-sky-700/40 light:border-sky-300 rounded-button text-[10px] font-bold inline-flex items-center gap-1 disabled:opacity-50"
                     >
-                      {busyId === songId ? (
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                      ) : (
-                        <Plus className="w-3 h-3" />
-                      )}
                       Incluir
-                    </button>
+                    </ActionButton>
                   ) : (
                     <span className="text-[10px] text-stone-500 shrink-0">Sem permissão</span>
                   )}

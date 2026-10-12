@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Check, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { ActionButton } from './ui';
 
 const OUTPUT_SIZE = 200;
 
@@ -112,13 +113,7 @@ export const AvatarCropDialog: React.FC<AvatarCropDialogProps> = ({
       <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-md p-4 space-y-4 text-stone-100 shadow-2xl">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-display font-bold text-emerald-100 tracking-tight">Ajustar foto</h3>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <ActionButton variant="light" icon={X} onClick={onCancel} aria-label="Fechar" title="Fechar" />
         </div>
 
         <p className="text-[11px] text-stone-400">
@@ -151,14 +146,13 @@ export const AvatarCropDialog: React.FC<AvatarCropDialogProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
+          <ActionButton
+            variant="light"
+            icon={ZoomOut}
             onClick={() => changeScale(scale / 1.1)}
-            className="p-2 bg-stone-800 border border-stone-700 rounded-button text-stone-300"
+            aria-label="Diminuir zoom"
             title="Diminuir zoom"
-          >
-            <ZoomOut className="w-4 h-4" />
-          </button>
+          />
           <input
             type="range"
             min={minScale}
@@ -168,33 +162,22 @@ export const AvatarCropDialog: React.FC<AvatarCropDialogProps> = ({
             onChange={(e) => changeScale(Number(e.target.value))}
             className="flex-1 accent-emerald-500"
           />
-          <button
-            type="button"
+          <ActionButton
+            variant="light"
+            icon={ZoomIn}
             onClick={() => changeScale(scale * 1.1)}
-            className="p-2 bg-stone-800 border border-stone-700 rounded-button text-stone-300"
+            aria-label="Aumentar zoom"
             title="Aumentar zoom"
-          >
-            <ZoomIn className="w-4 h-4" />
-          </button>
+          />
         </div>
 
         <div className="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-3 py-2 text-xs font-semibold bg-stone-800 border border-stone-700 rounded-button text-stone-300"
-          >
+          <ActionButton variant="light" onClick={onCancel}>
             Cancelar
-          </button>
-          <button
-            type="button"
-            disabled={!ready}
-            onClick={exportCrop}
-            className="px-3 py-2 text-xs font-bold bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-stone-950 rounded-button inline-flex items-center gap-1.5"
-          >
-            <Check className="w-3.5 h-3.5" />
+          </ActionButton>
+          <ActionButton variant="primary" icon={Check} disabled={!ready} onClick={exportCrop}>
             Usar foto
-          </button>
+          </ActionButton>
         </div>
       </div>
     </div>

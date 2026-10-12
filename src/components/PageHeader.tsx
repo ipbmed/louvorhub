@@ -1,11 +1,16 @@
 import React from 'react';
-import type { LucideIcon } from 'lucide-react';
+import { ArrowLeft, type LucideIcon } from 'lucide-react';
+import { Button, IconButton, type ButtonProps } from './ui/Button';
+import { cn } from './ui/cn';
 
-interface PageHeaderProps {
-  icon: LucideIcon;
+export interface PageHeaderProps {
+  icon?: LucideIcon;
   title: string;
   description?: React.ReactNode;
   actions?: React.ReactNode;
+  /** Mostra o botão de voltar à esquerda do título. */
+  onBack?: () => void;
+  backLabel?: string;
   /** Quando definido, o ícone vira botão clicável. */
   onIconClick?: () => void;
   iconTitle?: string;
@@ -14,15 +19,14 @@ interface PageHeaderProps {
   /** Clique no título (ex.: ir para Início). */
   onTitleClick?: () => void;
   titleTitle?: string;
+  /** Conteúdo abaixo do título (abas, filtros). */
+  children?: React.ReactNode;
+  /** Em tela grande, vira barra fixa colada ao topo (largura total, padding reduzido). */
+  bar?: boolean;
+  className?: string;
 }
 
-const primaryClassName =
-  'px-3 py-2 sm:px-4 sm:py-2.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs flex items-center gap-1.5 shadow-md shadow-emerald-500/20 transition-all shrink-0';
-
-const secondaryClassName =
-  'px-3 py-2 sm:px-4 sm:py-2.5 bg-stone-800 light:bg-stone-100 hover:bg-stone-700 light:hover:bg-stone-200 text-emerald-300 light:text-emerald-800 rounded-button border border-stone-700 light:border-stone-300 text-xs font-semibold transition-all flex items-center gap-1.5 shrink-0';
-
-interface PageHeaderButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface PageHeaderButtonProps extends Omit<ButtonProps, 'variant' | 'icon'> {
   icon: LucideIcon;
   variant?: 'primary' | 'secondary';
   children: React.ReactNode;
@@ -30,97 +34,173 @@ interface PageHeaderButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEle
 
 /** Botão padronizado do cabeçalho das views internas. */
 export const PageHeaderButton: React.FC<PageHeaderButtonProps> = ({
-  icon: Icon,
+  icon,
   variant = 'primary',
   children,
   className,
-  type = 'button',
   ...props
-}) => {
-  const base = variant === 'primary' ? primaryClassName : secondaryClassName;
-  return (
-    <button
-      type={type}
-      className={className ? `${base} ${className}` : base}
-      {...props}
-    >
-      <Icon className="w-4 h-4" />
-      <span className="inline-flex items-center gap-1.5">{children}</span>
-    </button>
-  );
-};
+}) => (
+  <Button
+    icon={icon}
+    size="sm"
+    variant={variant === 'primary' ? 'primary' : 'secondary'}
+    className={cn('sm:min-h-10 sm:px-4 sm:text-sm', className)}
+    {...props}
+  >
+    {children}
+  </Button>
+);
 
-/** Cabeçalho padronizado das views internas (painel, repertórios, igrejas, etc.). */
+/** Cabeçalho padronizado das views internas: título, subtítulo, voltar e ações. */
 export const PageHeader: React.FC<PageHeaderProps> = ({
   icon: Icon,
   title,
   description,
   actions,
+  onBack,
+  backLabel = 'Voltar',
   onIconClick,
   iconTitle,
   iconBadge: BadgeIcon,
   onTitleClick,
   titleTitle,
+  children,
+  bar = false,
+  className,
 }) => {
-  const iconClassName =
-    'relative w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl sm:rounded-2xl bg-emerald-500/20 light:bg-emerald-50 text-emerald-400 light:text-emerald-700 flex items-center justify-center border border-emerald-500/30 light:border-emerald-200 ml-2 sm:ml-3';
+  const iconClassName = cn(
+    'relative hidden sm:flex w-11 h-11 shrink-0 rounded-[14px] bg-brand-soft text-brand-text items-center justify-center',
+    bar && 'lg:w-9 lg:h-9 lg:rounded-xl',
+  );
 
-  const iconInner = (
+  const iconInner = Icon ? (
     <>
-      <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
+      <Icon className="w-5 h-5" />
       {BadgeIcon && (
-        <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 sm:w-[1.125rem] sm:h-[1.125rem] rounded-full bg-emerald-500 text-stone-950 flex items-center justify-center ring-2 ring-stone-900 light:ring-white shadow-sm">
+        <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-brand text-brand-fg flex items-center justify-center ring-2 ring-app shadow-sm">
           <BadgeIcon className="w-2.5 h-2.5" strokeWidth={2.5} />
         </span>
       )}
     </>
+  ) : null;
+
+  const titleClassName = cn(
+    'text-[22px] sm:text-2xl font-extrabold text-fg leading-tight tracking-tight truncate',
+    bar && 'lg:text-xl',
   );
 
-  const titleClassName =
-    'text-lg sm:text-2xl font-display font-bold text-emerald-100 light:text-stone-900 leading-tight tracking-tight truncate';
-
   return (
-    <div className="w-full bg-stone-900 border-y border-emerald-900/40 light:border-stone-200 rounded-none py-2 sm:py-2.5 px-0 shadow-none flex flex-row items-center justify-between gap-3">
-      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-        {onIconClick ? (
-          <button
-            type="button"
-            onClick={onIconClick}
-            title={iconTitle}
-            aria-label={iconTitle || 'Ação'}
-            className={`${iconClassName} hover:bg-emerald-500/30 light:hover:bg-emerald-100 transition-colors`}
-          >
-            {iconInner}
-          </button>
-        ) : (
-          <div className={iconClassName}>{iconInner}</div>
-        )}
-        <div className="min-w-0 pr-2">
-          {onTitleClick ? (
-            <button
-              type="button"
-              onClick={onTitleClick}
-              title={titleTitle || title}
-              className={`${titleClassName} text-left hover:opacity-80 transition-opacity max-w-full`}
-            >
-              {title}
-            </button>
-          ) : (
-            <h2 className={titleClassName}>{title}</h2>
-          )}
-          {description != null && description !== '' && (
-            <div className="hidden sm:block text-xs text-stone-400 light:text-stone-500 mt-0.5 leading-relaxed">
-              {description}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {actions && (
-        <div className="flex items-center gap-2 flex-wrap shrink-0 self-center pr-2 sm:pr-3">
-          {actions}
-        </div>
+    <div
+      className={cn(
+        'w-full',
+        // Fundo e borda inferior estendidos até as bordas da janela sem gerar rolagem horizontal.
+        bar &&
+          'lg:sticky lg:top-0 lg:z-20 lg:-mt-8 lg:-mx-8 lg:w-auto lg:min-h-16 lg:flex lg:flex-col lg:justify-center lg:px-8 lg:py-2 lg:bg-surface lg:[clip-path:inset(0_-100vmax_-1px)] lg:shadow-[0_0_0_100vmax_var(--surface),0_1px_0_100vmax_var(--line)]',
+        className,
       )}
+    >
+      <div className="flex flex-row items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          {onBack && (
+            <IconButton
+              icon={ArrowLeft}
+              label={backLabel}
+              variant="ghost"
+              onClick={onBack}
+              className={cn('-ml-1 bg-surface shadow-card', bar && 'lg:w-9 lg:h-9 lg:ml-0')}
+            />
+          )}
+          {Icon &&
+            (!onBack || bar) &&
+            (onIconClick ? (
+              <button
+                type="button"
+                onClick={onIconClick}
+                title={iconTitle}
+                aria-label={iconTitle || 'Ação'}
+                className={cn(iconClassName, 'hover:brightness-95 transition')}
+              >
+                {iconInner}
+              </button>
+            ) : (
+              <div className={iconClassName}>{iconInner}</div>
+            ))}
+          <div className="min-w-0 pr-1">
+            {onTitleClick ? (
+              <button
+                type="button"
+                onClick={onTitleClick}
+                title={titleTitle || title}
+                className={cn(titleClassName, 'block text-left hover:opacity-80 transition-opacity max-w-full')}
+              >
+                {title}
+              </button>
+            ) : (
+              <h1 className={titleClassName}>{title}</h1>
+            )}
+            {description != null && description !== '' && (
+              <div
+                className={cn(
+                  'text-[13px] sm:text-sm text-fg-muted mt-0.5 leading-snug line-clamp-2',
+                  bar && 'lg:text-[13px] lg:mt-0 lg:line-clamp-1',
+                )}
+              >
+                {description}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {actions && (
+          <div className="flex items-center gap-2 flex-wrap justify-end shrink-0 self-center">
+            {actions}
+          </div>
+        )}
+      </div>
+      {children && <div className="mt-3">{children}</div>}
     </div>
   );
 };
+
+const SHELL_WIDTHS = {
+  narrow: 'max-w-3xl',
+  wide: 'max-w-7xl',
+  full: '',
+} as const;
+
+interface PageShellProps extends Omit<PageHeaderProps, 'bar' | 'children' | 'className'> {
+  /** Conteúdo abaixo do título dentro da barra (abas, filtros). */
+  headerContent?: React.ReactNode;
+  /** Largura máxima do conteúdo (centralizado); a barra ocupa sempre a largura total. */
+  width?: keyof typeof SHELL_WIDTHS;
+  /** Oculta a barra (ex.: view embutida em outra página). */
+  hideHeader?: boolean;
+  className?: string;
+  contentClassName?: string;
+  children: React.ReactNode;
+}
+
+/**
+ * Página interna padrão: cabeçalho em barra colada ao topo (tela grande)
+ * e conteúdo com espaçamento externo reduzido.
+ */
+export const PageShell: React.FC<PageShellProps> = ({
+  headerContent,
+  width = 'wide',
+  hideHeader = false,
+  className,
+  contentClassName,
+  children,
+  ...header
+}) => (
+  <div className={cn('w-full space-y-4 lg:space-y-3 animate-in fade-in duration-300', className)}>
+    {!hideHeader && (
+      <PageHeader bar {...header}>
+        {headerContent}
+      </PageHeader>
+    )}
+    <div className={cn(!hideHeader && 'lg:-mx-4')}>
+      <div className={cn('mx-auto w-full space-y-4', SHELL_WIDTHS[width], contentClassName)}>{children}</div>
+    </div>
+  </div>
+);

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useMatch, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -36,6 +36,10 @@ import { songPath, songVersionPath } from '@/utils/songRoutes';
 import { Header } from './components/Header';
 import { SongCard } from './components/SongCard';
 import { SongListRow } from './components/SongListRow';
+import { SongPaneItem } from './components/SongPaneItem';
+import { CatalogSplitPlaceholder } from './components/CatalogSplitPlaceholder';
+import { CatalogRail } from './components/CatalogRail';
+import { useMediaQuery } from './hooks/useMediaQuery';
 import { SongDetailModal } from './components/SongDetailModal';
 import { SongProjectionModal } from './components/SongProjectionModal';
 import { NumericKeypadModal } from './components/NumericKeypadModal';
@@ -53,22 +57,80 @@ import { SongFormModal } from './components/SongFormModal';
 import { CategoryManagerModal } from './components/CategoryManagerModal';
 import { TagManagerModal } from './components/TagManagerModal';
 import { ChurchManager } from './components/ChurchManager';
-import { ChurchWorkspace, WORKSPACE_VIEWS } from './components/ChurchWorkspace';
-import { OrganizationManager } from './components/OrganizationManager';
+import { ChurchWorkspace, WORKSPACE_VIEWS, type ChurchSection } from './components/ChurchWorkspace';
+import { ChurchFormModal } from './components/ChurchFormModal';
 import { EventManager } from './components/EventManager';
 import { EventDetail } from './components/EventDetail';
 import { UserManager } from './components/UserManager';
 import { InviteAcceptPage } from './components/InviteAcceptPage';
 import { AlphabetFilter, AlphabetFilterToggle } from './components/AlphabetFilter';
-import { SongTypeFilter, matchesSongTypeFilter } from './components/SongTypeFilter';
+import { SongTypeFilter, matchesSongTypeFilter, type SongTypeMode } from './components/SongTypeFilter';
 import { AppSidebar } from './components/AppSidebar';
+import { AppTopbar } from './components/AppTopbar';
+import { MobileNav } from './components/MobileNav';
+import { CatalogSearchBar } from './components/CatalogSearchBar';
 import { ProfilePage } from './components/ProfilePage';
-import { Music, ArrowUpDown, AlertCircle, LayoutGrid, List, Loader2 } from 'lucide-react';
+import { HomeDashboard } from './components/HomeDashboard';
+import { ChurchesPage } from './components/ChurchesPage';
+import { MorePage } from './components/MorePage';
+import { PageHeader } from './components/PageHeader';
+import {
+  Music,
+  Music2,
+  ArrowUpDown,
+  AlertCircle,
+  ChevronDown,
+  LayoutGrid,
+  List,
+  Loader2,
+  Church as ChurchIcon,
+  KeyRound,
+  SearchX,
+  FilterX,
+  Settings2,
+} from 'lucide-react';
 import { CatalogSongsLoading } from './components/CatalogSongsLoading';
 import { HelpModal } from './components/HelpModal';
+import { useConfirm } from '@/contexts/ConfirmProvider';
+import { getAvatarPublicUrl } from '@/utils/avatarUrl';
+import { Alert, Button, Chip, EmptyState, Input, Select, cn } from './components/ui';
 
 type SongsLayoutMode = 'cards' | 'list';
 const SONGS_LAYOUT_KEY = 'louvorhub_songs_layout';
+const SIDEBAR_COLLAPSED_KEY = 'louvorhub_sidebar_collapsed';
+const AGENDA_HIDDEN_KEY = 'louvorhub_agenda_hidden_churches';
+/** Visitantes: o catálogo é exibido em blocos, com "Carregar mais". */
+const CATALOG_PAGE_SIZE = 30;
+
+const VALID_VIEWS: ViewMode[] = [
+  'home',
+  'churchList',
+  'more',
+  'public',
+  'register',
+  'workspace',
+  'setlist',
+  'churches',
+  'events',
+  'schedules',
+  'liturgies',
+  'users',
+  'accounts',
+  'admin',
+  'profile',
+];
+
+/** Lê `?view=` (atalhos do PWA) e limpa a URL. */
+function readInitialView(): ViewMode | null {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get('view');
+    if (v && (VALID_VIEWS as string[]).includes(v)) return v as ViewMode;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
 
 const INITIAL_FILTERS: SearchFilters = {
   keyword: '',
@@ -88,6 +150,8 @@ export default function App() {
   const location = useLocation();
   const songVersionMatch = useMatch('/musica/versao/:eventSongId');
   const songMatch = useMatch('/musica/:songId');
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const isTabletUp = useMediaQuery('(min-width: 768px)');
   const playlistShareMatch = useMatch('/playlist/:shareCode');
   const legacyPlaylistShareMatch = useMatch('/repertorio/:shareCode');
   const eventShareMatch = useMatch('/evento/:shareCode');
@@ -105,6 +169,7 @@ export default function App() {
   const { ready, user, profile, signOut, configured, refreshMemberships, refreshProfile } = useAuth();
   const { showToast } = useToast();
   const { withBusy } = useApiBusy();
+  const confirm = useConfirm();
   const { orgId, memberships, setActiveOrgId, activeOrgId } = useOrg();
   const {
     isAdmin,
@@ -123,6 +188,7 @@ export default function App() {
     refreshGrants,
   } = usePermissions();
 
+  const [pendingShortcutView] = useState<ViewMode | null>(readInitialView);
   const [currentView, setCurrentView] = useState<ViewMode>('public');
   const [activeCategoryPill, setActiveCategoryPill] = useState('Todos');
   const [selectedLetter, setSelectedLetter] = useState('TODAS');
@@ -142,6 +208,40 @@ export default function App() {
     }
   });
   const [advancedFilters, setAdvancedFilters] = useState<SearchFilters>(INITIAL_FILTERS);
+  const [catalogVisibleCount, setCatalogVisibleCount] = useState(CATALOG_PAGE_SIZE);
+
+  useEffect(() => {
+    setCatalogVisibleCount(CATALOG_PAGE_SIZE);
+  }, [
+    quickQuery,
+    activeCategoryPill,
+    selectedLetter,
+    showHinos,
+    showCanticos,
+    showFavoritesOnly,
+    sortBy,
+    advancedFilters,
+  ]);
+
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
 
   const handleSongsLayoutChange = (mode: SongsLayoutMode) => {
     setSongsLayout(mode);
@@ -160,37 +260,20 @@ export default function App() {
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [showTagManager, setShowTagManager] = useState(false);
   const [joinCode, setJoinCode] = useState('');
-  const [sidebarDrawerOpen, setSidebarDrawerOpen] = useState(false);
   const [churchEditRequestKey, setChurchEditRequestKey] = useState(0);
-  const [sidebarDesktopOpen, setSidebarDesktopOpen] = useState(() => {
-    try {
-      return localStorage.getItem('louvorhub_sidebar_desktop') !== '0';
-    } catch {
-      return true;
-    }
-  });
+  const [showChurchCreate, setShowChurchCreate] = useState(false);
   const [songToAddToSetlist, setSongToAddToSetlist] = useState<Song | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
-  const setSidebarDesktop = (open: boolean) => {
-    setSidebarDesktopOpen(open);
-    try {
-      localStorage.setItem('louvorhub_sidebar_desktop', open ? '1' : '0');
-    } catch {
-      /* ignore */
-    }
-  };
-
-  const isEventDetail =
-    currentView === 'events' && Boolean(selectedEventId);
-  const isWorkspaceShell =
-    Boolean(user && orgId && WORKSPACE_VIEWS.includes(currentView));
+  const isEventDetail = Boolean(user && selectedEventId);
 
   const PROTECTED_VIEWS: ViewMode[] = [
+    'home',
+    'churchList',
+    'more',
     'workspace',
     'setlist',
     'churches',
-    'organizations',
     'users',
     'accounts',
     'events',
@@ -213,10 +296,6 @@ export default function App() {
         showToast('Somente administradores gerenciam músicas.');
         return;
       }
-      if (view === 'organizations' && !canAccessAdminPanel) {
-        showToast('Somente administradores gerenciam igrejas.');
-        return;
-      }
       if (view === 'accounts' && !canManageUsers) {
         showToast('Somente administradores gerenciam contas.');
         return;
@@ -233,20 +312,35 @@ export default function App() {
         showToast('Sem permissão para gerenciar grupos e bandas.');
         return;
       }
+      if (view === 'events' && !orgId) {
+        showToast('Associe-se a uma igreja para ver a agenda.');
+        return;
+      }
       if (view === 'events' && !canAccessEvents) {
         showToast('Sem permissão para acessar eventos.');
         return;
       }
     }
-    // Sai do detalhe do evento ao trocar de aba (ou ao clicar de novo em Eventos).
-    if (view !== 'events' || currentView === 'events') setSelectedEventId(null);
+    setSelectedEventId(null);
+    if (view !== currentView) window.scrollTo({ top: 0 });
     setCurrentView(view);
+  };
+
+  const openEvent = (eventId: string) => {
+    setSelectedEventId(eventId);
+    window.scrollTo({ top: 0 });
+  };
+
+  const openChurch = (churchId: string) => {
+    if (churchId !== orgId) setActiveOrgId(churchId);
+    setSelectedEventId(null);
+    setCurrentView('workspace');
+    window.scrollTo({ top: 0 });
   };
 
   const goToCatalog = () => {
     if (currentView === 'public') return;
     setSelectedEventId(null);
-    setSidebarDrawerOpen(false);
     setCurrentView('public');
   };
 
@@ -254,6 +348,32 @@ export default function App() {
     setQuickQuery(val);
     if (val.trim()) goToCatalog();
   };
+
+  // Atalhos do PWA (?view=setlist etc.): aplica após a sessão estar pronta.
+  useEffect(() => {
+    if (!ready || !pendingShortcutView) return;
+    if (window.location.search) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+    if (pendingShortcutView === 'public') return;
+    if (!user && PROTECTED_VIEWS.includes(pendingShortcutView)) {
+      setShowLogin(true);
+      return;
+    }
+    if (pendingShortcutView === 'workspace' && !orgId) return;
+    setCurrentView(pendingShortcutView);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, pendingShortcutView, user, orgId]);
+
+  // Ao entrar (ou reabrir com sessão ativa), o ambiente privado começa no Início.
+  const lastUserIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const id = user?.id ?? null;
+    if (id && id !== lastUserIdRef.current && !pendingShortcutView) {
+      setCurrentView((v) => (v === 'public' ? 'home' : v));
+    }
+    lastUserIdRef.current = id;
+  }, [user?.id, pendingShortcutView]);
 
   // Visitante: somente consulta de músicas
   useEffect(() => {
@@ -294,12 +414,21 @@ export default function App() {
     queryFn: () => eventSongsService.getSongForVersion(selectedEventSongId!),
   });
 
+  /** Desktop: catálogo dividido — lista à esquerda, música selecionada à direita. */
+  const splitActive = isDesktop && currentView === 'public' && !selectedEventSongId && !isEventDetail;
+  const songOverlay = Boolean(songMatch) && !splitActive;
+  /** Celular e catálogo dividido: filtros em linhas (tipo, visualização, índice + ordem). */
+  const stackedFilters = splitActive || !isTabletUp;
+
   const openSong = (song: Song, options?: { eventSongId?: string }) => {
     if (options?.eventSongId) {
       navigate(songVersionPath(options.eventSongId), { state: { fromApp: true } });
       return;
     }
-    navigate(songPath(song), { state: { fromApp: true } });
+    // Trocar de música no painel não empilha histórico; preserva a origem para o "fechar".
+    const replace = splitActive && Boolean(songMatch);
+    const fromApp = replace ? Boolean((location.state as { fromApp?: boolean } | null)?.fromApp) : true;
+    navigate(songPath(song), { replace, state: { fromApp } });
   };
 
   const closeSongPage = () => {
@@ -328,12 +457,6 @@ export default function App() {
     queryFn: () => orgsService.listOrganizationsForUser(user!.id),
   });
 
-  const allOrganizationsQuery = useQuery({
-    queryKey: ['allOrganizations'],
-    enabled: Boolean(configured && user?.id && canAccessAdminPanel),
-    queryFn: () => orgsService.listAllVisibleOrganizations(),
-  });
-
   const musicGroupsQuery = useQuery({
     queryKey: ['musicGroups', orgIds.join(',')],
     enabled: Boolean(configured && orgIds.length),
@@ -358,6 +481,45 @@ export default function App() {
     queryFn: () => eventsService.listEvents(orgId!),
   });
 
+  const [agendaHiddenIds, setAgendaHiddenIds] = useState<string[]>(() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(AGENDA_HIDDEN_KEY) || '[]');
+      return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === 'string') : [];
+    } catch {
+      return [];
+    }
+  });
+  const updateAgendaHidden = (next: string[]) => {
+    setAgendaHiddenIds(next);
+    try {
+      localStorage.setItem(AGENDA_HIDDEN_KEY, JSON.stringify(next));
+    } catch {
+      /* armazenamento indisponível */
+    }
+  };
+  const agendaOrgIds = useMemo(
+    () =>
+      memberships
+        .filter((m) => m.organizations && !m.organizations.is_global)
+        .map((m) => m.org_id),
+    [memberships],
+  );
+  const toggleAgendaChurch = (id: string) =>
+    updateAgendaHidden(
+      agendaHiddenIds.includes(id) ? agendaHiddenIds.filter((x) => x !== id) : [...agendaHiddenIds, id],
+    );
+  const agendaVisibleIds = useMemo(() => {
+    if (agendaOrgIds.length <= 1) return orgId ? [orgId] : [];
+    return agendaOrgIds.filter((id) => !agendaHiddenIds.includes(id));
+  }, [agendaOrgIds, agendaHiddenIds, orgId]);
+
+  const agendaEventsQuery = useQuery({
+    queryKey: ['events', 'agenda', agendaVisibleIds.join(',')],
+    enabled: Boolean(configured && canAccessEvents && currentView === 'events'),
+    queryFn: () => eventsService.listEventsForOrgs(agendaVisibleIds),
+    placeholderData: (previous) => previous,
+  });
+
   const eventBundleQuery = useQuery({
     queryKey: ['event-bundle', selectedEventId],
     enabled: Boolean(configured && selectedEventId),
@@ -373,7 +535,6 @@ export default function App() {
   const categories = categoriesQuery.data || [];
   const favorites = favoritesQuery.data || [];
   const churches = churchesQuery.data || [];
-  const allOrganizations = allOrganizationsQuery.data || [];
   const musicGroups = musicGroupsQuery.data || [];
   const systemUsers = membersQuery.data || [];
   const setlists = setlistsQuery.data || [];
@@ -464,11 +625,14 @@ export default function App() {
     );
   };
 
-  const handleDeleteSong = (song: Song) => {
+  const handleDeleteSong = async (song: Song) => {
     const label = song.number ? `hino #${song.number}` : `cântico "${song.title}"`;
-    if (confirm(`Tem certeza que deseja excluir o ${label}?`)) {
-      void withBusy(() => deleteSongMutation.mutateAsync(song.id));
-    }
+    const ok = await confirm({
+      title: 'Excluir música',
+      message: `Tem certeza que deseja excluir o ${label}? Ele sairá do catálogo e das playlists.`,
+      confirmLabel: 'Excluir música',
+    });
+    if (ok) void withBusy(() => deleteSongMutation.mutateAsync(song.id));
   };
 
   const handleSaveCategories = async (updated: Category[]) => {
@@ -553,7 +717,6 @@ export default function App() {
         }
         await refreshMemberships();
         await queryClient.invalidateQueries({ queryKey: ['churches'] });
-        await queryClient.invalidateQueries({ queryKey: ['allOrganizations'] });
         showToast(`Igreja "${church.name}" salva!`);
       } catch (err) {
         showToast((err as Error).message);
@@ -562,15 +725,20 @@ export default function App() {
     });
   };
 
-  const handleDeleteChurch = async (id: string) => {
-    if (!confirm('Remover esta igreja? Esta ação é irreversível.')) return;
+  const handleDeleteChurch = async (id: string): Promise<boolean> => {
+    const ok = await confirm({
+      title: 'Remover igreja',
+      message: 'Todos os eventos, grupos e membros vinculados serão perdidos. Esta ação é irreversível.',
+      confirmLabel: 'Remover igreja',
+    });
+    if (!ok) return false;
     return withBusy(async () => {
       try {
         await orgsService.deleteOrganization(id);
         await refreshMemberships();
         await invalidateAll();
-        await queryClient.invalidateQueries({ queryKey: ['allOrganizations'] });
         showToast('Igreja removida.');
+        return true;
       } catch (err) {
         showToast((err as Error).message);
         throw err;
@@ -614,7 +782,7 @@ export default function App() {
     if (!requireOrg()) return;
     return withBusy(async () => {
       try {
-        await eventsService.upsertEvent(user?.id, { ...event, churchId: orgId! });
+        await eventsService.upsertEvent(user?.id, { ...event, churchId: event.churchId || orgId! });
         await invalidateEvents();
         showToast('Evento salvo!');
       } catch (err) {
@@ -634,7 +802,7 @@ export default function App() {
       try {
         const created = await eventsService.upsertEventBatch(
           user?.id,
-          { ...event, churchId: orgId! },
+          { ...event, churchId: event.churchId || orgId! },
           count,
           intervalDays,
         );
@@ -930,9 +1098,9 @@ export default function App() {
           await songsService.importSongsBulk(orgId!, data.songs);
         }
         await invalidateAll();
-        showToast('Dados importados no Supabase!');
+        showToast('Dados importados com sucesso!');
       } catch {
-        alert('Formato de arquivo JSON inválido.');
+        showToast('Formato de arquivo JSON inválido.', 'error');
       }
     };
     reader.readAsText(file);
@@ -952,48 +1120,9 @@ export default function App() {
     }
   };
 
-  const handleToggleHinos = () => {
-    let nextHinos: boolean;
-    let nextCanticos: boolean;
-
-    if (showHinos && !showCanticos) {
-      nextHinos = false;
-      nextCanticos = true;
-    } else {
-      nextHinos = !showHinos;
-      nextCanticos = showCanticos;
-    }
-
-    setShowHinos(nextHinos);
-    setShowCanticos(nextCanticos);
-
-    if (nextHinos && !nextCanticos) {
-      showToast('Exibindo apenas hinos');
-    } else if (!nextHinos && nextCanticos) {
-      showToast('Exibindo apenas cânticos');
-    }
-  };
-
-  const handleToggleCanticos = () => {
-    let nextHinos: boolean;
-    let nextCanticos: boolean;
-
-    if (showCanticos && !showHinos) {
-      nextCanticos = false;
-      nextHinos = true;
-    } else {
-      nextCanticos = !showCanticos;
-      nextHinos = showHinos;
-    }
-
-    setShowHinos(nextHinos);
-    setShowCanticos(nextCanticos);
-
-    if (nextHinos && !nextCanticos) {
-      showToast('Exibindo apenas hinos');
-    } else if (!nextHinos && nextCanticos) {
-      showToast('Exibindo apenas cânticos');
-    }
+  const handleSongTypeChange = (mode: SongTypeMode) => {
+    setShowHinos(mode !== 'cantico');
+    setShowCanticos(mode !== 'hino');
   };
 
   const filteredSongs = songs.filter((h) => {
@@ -1041,6 +1170,9 @@ export default function App() {
     return an - bn || a.title.localeCompare(b.title, 'pt-BR');
   });
 
+  const visibleSongs = user ? sortedSongs : sortedSongs.slice(0, catalogVisibleCount);
+  const hiddenSongsCount = sortedSongs.length - visibleSongs.length;
+
   const orgOptions = memberships
     .filter((m) => m.organizations && !m.organizations.is_global)
     .map((m) => ({
@@ -1072,7 +1204,7 @@ export default function App() {
 
   if (inviteToken) {
     return (
-      <div className="min-h-screen bg-stone-950 text-stone-100 font-sans">
+      <div className="min-h-screen bg-app text-fg font-sans">
         <InviteAcceptPage />
       </div>
     );
@@ -1093,147 +1225,311 @@ export default function App() {
       !songsQuery.isError &&
       (songsQuery.isPending || songsQuery.isFetching);
     return (
-      <div className="min-h-screen bg-stone-950 text-stone-200 flex flex-col items-center justify-center gap-3 px-6">
-        <Loader2 className="w-9 h-9 text-emerald-400 animate-spin" />
-        <p className="text-sm font-semibold text-stone-200">
-          {loadingSongs ? 'Carregando músicas…' : 'Carregando…'}
-        </p>
-        <p className="text-[11px] text-stone-500 text-center">
-          {loadingSongs ? 'Montando o catálogo' : 'Preparando a sessão'}
-        </p>
+      <div className="min-h-[100dvh] bg-app text-fg flex flex-col items-center justify-center gap-5 px-6 animate-in fade-in duration-300">
+        <span className="btn-gradient w-20 h-20 rounded-3xl flex items-center justify-center shadow-card-lg">
+          <Music2 className="w-10 h-10" strokeWidth={2.4} />
+        </span>
+        <div className="text-center space-y-1">
+          <p className="text-2xl font-medium tracking-tight">
+            Louvor<b className="font-extrabold text-brand-text">Hub</b>
+          </p>
+          <p className="text-xs text-fg-subtle">
+            {loadingSongs ? 'Montando o catálogo de músicas…' : 'Preparando sua sessão…'}
+          </p>
+        </div>
+        <Loader2 className="w-6 h-6 text-brand-text animate-spin" />
       </div>
     );
   }
 
+  const showMobileNav = Boolean(user) && !songMatch && !songVersionMatch;
+  const userName =
+    profile?.display_name?.trim() || user?.email?.split('@')[0] || 'Usuário';
+  const userAvatarUrl = getAvatarPublicUrl(profile?.avatar_path, profile?.updated_at);
+  const roleLabel = isAdmin
+    ? 'Administrador'
+    : canManageActiveOrgMembers
+      ? 'Líder'
+      : 'Membro';
+  const churchList = orgOptions.map((o) => {
+    const c = churches.find((ch) => ch.id === o.id);
+    return {
+      id: o.id,
+      name: c?.name || o.name,
+      city: c?.city,
+      sigla: c?.sigla ?? o.sigla,
+      color: c?.color,
+    };
+  });
+  const NARROW_VIEWS: ViewMode[] = ['home', 'more'];
+  /** Views com `PageShell`: a barra do cabeçalho ocupa toda a largura e o próprio shell limita o conteúdo. */
+  const SHELL_VIEWS: ViewMode[] = ['setlist', 'events', 'churchList', 'profile', 'accounts', 'workspace', 'churches', 'users'];
+  const contentWidth = !user
+    ? 'max-w-none'
+    : isEventDetail || SHELL_VIEWS.includes(currentView)
+        ? 'max-w-none'
+        : NARROW_VIEWS.includes(currentView)
+          ? 'max-w-3xl'
+          : 'max-w-7xl';
+
+  const churchSection: ChurchSection | null =
+    currentView === 'users' && canManageActiveOrgMembers
+      ? 'users'
+      : canManageChurches
+        ? 'churches'
+        : canManageActiveOrgMembers
+          ? 'users'
+          : null;
+
+  const renderChurchWorkspace = (variant: 'page' | 'pane', activeId: string, church: Church) => (
+      <ChurchWorkspace
+        variant={variant}
+        church={church}
+        section={churchSection}
+        canManageGroups={canManageChurches}
+        canManageMembers={canManageActiveOrgMembers}
+        canEditChurch={canEditChurch(activeId)}
+        onSaveChurch={handleSaveChurch}
+        onDeleteChurch={
+          canAccessAdminPanel
+            ? async (id) => {
+                if (await handleDeleteChurch(id)) handleViewChange('churchList');
+              }
+            : undefined
+        }
+        onNavigate={handleViewChange}
+        onBack={() => handleViewChange('churchList')}
+        editRequestKey={churchEditRequestKey}
+        groupsCount={activeChurchGroups.length}
+        membersCount={systemUsers.length}
+      >
+        {churchSection === 'churches' ? (
+          <ChurchManager
+            churches={churches}
+            musicGroups={musicGroups}
+            systemUsers={systemUsers}
+            onSaveChurch={handleSaveChurch}
+            onDeleteChurch={handleDeleteChurch}
+            onSaveMusicGroup={handleSaveMusicGroup}
+            onDeleteMusicGroup={handleDeleteMusicGroup}
+            isAdmin={isAdmin}
+            allowedChurchIds={churchEditorOrgIds}
+            allowedGroupIds={groupEditorGroupIds}
+            canEditChurch={canEditChurch}
+            canEditGroup={canEditGroup}
+            lockedChurchId={activeId}
+            embedded
+          />
+        ) : churchSection === 'users' ? (
+          <UserManager
+            orgId={activeId}
+            orgName={church?.name}
+            systemUsers={systemUsers}
+            churches={churches}
+            musicGroups={musicGroups}
+            currentUserIsAdmin={isAdmin}
+            embedded
+            onSaveUser={async (u) => {
+              await handleSaveUser(u);
+              await refreshProfile();
+              await refreshGrants();
+            }}
+            onDeleteUser={handleDeleteUser}
+          />
+        ) : null}
+      </ChurchWorkspace>
+  );
+
+  const handleSignOut = async () => {
+    await signOut();
+    setSelectedEventId(null);
+    setCurrentView('public');
+    showToast('Sessão encerrada.');
+  };
+
+  const songRouteError = selectedEventSongId ? selectedSongVersionQuery.error : selectedSongQuery.error;
+  const renderSongDetail = (variant: 'overlay' | 'pane') =>
+    songRouteError ? (
+      <div
+        className={cn(
+          'flex items-center justify-center px-6',
+          variant === 'pane' ? 'h-full' : 'fixed inset-0 z-50 bg-app',
+        )}
+      >
+        <EmptyState
+          tone="danger"
+          icon={AlertCircle}
+          title={selectedEventSongId ? 'Versão não encontrada' : 'Música não encontrada'}
+          description={
+            (songRouteError as Error)?.message ||
+            'Este link pode estar inválido ou a música não está disponível.'
+          }
+          action={
+            <Button variant="secondary" onClick={closeSongPage}>
+              Voltar ao catálogo
+            </Button>
+          }
+          className="w-full max-w-md"
+        />
+      </div>
+    ) : (
+      <SongDetailModal
+        variant={variant}
+        song={selectedSong}
+        eventVersion={
+          songEventVersion
+            ? {
+                title: songEventVersion.title,
+                date: songEventVersion.date,
+                time: songEventVersion.time,
+              }
+            : null
+        }
+        isLoading={
+          selectedEventSongId
+            ? selectedSongVersionQuery.isLoading ||
+              (!selectedSongVersionQuery.data && selectedSongVersionQuery.isFetching)
+            : selectedSongQuery.isLoading ||
+              (!selectedSongQuery.data && selectedSongQuery.isFetching)
+        }
+        onClose={closeSongPage}
+        isFavorite={Boolean(user) && Boolean(catalogSongId) && favorites.includes(catalogSongId!)}
+        onToggleFavorite={user ? handleToggleFavorite : undefined}
+        onOpenProjection={(s) => setProjectionSongs([s])}
+        onAddToSetlist={user ? handleAddToSetlist : undefined}
+        isAdmin={Boolean(user) && canManageSongs && !selectedEventSongId}
+        onEditSong={
+          canManageSongs && !selectedEventSongId
+            ? () => {
+                if (selectedSongQuery.data) setSongToEdit(selectedSongQuery.data);
+              }
+            : undefined
+        }
+      />
+    );
+
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col font-sans">
-      {!songMatch && (
+    <div className="min-h-[100dvh] bg-app text-fg flex flex-col font-sans">
+      {!songOverlay && !user && (
         <Header
           onViewChange={handleViewChange}
           quickNumberQuery={quickQuery}
           onQuickNumberChange={handleQuickQueryChange}
           onOpenKeypad={() => setShowKeypad(true)}
           onOpenAdvancedSearch={() => setShowAdvancedSearch(true)}
-          isAuthenticated={Boolean(user)}
-          showPublicEvents={!user && currentView === 'public'}
-          onAdminAuthClick={() => {
-            if (!user) setShowLogin(true);
-            else if (canAccessAdminPanel) setCurrentView(currentView === 'admin' ? 'public' : 'admin');
-            else showToast('Somente administradores acessam o Painel Geral.');
-          }}
-          onSignOut={async () => {
-            await signOut();
-            setSidebarDrawerOpen(false);
-            setCurrentView('public');
-            showToast('Sessão encerrada.');
-          }}
+          isAuthenticated={false}
+          showPublicEvents={currentView === 'public'}
+          onAdminAuthClick={() => setShowLogin(true)}
+          onSignOut={handleSignOut}
           favoritesCount={favorites.length}
           showFavoritesOnly={showFavoritesOnly}
           onToggleFavoritesOnly={() => {
             void handleToggleFavoritesOnly();
           }}
-          onOpenSidebar={() => setSidebarDrawerOpen(true)}
           currentView={currentView}
-          activeChurchSigla={workspaceChurch?.sigla}
-          activeChurchName={workspaceChurch?.name}
-          canEditActiveChurch={Boolean(orgId && canEditChurch(orgId))}
-          onEditActiveChurch={() => {
-            if (!orgId || !canEditChurch(orgId)) return;
-            // Garante ChurchWorkspace montado para abrir o modal, sem trocar a aba se já estiver no workspace
-            if (!WORKSPACE_VIEWS.includes(currentView)) {
-              setCurrentView('workspace');
-              setSelectedEventId(null);
-            }
-            requestAnimationFrame(() => {
-              setChurchEditRequestKey((k) => k + 1);
-            });
-          }}
+          hideOnDesktop={splitActive}
         />
       )}
 
-      {!songMatch && (
-      <div className="flex flex-1 w-full min-h-0">
-        {user && (
+      {!songOverlay && user && (
+        <>
           <AppSidebar
             currentView={currentView}
             onViewChange={handleViewChange}
-            open={sidebarDrawerOpen}
-            onClose={() => setSidebarDrawerOpen(false)}
-            desktopExpanded={sidebarDesktopOpen}
-            onToggleDesktop={() => setSidebarDesktop(!sidebarDesktopOpen)}
-            orgOptions={orgOptions}
-            activeOrgId={activeOrgId || undefined}
-            onOrgChange={setActiveOrgId}
-            userEmail={user.email}
-            userDisplayName={profile?.display_name}
-            userAvatarPath={profile?.avatar_path}
-            userAvatarUpdatedAt={profile?.updated_at}
-            permissions={{
-              canAccessAdminPanel,
-              canManageUsers,
-              canManageOrgMembers: canManageActiveOrgMembers,
-              canManageChurches,
-              canAccessLiturgies,
-              canManageSchedules,
-              canAccessEvents,
-            }}
-            onSignOut={async () => {
-              await signOut();
-              setSidebarDrawerOpen(false);
-              setCurrentView('public');
-              showToast('Sessão encerrada.');
-            }}
-            onOpenHelp={() => setShowHelp(true)}
+            userName={userName}
+            userAvatarUrl={userAvatarUrl}
+            roleLabel={roleLabel}
+            showAgenda={Boolean(orgId && canAccessEvents)}
+            showAccounts={canManageUsers}
+            onSignOut={() => void handleSignOut()}
+            collapsed={sidebarCollapsed}
+            onToggleCollapsed={toggleSidebar}
           />
-        )}
+          <AppTopbar
+            userName={userName}
+            userAvatarUrl={userAvatarUrl}
+            onHome={() => handleViewChange('home')}
+            onProfile={() => handleViewChange('profile')}
+          />
+        </>
+      )}
 
+      {!songOverlay && (
+      <div
+        className={cn(
+          'flex flex-1 w-full min-h-0',
+          user && (sidebarCollapsed ? 'lg:pl-[4.5rem]' : 'lg:pl-64'),
+        )}
+      >
       <main
-        className={`flex-1 w-full min-w-0 space-y-4 sm:space-y-6 transition-[padding] duration-200 ${
-          isWorkspaceShell
-            ? 'px-0 py-0 sm:py-0'
-            : isEventDetail
-              ? 'px-2 sm:px-4 lg:px-5 xl:px-6 2xl:px-8 py-3 sm:py-8'
-              : 'px-2.5 sm:px-6 lg:px-8 py-3 sm:py-8'
-        }`}
+        className={cn(
+          'flex-1 w-full min-w-0 mx-auto space-y-4 sm:space-y-6',
+          splitActive ? 'max-w-none' : contentWidth,
+          splitActive
+            ? 'p-0'
+            : user
+              ? 'px-4 sm:px-6 lg:px-8 pt-2 pb-6 lg:pt-8'
+              : 'px-3 sm:px-6 lg:px-8 py-3 sm:py-6',
+          showMobileNav && !splitActive && 'pb-nav lg:pb-8',
+        )}
       >
         {!configured && (
-          <div className="bg-rose-950/40 border border-rose-800 rounded-2xl p-4 text-sm text-rose-100 flex gap-2">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            Configure <code className="mx-1">VITE_SUPABASE_URL</code> e{' '}
-            <code className="mx-1">VITE_SUPABASE_ANON_KEY</code> no arquivo{' '}
-            <code className="mx-1">.env.local</code>.
-          </div>
+          <Alert tone="danger" title="Backend não configurado">
+            Configure <code className="mx-0.5 font-mono">VITE_SUPABASE_URL</code> e{' '}
+            <code className="mx-0.5 font-mono">VITE_SUPABASE_ANON_KEY</code> no arquivo{' '}
+            <code className="mx-0.5 font-mono">.env.local</code>.
+          </Alert>
         )}
 
         {configured && songsQuery.isError && (
-          <div className="bg-rose-950/40 border border-rose-800 rounded-2xl p-4 text-sm text-rose-100 flex gap-2">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            <div>
-              <p className="font-semibold">Erro ao carregar songs</p>
-              <p className="text-xs mt-1 opacity-90">
-                {(songsQuery.error as Error)?.message || 'Falha na consulta à tabela songs.'}
-              </p>
-            </div>
-          </div>
+          <Alert
+            tone="danger"
+            title="Não foi possível carregar as músicas"
+            action={
+              <Button size="xs" variant="danger-soft" onClick={() => void songsQuery.refetch()}>
+                Tentar novamente
+              </Button>
+            }
+          >
+            {(songsQuery.error as Error)?.message || 'Falha na consulta ao catálogo.'}
+          </Alert>
         )}
 
-        {configured && user && !orgId && (
-          <div className="bg-emerald-950/40 border border-emerald-800 rounded-2xl p-4 text-sm space-y-3">
-            <p>Você ainda não pertence a nenhuma igreja. Crie uma em “Igrejas” ou entre com o código:</p>
-            <div className="flex gap-2">
-              <input
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value)}
-                placeholder="Código de convite"
-                className="flex-1 bg-stone-950 border border-stone-700 rounded-xl px-3 py-2 text-xs"
-              />
-              <button
-                onClick={handleJoinOrg}
-                className="px-4 py-2 bg-emerald-500 text-stone-950 font-bold rounded-button text-xs"
-              >
-                Entrar
-              </button>
+        {configured && user && !orgId && currentView === 'home' && (
+          <div className="ui-card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="w-11 h-11 rounded-xl bg-brand-soft text-brand-text border border-brand-line flex items-center justify-center shrink-0">
+                <ChurchIcon className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-fg">Você ainda não faz parte de uma igreja</p>
+                <p className="text-xs text-fg-muted mt-0.5">
+                  Peça o código de convite ao líder da sua igreja e informe abaixo.
+                </p>
+              </div>
             </div>
+            <form
+              className="flex gap-2 w-full sm:w-auto"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleJoinOrg();
+              }}
+            >
+              <div className="relative flex-1 sm:w-56">
+                <KeyRound className="w-4 h-4 text-fg-subtle absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Input
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value)}
+                  placeholder="Código de convite"
+                  aria-label="Código de convite"
+                  className="pl-9 min-h-10"
+                  autoCapitalize="characters"
+                />
+              </div>
+              <Button type="submit" size="sm" className="h-10" disabled={!joinCode.trim()}>
+                Entrar
+              </Button>
+            </form>
           </div>
         )}
 
@@ -1245,8 +1541,137 @@ export default function App() {
               setShowLogin(true);
             }}
           />
+        ) : user && isEventDetail ? (
+          eventBundle?.event ? (
+            <div className="space-y-4">
+              <EventDetail
+                onBack={() => setSelectedEventId(null)}
+                event={eventBundle.event}
+                schedule={eventBundle.schedule}
+                liturgy={eventBundle.liturgy}
+                setlist={eventBundle.setlist}
+                songs={songs}
+                musicGroups={activeChurchGroups}
+                systemUsers={systemUsers}
+                churchName={workspaceChurch?.name}
+                canManageTeam={canAccessEvents}
+                canManageLiturgy={canAccessLiturgies}
+                canManageSetlist={canAccessEvents}
+                onSaveSchedule={handleSaveSchedule}
+                onDeleteSchedule={handleDeleteSchedule}
+                onSaveLiturgy={handleSaveLiturgy}
+                onDeleteLiturgy={handleDeleteLiturgy}
+                onEnsureLiturgy={handleEnsureEventLiturgy}
+                onSaveSetlist={handleSaveEventSetlist}
+                onSaveEvent={handleSaveEvent}
+                onSaveSongVersion={handleSaveEventSongVersion}
+                onResetSongVersion={handleResetEventSongVersion}
+                onSelectSong={openSong}
+                onShareUpdated={invalidateEvents}
+              />
+            </div>
+          ) : eventBundleQuery.isError ? (
+            <EmptyState
+              tone="danger"
+              icon={AlertCircle}
+              title="Evento não encontrado"
+              description={(eventBundleQuery.error as Error)?.message || 'Não foi possível carregar o evento.'}
+              action={
+                <Button variant="secondary" onClick={() => setSelectedEventId(null)}>
+                  Voltar
+                </Button>
+              }
+            />
+          ) : (
+            <div className="flex items-center justify-center py-20 text-fg-subtle gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Carregando evento...
+            </div>
+          )
+        ) : user && currentView === 'home' ? (
+          <HomeDashboard
+            userName={userName}
+            churchName={workspaceChurch?.name}
+            churchColor={workspaceChurch?.color}
+            canAccessEvents={Boolean(orgId && canAccessEvents)}
+            events={events}
+            musicGroups={activeChurchGroups}
+            setlists={setlists}
+            songsCount={songs.length}
+            churchesCount={orgOptions.length}
+            onNavigate={handleViewChange}
+            onOpenEvent={openEvent}
+          />
+        ) : user && currentView === 'more' ? (
+          <MorePage
+            userName={userName}
+            userEmail={user.email}
+            userAvatarUrl={userAvatarUrl}
+            roleLabel={roleLabel}
+            canManageSongs={canAccessAdminPanel}
+            canManageUsers={canManageUsers}
+            onNavigate={handleViewChange}
+            onOpenHelp={() => setShowHelp(true)}
+            onSignOut={() => void handleSignOut()}
+          />
+        ) : user && (currentView === 'churchList' || (isDesktop && WORKSPACE_VIEWS.includes(currentView))) ? (
+          <ChurchesPage
+            churches={churchList}
+            activeOrgId={orgId}
+            groupsCount={(id) => musicGroups.filter((g) => g.churchId === id).length}
+            membersCount={systemUsers.length}
+            onOpen={openChurch}
+            onCreate={canAccessAdminPanel ? () => setShowChurchCreate(true) : undefined}
+            joinCode={joinCode}
+            onJoinCodeChange={setJoinCode}
+            onJoin={() => void handleJoinOrg()}
+            split={isDesktop}
+            detail={
+              isDesktop && orgId && workspaceChurch
+                ? renderChurchWorkspace('pane', orgId, workspaceChurch)
+                : undefined
+            }
+          />
+        ) : user && currentView === 'events' && orgId && canAccessEvents ? (
+          <EventManager
+            events={agendaEventsQuery.data || []}
+            musicGroups={musicGroups}
+            activeChurchId={orgId}
+            churchName={workspaceChurch?.name}
+            churchColor={workspaceChurch?.color}
+            churches={churchList}
+            visibleChurchIds={agendaVisibleIds}
+            onToggleChurch={toggleAgendaChurch}
+            onShowOnlyChurch={(id) => updateAgendaHidden(agendaOrgIds.filter((x) => x !== id))}
+            onSaveEvent={handleSaveEvent}
+            onSaveEventBatch={handleSaveEventBatch}
+            onDeleteEvent={handleDeleteEvent}
+            onOpenEvent={(id) => {
+              const ev = agendaEventsQuery.data?.find((e) => e.id === id);
+              if (ev && ev.churchId !== orgId) setActiveOrgId(ev.churchId);
+              openEvent(id);
+            }}
+            toolbar={
+              churchList.length > 1 ? (
+                <div className="lg:hidden flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+                  {churchList.map((c) => (
+                    <Chip
+                      key={c.id}
+                      active={agendaVisibleIds.includes(c.id)}
+                      dotColor={c.color || '#4f46e5'}
+                      onClick={() => toggleAgendaChurch(c.id)}
+                      title={c.name}
+                      aria-pressed={agendaVisibleIds.includes(c.id)}
+                    >
+                      {c.sigla?.trim() || c.name}
+                    </Chip>
+                  ))}
+                </div>
+              ) : undefined
+            }
+          />
         ) : user && currentView === 'profile' ? (
-          <ProfilePage onBack={() => setCurrentView('public')} />
+          <ProfilePage onBack={() => handleViewChange('more')} />
         ) : user && currentView === 'admin' && canAccessAdminPanel ? (
           <AdminDashboard
             songs={songs}
@@ -1275,99 +1700,7 @@ export default function App() {
             }
           />
         ) : user && orgId && workspaceChurch && WORKSPACE_VIEWS.includes(currentView) ? (
-          <ChurchWorkspace
-            church={workspaceChurch}
-            currentView={currentView}
-            canAccessEvents={canAccessEvents}
-            canManageGroups={canManageChurches}
-            canManageMembers={canManageActiveOrgMembers}
-            canEditChurch={canEditChurch(orgId)}
-            onSaveChurch={handleSaveChurch}
-            onNavigate={handleViewChange}
-            onBack={isEventDetail ? () => setSelectedEventId(null) : undefined}
-            backLabel={isEventDetail ? 'Voltar ao calendário' : undefined}
-            editRequestKey={churchEditRequestKey}
-            events={events}
-            onOpenEvent={(id) => setSelectedEventId(id)}
-          >
-            {currentView === 'churches' && canManageChurches ? (
-              <ChurchManager
-                churches={churches}
-                musicGroups={musicGroups}
-                systemUsers={systemUsers}
-                onSaveChurch={handleSaveChurch}
-                onDeleteChurch={handleDeleteChurch}
-                onSaveMusicGroup={handleSaveMusicGroup}
-                onDeleteMusicGroup={handleDeleteMusicGroup}
-                isAdmin={isAdmin}
-                allowedChurchIds={churchEditorOrgIds}
-                allowedGroupIds={groupEditorGroupIds}
-                canEditChurch={canEditChurch}
-                canEditGroup={canEditGroup}
-                lockedChurchId={orgId}
-                embedded
-              />
-            ) : currentView === 'users' && canManageActiveOrgMembers ? (
-              <UserManager
-                orgId={orgId}
-                orgName={workspaceChurch?.name}
-                systemUsers={systemUsers}
-                churches={churches}
-                musicGroups={musicGroups}
-                currentUserIsAdmin={isAdmin}
-                embedded
-                onSaveUser={async (u) => {
-                  await handleSaveUser(u);
-                  await refreshProfile();
-                  await refreshGrants();
-                }}
-                onDeleteUser={handleDeleteUser}
-              />
-            ) : currentView === 'events' && canAccessEvents ? (
-              selectedEventId && eventBundle?.event ? (
-                <EventDetail
-                  event={eventBundle.event}
-                  schedule={eventBundle.schedule}
-                  liturgy={eventBundle.liturgy}
-                  setlist={eventBundle.setlist}
-                  songs={songs}
-                  musicGroups={activeChurchGroups}
-                  systemUsers={systemUsers}
-                  churchName={workspaceChurch?.name}
-                  canManageTeam={canAccessEvents}
-                  canManageLiturgy={canAccessLiturgies}
-                  canManageSetlist={canAccessEvents}
-                  onSaveSchedule={handleSaveSchedule}
-                  onDeleteSchedule={handleDeleteSchedule}
-                  onSaveLiturgy={handleSaveLiturgy}
-                  onDeleteLiturgy={handleDeleteLiturgy}
-                  onEnsureLiturgy={handleEnsureEventLiturgy}
-                  onSaveSetlist={handleSaveEventSetlist}
-                  onSaveEvent={handleSaveEvent}
-                  onSaveSongVersion={handleSaveEventSongVersion}
-                  onResetSongVersion={handleResetEventSongVersion}
-                  onSelectSong={openSong}
-                  onShareUpdated={invalidateEvents}
-                />
-              ) : selectedEventId && eventBundleQuery.isLoading ? (
-                <div className="flex items-center justify-center py-20 text-stone-400 gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Carregando evento...
-                </div>
-              ) : (
-                <EventManager
-                  events={events}
-                  musicGroups={activeChurchGroups}
-                  activeChurchId={orgId}
-                  embedded
-                  onSaveEvent={handleSaveEvent}
-                  onSaveEventBatch={handleSaveEventBatch}
-                  onDeleteEvent={handleDeleteEvent}
-                  onOpenEvent={(id) => setSelectedEventId(id)}
-                />
-              )
-            ) : null}
-          </ChurchWorkspace>
+          renderChurchWorkspace('page', orgId, workspaceChurch)
         ) : user && currentView === 'setlist' ? (
           <SetlistManager
             setlists={setlists}
@@ -1383,104 +1716,221 @@ export default function App() {
             onOpenProjectionPlaylist={(sequence) => setProjectionSongs(sequence)}
             onSelectSong={openSong}
           />
-        ) : user && currentView === 'organizations' && canAccessAdminPanel ? (
-          <OrganizationManager
-            churches={allOrganizations}
-            loading={allOrganizationsQuery.isLoading}
-            onSave={handleSaveChurch}
-            onDelete={handleDeleteChurch}
-            onRefresh={() => queryClient.invalidateQueries({ queryKey: ['allOrganizations'] })}
-          />
         ) : user && currentView === 'accounts' && canManageUsers ? (
           <AccountManager />
         ) : catalogSongsLoading ? (
-          <CatalogSongsLoading layout={songsLayout} />
+          <div className={cn(splitActive && 'p-8')}>
+            <CatalogSongsLoading layout={songsLayout} />
+          </div>
         ) : (
-          <div className="w-full space-y-4 sm:space-y-6">
-            <div className="flex flex-col gap-3 bg-stone-900/60 p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-stone-800/80">
-              <div className="flex flex-wrap items-center gap-1.5">
-                {categories.map((cat) => {
-                  const count = songs.filter((h) => h.category === cat.name).length;
-                  const isSelected = activeCategoryPill === cat.name;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() =>
-                        setActiveCategoryPill(isSelected ? 'Todos' : cat.name)
-                      }
-                      className={`min-h-9 px-3 py-1.5 rounded-button text-xs font-semibold transition-all border touch-manipulation ${
-                        isSelected
-                          ? 'bg-emerald-500 text-stone-950 border-emerald-400 font-bold shadow-sm'
-                          : 'bg-stone-800/80 light:bg-stone-100 text-stone-300 light:text-stone-700 border-stone-700/80 light:border-stone-200 hover:bg-stone-700/80 light:hover:bg-stone-200'
-                      }`}
-                    >
-                      {cat.name} ({count})
-                    </button>
-                  );
-                })}
+          <div
+            className={cn(
+              splitActive && 'grid h-[100dvh]',
+              splitActive &&
+                (user
+                  ? 'grid-cols-[minmax(340px,420px)_minmax(0,1fr)] 2xl:grid-cols-[460px_minmax(0,1fr)]'
+                  : 'grid-cols-[68px_minmax(340px,420px)_minmax(0,1fr)] 2xl:grid-cols-[68px_460px_minmax(0,1fr)]'),
+            )}
+          >
+          {splitActive && !user && (
+            <CatalogRail
+              onHome={() => navigate('/')}
+              onLogin={() => setShowLogin(true)}
+              onOpenAdvancedSearch={() => setShowAdvancedSearch(true)}
+              onToggleFavoritesOnly={() => void handleToggleFavoritesOnly()}
+              showFavoritesOnly={showFavoritesOnly}
+              favoritesCount={favorites.length}
+              showPublicEvents
+            />
+          )}
+          <div
+            className={cn(
+              'w-full',
+              splitActive
+                ? 'min-h-0 overflow-y-auto overscroll-contain bg-surface border-r border-line'
+                : 'space-y-4 sm:space-y-5',
+            )}
+          >
+            {splitActive && (
+              <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-1">
+                <div className="min-w-0">
+                  <h1 className="text-xl font-extrabold tracking-tight text-fg">Músicas</h1>
+                  <p className="text-xs text-fg-muted tabular-nums">{songs.length} hinos e cânticos</p>
+                </div>
+                {user && canAccessAdminPanel && (
+                  <Button variant="ghost" size="sm" icon={Settings2} onClick={() => handleViewChange('admin')}>
+                    Gerenciar
+                  </Button>
+                )}
               </div>
-              <div className="flex items-center gap-1.5 min-w-0 text-xs text-stone-400 light:text-stone-500">
-                <div className="flex items-center gap-1 flex-1 min-w-0 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            )}
+            {user && !splitActive && (
+              <PageHeader
+                title="Músicas"
+                description={`${songs.length} hinos e cânticos no catálogo`}
+                actions={
+                  canAccessAdminPanel ? (
+                    <Button variant="secondary" size="sm" icon={Settings2} onClick={() => handleViewChange('admin')}>
+                      Gerenciar
+                    </Button>
+                  ) : undefined
+                }
+              />
+            )}
+            {(user || splitActive) && (
+              <div
+                className={
+                  splitActive
+                    ? 'sticky top-0 z-20 px-3 py-2 bg-surface/95 backdrop-blur-md border-b border-line/60'
+                    : 'sticky top-[calc(60px+env(safe-area-inset-top,0px))] lg:top-0 z-20 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 py-2 bg-app/90 backdrop-blur-md'
+                }
+              >
+                <CatalogSearchBar
+                  value={quickQuery}
+                  onChange={handleQuickQueryChange}
+                  onOpenKeypad={() => setShowKeypad(true)}
+                  onOpenAdvancedSearch={splitActive && !user ? undefined : () => setShowAdvancedSearch(true)}
+                  showFavoritesOnly={showFavoritesOnly}
+                  onToggleFavoritesOnly={
+                    splitActive && !user ? undefined : () => void handleToggleFavoritesOnly()
+                  }
+                />
+              </div>
+            )}
+            <div
+              className={cn(
+                'flex flex-col gap-3',
+                splitActive ? 'px-3 py-3 border-b border-line/60' : 'ui-card p-3 sm:p-4 rounded-2xl sm:rounded-3xl',
+              )}
+            >
+              {categories.length > 0 && (
+                <div
+                  className={cn(
+                    'flex items-center gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1',
+                    !splitActive && 'sm:flex-wrap sm:overflow-visible',
+                  )}
+                  role="group"
+                  aria-label="Categorias"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setActiveCategoryPill('Todos')}
+                    aria-pressed={activeCategoryPill === 'Todos'}
+                    className={cn(
+                      'shrink-0 min-h-9 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border touch-manipulation',
+                      activeCategoryPill === 'Todos'
+                        ? 'bg-brand text-brand-fg border-transparent font-bold shadow-sm'
+                        : 'bg-muted text-fg-muted border-transparent hover:bg-muted-hover hover:text-fg',
+                    )}
+                  >
+                    Todas
+                    <span className="ml-1 opacity-70 tabular-nums">{songs.length}</span>
+                  </button>
+                  {categories.map((cat) => {
+                    const count = songs.filter((h) => h.category === cat.name).length;
+                    const isSelected = activeCategoryPill === cat.name;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setActiveCategoryPill(isSelected ? 'Todos' : cat.name)}
+                        aria-pressed={isSelected}
+                        className={cn(
+                          'shrink-0 min-h-9 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border touch-manipulation',
+                          isSelected
+                            ? 'bg-brand text-brand-fg border-transparent font-bold shadow-sm'
+                            : 'bg-muted text-fg-muted border-transparent hover:bg-muted-hover hover:text-fg',
+                        )}
+                      >
+                        {cat.name}
+                        <span className="ml-1 opacity-70 tabular-nums">{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <div
+                className={cn(
+                  'min-w-0 text-xs text-fg-muted',
+                  stackedFilters ? 'grid grid-cols-[auto_minmax(0,1fr)] items-center gap-2' : 'flex items-center gap-2',
+                )}
+              >
+                <div
+                  className={cn(
+                    stackedFilters
+                      ? 'contents'
+                      : 'flex items-center gap-1.5 flex-1 min-w-0 overflow-x-auto overscroll-x-contain scrollbar-none',
+                  )}
+                >
                   <div
-                    className="flex items-center shrink-0 bg-stone-800 light:bg-stone-100 border border-stone-700 light:border-stone-200 rounded-xl p-0.5"
+                    className={cn(
+                      'items-center bg-muted border border-line rounded-xl p-0.5',
+                      splitActive
+                        ? 'hidden'
+                        : stackedFilters
+                          ? 'col-span-2 grid grid-cols-2'
+                          : 'flex shrink-0',
+                    )}
                     role="group"
                     aria-label="Modo de visualização"
                   >
-                    <button
-                      type="button"
-                      onClick={() => handleSongsLayoutChange('cards')}
-                      aria-label="Visualização em cards"
-                      className={`flex items-center justify-center gap-1.5 min-h-9 min-w-9 sm:min-w-0 px-2 sm:px-2.5 py-1.5 rounded-button font-semibold transition-all touch-manipulation ${
-                        songsLayout === 'cards'
-                          ? 'bg-emerald-500 text-stone-950 shadow-sm'
-                          : 'text-stone-400 light:text-stone-600 hover:text-stone-200 light:hover:text-stone-900'
-                      }`}
-                      title="Visualização em cards"
-                    >
-                      <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
-                      <span className="hidden sm:inline">Cards</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSongsLayoutChange('list')}
-                      aria-label="Listagem simples"
-                      className={`flex items-center justify-center gap-1.5 min-h-9 min-w-9 sm:min-w-0 px-2 sm:px-2.5 py-1.5 rounded-button font-semibold transition-all touch-manipulation ${
-                        songsLayout === 'list'
-                          ? 'bg-emerald-500 text-stone-950 shadow-sm'
-                          : 'text-stone-400 light:text-stone-600 hover:text-stone-200 light:hover:text-stone-900'
-                      }`}
-                      title="Listagem simples"
-                    >
-                      <List className="w-3.5 h-3.5 shrink-0" />
-                      <span className="hidden sm:inline">Lista</span>
-                    </button>
+                    {(
+                      [
+                        { mode: 'cards', label: 'Cards', Icon: LayoutGrid },
+                        { mode: 'list', label: 'Lista', Icon: List },
+                      ] as const
+                    ).map(({ mode, label, Icon }) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => handleSongsLayoutChange(mode)}
+                        aria-label={`Visualização em ${label.toLowerCase()}`}
+                        aria-pressed={songsLayout === mode}
+                        title={`Visualização em ${label.toLowerCase()}`}
+                        className={cn(
+                          'flex items-center justify-center gap-1.5 min-h-8 px-2 sm:px-2.5 rounded-lg font-semibold transition-all touch-manipulation',
+                          stackedFilters ? 'min-w-0' : 'min-w-9 sm:min-w-0',
+                          songsLayout === mode
+                            ? 'bg-surface text-fg shadow-sm'
+                            : 'text-fg-subtle hover:text-fg',
+                        )}
+                      >
+                        <Icon className="w-3.5 h-3.5 shrink-0" />
+                        <span className={stackedFilters ? 'min-w-0 truncate' : 'hidden sm:inline'}>{label}</span>
+                      </button>
+                    ))}
                   </div>
                   <SongTypeFilter
                     showHinos={showHinos}
                     showCanticos={showCanticos}
-                    onToggleHinos={handleToggleHinos}
-                    onToggleCanticos={handleToggleCanticos}
+                    onChange={handleSongTypeChange}
+                    fullWidth={stackedFilters}
+                    className={cn(stackedFilters && 'col-span-2 order-first')}
                   />
                   <AlphabetFilterToggle
                     expanded={alphabetExpanded}
                     onToggle={() => setAlphabetExpanded((v) => !v)}
                     selectedLetter={selectedLetter}
+                    showLabel={stackedFilters}
                   />
                 </div>
 
-                <label className="flex items-center gap-1 shrink-0 pl-1.5 sm:pl-0 border-l border-stone-800/80 light:border-stone-200 sm:border-0">
+                <label className={cn('flex items-center gap-1.5', stackedFilters ? 'min-w-0' : 'shrink-0')}>
                   <ArrowUpDown className="w-3.5 h-3.5 shrink-0" aria-hidden />
-                  <span className="hidden md:inline shrink-0 font-medium">Ordem</span>
-                  <select
+                  <span className={cn('shrink-0 font-medium', !splitActive && 'hidden md:inline')}>Ordem</span>
+                  <Select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as 'number' | 'title' | 'recent')}
                     aria-label="Ordenação"
-                    className="min-h-9 max-w-[6.25rem] sm:max-w-none bg-stone-800 light:bg-white border border-stone-700 light:border-stone-300 text-stone-200 light:text-stone-900 rounded-button px-1.5 sm:px-2.5 py-1.5 text-[11px] sm:text-xs font-medium focus:outline-none touch-manipulation"
+                    className={cn(
+                      'min-h-9 !py-1 !text-xs',
+                      stackedFilters ? 'flex-1 min-w-0' : 'w-auto max-w-[7.5rem] sm:max-w-none',
+                    )}
                   >
-                    <option value="number">Por Número</option>
-                    <option value="title">Por Título</option>
-                    <option value="recent">Mais Recentes</option>
-                  </select>
+                    <option value="number">Por número</option>
+                    <option value="title">Por título</option>
+                    <option value="recent">Mais recentes</option>
+                  </Select>
                 </label>
               </div>
 
@@ -1509,19 +1959,34 @@ export default function App() {
             </div>
 
             {favoritesFilterLoading ? (
-              <CatalogSongsLoading
-                layout={songsLayout}
-                title={showFavoritesOnly ? 'Carregando favoritos…' : 'Atualizando catálogo…'}
-                subtitle={
-                  showFavoritesOnly
-                    ? 'Filtrando suas músicas favoritas'
-                    : 'Removendo o filtro de favoritos'
-                }
-              />
+              <div className={cn(splitActive && 'p-3')}>
+                <CatalogSongsLoading
+                  layout={splitActive ? 'list' : songsLayout}
+                  title={showFavoritesOnly ? 'Carregando favoritos…' : 'Atualizando catálogo…'}
+                  subtitle={
+                    showFavoritesOnly
+                      ? 'Filtrando suas músicas favoritas'
+                      : 'Removendo o filtro de favoritos'
+                  }
+                />
+              </div>
             ) : sortedSongs.length > 0 ? (
-              songsLayout === 'list' ? (
+              <>
+              {splitActive ? (
+                <div className="flex flex-col p-1.5" role="list" aria-label="Músicas">
+                  {visibleSongs.map((song) => (
+                    <SongPaneItem
+                      key={song.id}
+                      song={song}
+                      selected={song.id === catalogSongId}
+                      isFavorite={Boolean(user) && favorites.includes(song.id)}
+                      onSelect={openSong}
+                    />
+                  ))}
+                </div>
+              ) : songsLayout === 'list' ? (
                 <div className="flex flex-col gap-1.5">
-                  {sortedSongs.map((song) => (
+                  {visibleSongs.map((song) => (
                     <SongListRow
                       key={song.id}
                       song={song}
@@ -1538,7 +2003,7 @@ export default function App() {
                 </div>
               ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {sortedSongs.map((song) => (
+                {visibleSongs.map((song) => (
                   <SongCard
                     key={song.id}
                     song={song}
@@ -1553,99 +2018,95 @@ export default function App() {
                   />
                 ))}
               </div>
-              )
+              )}
+              {hiddenSongsCount > 0 && (
+                <div className="flex flex-col items-center gap-2 pt-2 pb-4">
+                  <Button
+                    variant="secondary"
+                    icon={ChevronDown}
+                    onClick={() => setCatalogVisibleCount((n) => n + CATALOG_PAGE_SIZE)}
+                    className="min-w-56"
+                  >
+                    Carregar mais {Math.min(CATALOG_PAGE_SIZE, hiddenSongsCount)}
+                  </Button>
+                  <p className="text-xs text-fg-subtle tabular-nums">
+                    Mostrando {visibleSongs.length} de {sortedSongs.length} músicas
+                  </p>
+                </div>
+              )}
+              </>
+            ) : songs.length === 0 ? (
+              <EmptyState
+                className={cn(splitActive && 'm-3')}
+                icon={Music}
+                title="Catálogo vazio"
+                description={
+                  canManageSongs
+                    ? 'Nenhuma música cadastrada ainda. Cadastre a primeira música ou importe um arquivo JSON no painel de músicas.'
+                    : 'Nenhuma música disponível no momento. Fale com o administrador da sua igreja.'
+                }
+                action={
+                  canManageSongs ? (
+                    <Button icon={Music} onClick={() => setSongToEdit('new')}>
+                      Cadastrar música
+                    </Button>
+                  ) : undefined
+                }
+              />
             ) : (
-              <div className="bg-stone-900/40 border border-stone-800 rounded-3xl p-12 text-center space-y-3">
-                <Music className="w-12 h-12 text-stone-600 mx-auto" />
-                <h3 className="text-xl font-serif font-bold text-stone-200">Nenhuma música encontrada</h3>
-                <p className="text-xs text-stone-400 max-w-sm mx-auto">
-                  {songs.length === 0
-                    ? 'Nenhuma música visível na tabela songs (verifique is_public / org global e o RLS).'
-                    : 'Não encontramos músicas com os filtros selecionados.'}
-                </p>
-                <button
-                  onClick={() => {
-                    setActiveCategoryPill('Todos');
-                    setShowFavoritesOnly(false);
-                    setQuickQuery('');
-                    setAdvancedFilters(INITIAL_FILTERS);
-                  }}
-                  className="mt-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-emerald-300 rounded-button text-xs font-semibold border border-stone-700"
-                >
-                  Limpar filtros
-                </button>
-              </div>
+              <EmptyState
+                className={cn(splitActive && 'm-3')}
+                icon={SearchX}
+                title="Nenhuma música encontrada"
+                description={
+                  quickQuery.trim()
+                    ? `Não encontramos resultados para “${quickQuery.trim()}”. Verifique a grafia ou tente buscar pelo número ou por um trecho da letra.`
+                    : 'Não encontramos músicas com os filtros selecionados. Remova alguns filtros para ampliar a busca.'
+                }
+                action={
+                  <Button
+                    variant="secondary"
+                    icon={FilterX}
+                    onClick={() => {
+                      setActiveCategoryPill('Todos');
+                      setShowFavoritesOnly(false);
+                      setQuickQuery('');
+                      setSelectedLetter('TODAS');
+                      setShowHinos(true);
+                      setShowCanticos(true);
+                      setAdvancedFilters(INITIAL_FILTERS);
+                    }}
+                  >
+                    Limpar filtros
+                  </Button>
+                }
+              />
             )}
+          </div>
+          {splitActive && (
+            <section className="min-h-0 min-w-0 bg-app" aria-label="Música selecionada">
+              {selectedSongId ? (
+                renderSongDetail('pane')
+              ) : (
+                <CatalogSplitPlaceholder songsCount={songs.length} />
+              )}
+            </section>
+          )}
           </div>
         )}
       </main>
       </div>
       )}
 
-      {activeSongRouteId &&
-        (selectedEventSongId
-          ? selectedSongVersionQuery.isError
-          : selectedSongQuery.isError) && (
-        <div className="fixed inset-0 z-50 bg-stone-900 flex flex-col items-center justify-center gap-3 text-stone-100 px-6">
-          <AlertCircle className="w-8 h-8 text-rose-400" />
-          <p className="text-sm font-semibold">
-            {selectedEventSongId ? 'Versão não encontrada' : 'Música não encontrada'}
-          </p>
-          <p className="text-xs text-stone-400 text-center max-w-sm">
-            {(
-              (selectedEventSongId
-                ? selectedSongVersionQuery.error
-                : selectedSongQuery.error) as Error
-            )?.message ||
-              'Este link pode estar inválido ou a música não está disponível.'}
-          </p>
-          <button
-            type="button"
-            onClick={closeSongPage}
-            className="mt-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-emerald-300 rounded-button text-xs font-semibold border border-stone-700"
-          >
-            Voltar
-          </button>
-        </div>
-      )}
-
-      {activeSongRouteId &&
-        !(selectedEventSongId
-          ? selectedSongVersionQuery.isError
-          : selectedSongQuery.isError) && (
-        <SongDetailModal
-          song={selectedSong}
-          eventVersion={
-            songEventVersion
-              ? {
-                  title: songEventVersion.title,
-                  date: songEventVersion.date,
-                  time: songEventVersion.time,
-                }
-              : null
-          }
-          isLoading={
-            selectedEventSongId
-              ? selectedSongVersionQuery.isLoading ||
-                (!selectedSongVersionQuery.data && selectedSongVersionQuery.isFetching)
-              : selectedSongQuery.isLoading ||
-                (!selectedSongQuery.data && selectedSongQuery.isFetching)
-          }
-          onClose={closeSongPage}
-          isFavorite={Boolean(user) && Boolean(catalogSongId) && favorites.includes(catalogSongId!)}
-          onToggleFavorite={user ? handleToggleFavorite : undefined}
-          onOpenProjection={(s) => setProjectionSongs([s])}
-          onAddToSetlist={user ? handleAddToSetlist : undefined}
-          isAdmin={Boolean(user) && canManageSongs && !selectedEventSongId}
-          onEditSong={
-            canManageSongs && !selectedEventSongId
-              ? () => {
-                  if (selectedSongQuery.data) setSongToEdit(selectedSongQuery.data);
-                }
-              : undefined
-          }
+      {showMobileNav && (
+        <MobileNav
+          currentView={currentView}
+          onViewChange={handleViewChange}
+          hidden={Boolean(projectionSongs)}
         />
       )}
+
+      {activeSongRouteId && !splitActive && renderSongDetail('overlay')}
 
       {projectionSongs && (
         <SongProjectionModal
@@ -1687,6 +2148,14 @@ export default function App() {
             setShowLogin(false);
             setCurrentView('register');
           }}
+        />
+      )}
+
+      {user && canAccessAdminPanel && (
+        <ChurchFormModal
+          open={showChurchCreate}
+          onClose={() => setShowChurchCreate(false)}
+          onSave={handleSaveChurch}
         />
       )}
 

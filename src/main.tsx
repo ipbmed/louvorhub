@@ -6,6 +6,8 @@ import { AuthProvider } from '@/contexts/AuthProvider';
 import { ThemeProvider } from '@/contexts/ThemeProvider';
 import { ToastProvider } from '@/contexts/ToastProvider';
 import { ApiBusyProvider } from '@/contexts/ApiBusyProvider';
+import { ConfirmProvider } from '@/contexts/ConfirmProvider';
+import { PwaProvider } from '@/contexts/PwaProvider';
 import App from './App.tsx';
 import './index.css';
 
@@ -25,11 +27,15 @@ createRoot(document.getElementById('root')!).render(
       <ThemeProvider>
         <AuthProvider>
           <ToastProvider>
-            <ApiBusyProvider>
-              <BrowserRouter>
-                <App />
-              </BrowserRouter>
-            </ApiBusyProvider>
+            <ConfirmProvider>
+              <ApiBusyProvider>
+                <PwaProvider>
+                  <BrowserRouter>
+                    <App />
+                  </BrowserRouter>
+                </PwaProvider>
+              </ApiBusyProvider>
+            </ConfirmProvider>
           </ToastProvider>
         </AuthProvider>
       </ThemeProvider>

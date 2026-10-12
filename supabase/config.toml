@@ -8,8 +8,15 @@ major_version = 15
 
 [auth]
 enabled = true
-site_url = "http://localhost:5173"
-additional_redirect_urls = ["http://localhost:5173/login", "https://*.github.io/*"]
+# Em produção, defina site_url com o domínio público e inclua-o em additional_redirect_urls.
+# URLs fora desta lista são ignoradas no magic link e o Supabase usa site_url como destino.
+site_url = "http://localhost:3000"
+additional_redirect_urls = [
+  "http://localhost:3000/**",
+  "http://127.0.0.1:3000/**",
+  "http://localhost:4173/**",
+  "https://*.github.io/**",
+]
 
 [auth.email]
 enable_signup = true

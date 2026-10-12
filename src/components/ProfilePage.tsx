@@ -21,7 +21,7 @@ import { getAvatarPublicUrl } from '@/utils/avatarUrl';
 import { updateProfileDetails } from '@/services/members';
 import { listAllVisibleOrganizations } from '@/services/organizations';
 import type { Church } from '@/types';
-import { PageHeader, PageHeaderButton } from './PageHeader';
+import { PageShell, PageHeaderButton } from './PageHeader';
 import { AvatarCropDialog } from './AvatarCropDialog';
 import { CameraCaptureDialog } from './CameraCaptureDialog';
 import { KNOWN_SKILLS } from '@/constants/skills';
@@ -264,14 +264,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = () => {
   );
 
   return (
-    <div className="w-full space-y-6 animate-in fade-in duration-200">
-      <PageHeader
+    <PageShell
+        width="narrow"
         icon={User}
         title="Meu perfil"
         description={editing ? 'Edite seus dados e salve as alterações.' : 'Visualize seus dados pessoais.'}
         actions={
           editing ? (
-            <PageHeaderButton icon={X} variant="secondary" onClick={cancelEditing} disabled={busy}>
+            <PageHeaderButton icon={X} onClick={cancelEditing} disabled={busy}>
               Cancelar
             </PageHeaderButton>
           ) : (
@@ -280,11 +280,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = () => {
             </PageHeaderButton>
           )
         }
-      />
-
-      <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] gap-4 lg:gap-6 lg:items-start">
+    >
+      <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)] gap-4 lg:gap-3 lg:items-start">
         {/* Foto: ao lado e sticky quando há espaço */}
-        <aside className="lg:sticky lg:top-6 self-start">
+        <aside className="lg:sticky lg:top-[4.75rem] self-start">
           <div className="bg-stone-900/80 border border-stone-800 rounded-3xl p-4 sm:p-5 flex flex-row lg:flex-col items-center lg:items-stretch gap-4">
             <div className="w-28 h-28 sm:w-32 sm:h-32 lg:w-full lg:aspect-square lg:h-auto rounded-2xl overflow-hidden bg-stone-800 border border-stone-700 flex items-center justify-center shrink-0">
               {avatarUrl ? (
@@ -612,6 +611,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = () => {
           }}
         />
       )}
-    </div>
+    </PageShell>
   );
 };

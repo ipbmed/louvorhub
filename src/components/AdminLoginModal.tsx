@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { X, Mail, ShieldCheck, AlertCircle, Info, Loader2 } from 'lucide-react';
+import { ArrowLeft, Mail, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthProvider';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { Logo } from './Logo';
+import { ActionButton, Alert, Field, Input, Modal } from './ui';
 
 interface AdminLoginModalProps {
   onClose: () => void;
@@ -8,12 +11,17 @@ interface AdminLoginModalProps {
   onGoToRegister?: () => void;
 }
 
+/**
+ * Login por link mágico. No desktop é um diálogo centralizado; no celular vira
+ * uma tela cheia com o conteúdo no topo, para o teclado não cobrir o formulário.
+ */
 export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   onClose,
   onSent,
   onGoToRegister,
 }) => {
   const { signInWithEmail, configured, authNotice, clearAuthNotice } = useAuth();
+  const isWide = useMediaQuery('(min-width: 640px)');
   const [email, setEmail] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [sent, setSent] = useState(false);
@@ -24,9 +32,17 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   }, [authNotice]);
 
   const handleClose = () => {
+    if (loading) return;
     clearAuthNotice();
     onClose();
   };
+
+  const handleRegister = onGoToRegister
+    ? () => {
+        handleClose();
+        onGoToRegister();
+      }
+    : undefined;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,96 +59,178 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       setErrorMsg(error);
       return;
     }
+    (document.activeElement as HTMLElement | null)?.blur();
     setSent(true);
     onSent?.();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-stone-900 border border-stone-800 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl text-stone-100 relative">
-        <div className="flex items-center justify-between pb-4 border-b border-stone-800 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 light:bg-emerald-100 text-emerald-300 light:text-emerald-800 flex items-center justify-center font-bold border border-emerald-500/30 light:border-emerald-300 shadow-inner">
-              <Mail className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-xl font-display font-bold text-emerald-100 light:text-stone-900 tracking-tight">Entrar no LouvorHub</h3>
-              <p className="text-xs text-stone-400 light:text-stone-500">Magic link por e-mail</p>
-            </div>
-          </div>
-          <button onClick={handleClose} className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+  const emailField = (
+    <Field label="E-mail" required>
+      {(id) => (
+        <Input
+          id={id}
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          enterKeyHint="send"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="voce@igreja.org"
+          autoFocus={isWide}
+        />
+      )}
+    </Field>
+  );
 
-        <div className="bg-emerald-950/40 light:bg-emerald-50 border border-emerald-800/40 light:border-emerald-200 rounded-2xl p-3.5 mb-6 text-xs text-emerald-200/90 light:text-emerald-800 flex items-start gap-2.5">
-          <Info className="w-4 h-4 text-emerald-400 light:text-emerald-600 shrink-0 mt-0.5" />
-          <p>
-            Só contas já cadastradas e aprovadas recebem magic link. Se ainda não tem cadastro, crie
-            sua conta e aguarde a aprovação do administrador.
-          </p>
-        </div>
+  const approvalNote = (
+    <span className="inline-flex items-start gap-1.5">
+      <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+      <span>
+        Só contas já cadastradas e aprovadas recebem o link. Ainda não tem cadastro? Crie sua conta
+        e aguarde a aprovação do administrador.
+      </span>
+    </span>
+  );
 
-        {errorMsg && (
-          <div className="bg-rose-950/60 border border-rose-800/60 rounded-2xl p-3 mb-4 text-xs text-rose-300 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
+  const sentMessage = (
+    <>
+      <p className="text-sm text-fg font-semibold break-words">Link enviado para {email}</p>
+      <p className="text-xs text-fg-muted leading-relaxed">
+        Abra o e-mail neste aparelho e toque no link para entrar. Se não aparecer em alguns minutos,
+        confira a caixa de spam.
+      </p>
+    </>
+  );
 
+  if (!isWide) {
+    return (
+      <LoginScreen onClose={handleClose} locked={loading}>
         {sent ? (
-          <div className="text-center space-y-3 py-4">
-            <ShieldCheck className="w-10 h-10 text-emerald-400 mx-auto" />
-            <p className="text-sm text-emerald-100 font-semibold">Link enviado!</p>
-            <p className="text-xs text-stone-400">
-              Verifique sua caixa de entrada ({email}) e abra o magic link para entrar.
-            </p>
-            <button
-              onClick={handleClose}
-              className="mt-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 rounded-button text-xs font-semibold"
-            >
-              Fechar
-            </button>
+          <div className="text-center space-y-3 pt-6">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-brand-soft border border-brand-line text-brand-text flex items-center justify-center">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-fg">Verifique seu e-mail</h1>
+            {sentMessage}
+            <div className="pt-4">
+              <ActionButton variant="light" className="w-full" onClick={handleClose}>
+                Voltar ao catálogo
+              </ActionButton>
+            </div>
           </div>
         ) : (
-          <form onSubmit={handleLogin} className="space-y-4 text-sm">
-            <div>
-              <label className="block text-stone-400 font-semibold mb-1">E-mail</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="voce@igreja.org"
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-              />
+          <>
+            <div className="text-center pt-2 pb-7">
+              <Logo size="lg" className="flex-col gap-3" />
+              <h1 className="mt-6 text-2xl font-extrabold tracking-tight text-fg">Entrar</h1>
+              <p className="mt-1 text-sm text-fg-muted">
+                Receba o link de acesso para no seu e-mail.
+              </p>
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-stone-950 font-bold rounded-button shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 text-sm transition-all mt-6"
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-              <span>Enviar magic link</span>
-            </button>
-            {onGoToRegister && (
-              <p className="text-xs text-stone-500 text-center pt-1">
-                Ainda não tem cadastro?{' '}
+            <form onSubmit={(e) => void handleLogin(e)} className="space-y-4">
+              {errorMsg && <Alert tone="danger">{errorMsg}</Alert>}
+              {emailField}
+              <ActionButton type="submit" variant="primary" className="w-full" loading={loading} icon={Mail}>
+                Enviar link de acesso
+              </ActionButton>
+            </form>
+            {handleRegister && (
+              <p className="mt-6 text-center text-sm text-fg-muted">
+                Ainda não tem conta?{' '}
                 <button
                   type="button"
-                  onClick={() => {
-                    handleClose();
-                    onGoToRegister();
-                  }}
-                  className="text-emerald-400 hover:text-emerald-300 font-semibold"
+                  onClick={handleRegister}
+                  className="font-bold text-brand-text underline-offset-4 hover:underline"
                 >
                   Criar conta
                 </button>
               </p>
             )}
-          </form>
+            <div className="mt-8">
+              <Alert tone="info">{approvalNote}</Alert>
+            </div>
+          </>
         )}
+      </LoginScreen>
+    );
+  }
+
+  return (
+    <Modal
+      open
+      onClose={handleClose}
+      locked={loading}
+      icon={sent ? ShieldCheck : Mail}
+      title={sent ? 'Verifique seu e-mail' : 'Entrar no LouvorHub'}
+      subtitle={sent ? undefined : 'Sem senha: enviamos um link de acesso para o seu e-mail.'}
+      size="sm"
+      footer={
+        sent ? (
+          <ActionButton variant="light" className="w-full" onClick={handleClose}>
+            Fechar
+          </ActionButton>
+        ) : (
+          <>
+            {handleRegister && (
+              <ActionButton variant="light" onClick={handleRegister} className="mr-auto">
+                Criar conta
+              </ActionButton>
+            )}
+            <ActionButton type="submit" form="login-form" variant="primary" loading={loading} icon={Mail}>
+              Enviar link de acesso
+            </ActionButton>
+          </>
+        )
+      }
+    >
+      {sent ? (
+        <div className="text-center space-y-3 py-2">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-brand-soft border border-brand-line text-brand-text flex items-center justify-center">
+            <ShieldCheck className="w-8 h-8" />
+          </div>
+          {sentMessage}
+        </div>
+      ) : (
+        <form id="login-form" onSubmit={(e) => void handleLogin(e)} className="space-y-4">
+          <Alert tone="info">{approvalNote}</Alert>
+          {errorMsg && <Alert tone="danger">{errorMsg}</Alert>}
+          {emailField}
+        </form>
+      )}
+    </Modal>
+  );
+};
+
+const LoginScreen: React.FC<{ onClose: () => void; locked: boolean; children: React.ReactNode }> = ({
+  onClose,
+  locked,
+  children,
+}) => {
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, []);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Entrar no LouvorHub"
+      className="fixed inset-0 z-50 bg-app text-fg overflow-y-auto overscroll-contain pt-safe pb-safe animate-in fade-in slide-in-from-bottom-2 duration-200"
+    >
+      <div className="flex items-center h-14 px-2">
+        <ActionButton variant="light" icon={ArrowLeft} onClick={onClose} disabled={locked}>
+          Voltar
+        </ActionButton>
       </div>
+      <div className="w-full max-w-sm mx-auto px-6 pb-10">{children}</div>
     </div>
   );
 };

@@ -57,7 +57,9 @@ export const AlphabetFilterToggle: React.FC<{
   expanded: boolean;
   onToggle: () => void;
   selectedLetter: string;
-}> = ({ expanded, onToggle, selectedLetter }) => {
+  /** Mostra o rótulo "Índice" também em telas pequenas. */
+  showLabel?: boolean;
+}> = ({ expanded, onToggle, selectedLetter, showLabel = false }) => {
   const hasFilter = selectedLetter !== 'TODAS';
 
   return (
@@ -67,14 +69,14 @@ export const AlphabetFilterToggle: React.FC<{
       aria-expanded={expanded}
       aria-label="Índice alfabético"
       title="Índice alfabético"
-      className={`relative flex items-center justify-center gap-1.5 min-h-9 min-w-9 sm:min-w-0 px-2 sm:px-2.5 py-1.5 rounded-button font-semibold transition-all touch-manipulation border ${
+      className={`relative shrink-0 flex items-center justify-center gap-1.5 min-h-9 min-w-9 sm:min-w-0 px-2 sm:px-2.5 py-1.5 rounded-button font-semibold transition-all touch-manipulation border ${
         expanded || hasFilter
           ? 'bg-emerald-500 text-stone-950 border-emerald-400 shadow-sm'
           : 'bg-stone-800/80 light:bg-stone-100 text-stone-300 light:text-stone-700 border-stone-700 light:border-stone-200 hover:bg-stone-700/80 light:hover:bg-stone-200'
       }`}
     >
       <BookA className="w-3.5 h-3.5 shrink-0" />
-      <span className="hidden sm:inline">Índice</span>
+      <span className={showLabel ? 'inline' : 'hidden sm:inline'}>Índice</span>
       {hasFilter && !expanded && (
         <span className="sm:ml-0.5 absolute -top-1 -right-1 sm:static min-w-[1.1rem] h-[1.1rem] px-0.5 rounded-full bg-stone-950/25 sm:bg-stone-950/20 text-[9px] sm:text-[10px] font-extrabold flex items-center justify-center">
           {selectedLetter}

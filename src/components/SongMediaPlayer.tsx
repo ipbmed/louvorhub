@@ -22,6 +22,7 @@ import {
   getSpotifyEmbedUrl, 
   isDirectAudioUrl 
 } from '../utils/mediaUtils';
+import { ActionButton } from './ui';
 
 type YoutubeViewMode = 'compact' | 'normal' | 'wide' | 'featured';
 
@@ -284,12 +285,13 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
                     <span>Abrir no App</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
-                  <button
+                  <ActionButton
+                    variant="light"
+                    icon={X}
                     onClick={() => setActiveEmbedId(null)}
-                    className="p-1 text-stone-400 hover:text-stone-100 rounded-button bg-stone-800"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                    aria-label="Fechar"
+                    title="Fechar"
+                  />
                 </div>
               </div>
 
@@ -364,19 +366,19 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
             Links
           </h4>
         </div>
-        <button
-          type="button"
+        <ActionButton
+          variant="light"
+          icon={X}
+          collapseLabel
           onClick={() => {
             setMediaExpanded(false);
             setActiveEmbedId(null);
           }}
-          className="inline-flex items-center gap-1 px-2 py-1 rounded-button text-[10px] font-semibold text-stone-400 light:text-stone-600 hover:text-stone-100 light:hover:text-stone-900 hover:bg-stone-800 light:hover:bg-stone-100 transition-colors shrink-0"
           title="Fechar links"
           aria-label="Fechar links"
         >
-          <X className="w-3.5 h-3.5" aria-hidden />
-          <span className="hidden sm:inline">Fechar</span>
-        </button>
+          Fechar
+        </ActionButton>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -472,14 +474,13 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
                   <span>Abrir</span>
                   <ExternalLink className="w-3 h-3" />
                 </a>
-                <button
-                  type="button"
+                <ActionButton
+                  variant="light"
+                  icon={X}
                   onClick={() => setActiveEmbedId(null)}
-                  className="p-1 text-stone-400 hover:text-stone-100 rounded-button bg-stone-800"
+                  aria-label="Fechar player"
                   title="Fechar player"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                />
               </div>
             </div>
             <div className="p-3 bg-stone-950">{renderYoutubePlayer('featured')}</div>
@@ -498,13 +499,13 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
             </span>
             <div className="flex items-center gap-1.5 shrink-0">
               {isYoutubeEmbed && renderYoutubeControls()}
-              <button
-                type="button"
+              <ActionButton
+                variant="light"
+                icon={X}
                 onClick={() => setActiveEmbedId(null)}
-                className="text-stone-400 light:text-stone-600 hover:text-stone-100 light:hover:text-stone-900 p-1 rounded bg-stone-900 light:bg-white border border-stone-800 light:border-stone-200 rounded-button"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
+                aria-label="Fechar player"
+                title="Fechar player"
+              />
             </div>
           </div>
 

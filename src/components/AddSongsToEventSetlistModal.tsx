@@ -1,6 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Check, ListMusic, Loader2, Search, X } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Check, ListMusic, Search, X } from 'lucide-react';
 import type { Song } from '../types';
+import { ActionButton } from './ui';
+import { SongTypeFilter, resolveSongType, type SongTypeMode } from './SongTypeFilter';
+
+const PAGE_SIZE = 80;
+
+const normalize = (text: string) =>
+  text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
 interface AddSongsToEventSetlistModalProps {
   songs: Song[];
@@ -18,23 +25,49 @@ export const AddSongsToEventSetlistModal: React.FC<AddSongsToEventSetlistModalPr
   onAdd,
 }) => {
   const [query, setQuery] = useState('');
+  const [typeMode, setTypeMode] = useState<SongTypeMode>('todos');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const existing = useMemo(() => new Set(existingSongIds), [existingSongIds]);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const list = !q
-      ? songs
-      : songs.filter(
-          (s) =>
-            s.title.toLowerCase().includes(q) ||
-            (s.number != null && String(s.number).includes(q)) ||
-            (s.author && s.author.toLowerCase().includes(q)),
-        );
-    return list.slice(0, 120);
-  }, [songs, query]);
+    const q = normalize(query.trim());
+    return songs.filter((s) => {
+      if (typeMode !== 'todos' && resolveSongType(s) !== typeMode) return false;
+      if (!q) return true;
+      return (
+        normalize(s.title).includes(q) ||
+        (s.number != null && String(s.number).includes(q)) ||
+        (s.author != null && normalize(s.author).includes(q))
+      );
+    });
+  }, [songs, query, typeMode]);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+    listRef.current?.scrollTo({ top: 0 });
+  }, [query, typeMode]);
+
+  const hasMore = visibleCount < filtered.length;
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisibleCount((n) => n + PAGE_SIZE);
+        }
+      },
+      { root: listRef.current, rootMargin: '200px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, visibleCount]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -82,17 +115,29 @@ export const AddSongsToEventSetlistModal: React.FC<AddSongsToEventSetlistModalPr
               Selecione as músicas do catálogo para este evento.
             </p>
           </div>
-          <button
-            type="button"
+          <ActionButton
+            variant="light"
+            icon={X}
             onClick={onClose}
             disabled={saving}
-            className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button disabled:opacity-50"
-          >
-            <X className="w-4 h-4" />
-          </button>
+            aria-label="Fechar"
+            title="Fechar"
+          />
         </div>
 
-        <div className="p-4 border-b border-stone-800 shrink-0">
+        <div className="p-4 border-b border-stone-800 shrink-0 space-y-2.5">
+          <div className="flex items-center gap-2">
+            <SongTypeFilter
+              showHinos={typeMode !== 'cantico'}
+              showCanticos={typeMode !== 'hino'}
+              onChange={setTypeMode}
+              fullWidth
+              className="flex-1"
+            />
+            <span className="text-[11px] text-stone-500 shrink-0 tabular-nums">
+              {filtered.length} música{filtered.length === 1 ? '' : 's'}
+            </span>
+          </div>
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-stone-500 absolute left-2.5 top-2.5" />
             <input
@@ -105,11 +150,11 @@ export const AddSongsToEventSetlistModal: React.FC<AddSongsToEventSetlistModalPr
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-1 min-h-0">
+        <div ref={listRef} className="flex-1 overflow-y-auto p-3 space-y-1 min-h-0">
           {filtered.length === 0 ? (
             <p className="text-xs text-stone-500 text-center py-8">Nenhuma música encontrada.</p>
           ) : (
-            filtered.map((song) => {
+            filtered.slice(0, visibleCount).map((song) => {
               const already = existing.has(song.id);
               const isSelected = selected.has(song.id);
               return (
@@ -146,6 +191,7 @@ export const AddSongsToEventSetlistModal: React.FC<AddSongsToEventSetlistModalPr
               );
             })
           )}
+          {hasMore && <div ref={sentinelRef} className="h-8" aria-hidden />}
         </div>
 
         <div className="p-4 border-t border-stone-800 shrink-0 space-y-2">
@@ -155,23 +201,18 @@ export const AddSongsToEventSetlistModal: React.FC<AddSongsToEventSetlistModalPr
               {selected.size} selecionada{selected.size === 1 ? '' : 's'}
             </p>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={saving}
-                className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold disabled:opacity-50"
-              >
+              <ActionButton variant="light" onClick={onClose} disabled={saving}>
                 Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirm}
-                disabled={saving || selected.size === 0}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs inline-flex items-center gap-1.5 disabled:opacity-50"
+              </ActionButton>
+              <ActionButton
+                variant="primary"
+                icon={Check}
+                onClick={() => void handleConfirm()}
+                loading={saving}
+                disabled={selected.size === 0}
               >
-                {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 Adicionar{selected.size > 0 ? ` (${selected.size})` : ''}
-              </button>
+              </ActionButton>
             </div>
           </div>
         </div>

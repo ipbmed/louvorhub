@@ -30,8 +30,10 @@ import {
   Copy,
   ExternalLink,
   Loader2,
+  Check,
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton } from './PageHeader';
+import { ActionButton } from './ui';
 import { KNOWN_SKILLS } from '@/constants/skills';
 import { listRegisteredUsers } from '@/services/accounts';
 import {
@@ -41,6 +43,7 @@ import {
   revokeOrgInvitation,
 } from '@/services/invitations';
 import { useToast } from '@/contexts/ToastProvider';
+import { useConfirm } from '@/contexts/ConfirmProvider';
 import type { RegisteredUser } from '@/types';
 import { getAvatarPublicUrl } from '@/utils/avatarUrl';
 
@@ -110,6 +113,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
   onDeleteUser,
 }) => {
   const { showToast } = useToast();
+  const confirm = useConfirm();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -374,7 +378,14 @@ export const UserManager: React.FC<UserManagerProps> = ({
   };
 
   const handleRevokeInvitation = async (id: string) => {
-    if (!confirm('Cancelar este convite pendente?')) return;
+    const ok = await confirm({
+      title: 'Cancelar convite',
+      message: 'O link enviado deixará de funcionar. Você poderá convidar novamente depois.',
+      confirmLabel: 'Cancelar convite',
+      cancelLabel: 'Manter',
+      tone: 'warning',
+    });
+    if (!ok) return;
     setRevokingId(id);
     try {
       await revokeOrgInvitation(id);
@@ -456,7 +467,16 @@ export const UserManager: React.FC<UserManagerProps> = ({
     }
   };
 
-  const toolbarActions = (
+  const toolbarActions = embedded ? (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      <ActionButton variant="primary" icon={Mail} onClick={openInviteModal}>
+        Convidar
+      </ActionButton>
+      <ActionButton variant="secondary" icon={UserPlus} onClick={openAssociateModal}>
+        Associar
+      </ActionButton>
+    </div>
+  ) : (
     <div className="flex flex-wrap items-center justify-end gap-2">
       <PageHeaderButton icon={Mail} onClick={openInviteModal}>
         Convidar
@@ -505,31 +525,29 @@ export const UserManager: React.FC<UserManagerProps> = ({
                     </p>
                     <p className="text-[11px] text-stone-500 font-mono truncate">{inv.email}</p>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <ActionButton
+                      variant="light"
+                      icon={Copy}
                       onClick={() => void copyInviteLink(inv.token)}
-                      className="p-1.5 text-stone-400 hover:text-stone-100 hover:bg-stone-800 rounded-button"
                       title="Copiar link"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
+                      aria-label="Copiar link"
+                    />
+                    <ActionButton
+                      variant="light"
+                      icon={ExternalLink}
                       onClick={() => mailtoInvite(inv)}
-                      className="p-1.5 text-stone-400 hover:text-stone-100 hover:bg-stone-800 rounded-button"
                       title="Abrir e-mail"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={revokingId === inv.id}
+                      aria-label="Abrir e-mail"
+                    />
+                    <ActionButton
+                      variant="danger"
+                      icon={X}
+                      loading={revokingId === inv.id}
                       onClick={() => void handleRevokeInvitation(inv.id)}
-                      className="px-2 py-1 text-[11px] font-semibold text-rose-300 hover:bg-rose-950/40 rounded-button disabled:opacity-50"
                     >
-                      {revokingId === inv.id ? '…' : 'Revogar'}
-                    </button>
+                      Revogar
+                    </ActionButton>
                   </div>
                 </li>
               ))}
@@ -621,22 +639,12 @@ export const UserManager: React.FC<UserManagerProps> = ({
             Convide alguém por e-mail ou associe uma conta já cadastrada a esta igreja.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={openInviteModal}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs inline-flex items-center gap-1.5"
-            >
-              <Mail className="w-3.5 h-3.5" />
+            <ActionButton variant="primary" icon={Mail} onClick={openInviteModal}>
               Convidar
-            </button>
-            <button
-              type="button"
-              onClick={openAssociateModal}
-              className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold rounded-button text-xs inline-flex items-center gap-1.5 border border-stone-700"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
+            </ActionButton>
+            <ActionButton variant="secondary" icon={UserPlus} onClick={openAssociateModal}>
               Associar
-            </button>
+            </ActionButton>
           </div>
         </div>
       ) : layoutMode === 'list' ? (
@@ -690,27 +698,29 @@ export const UserManager: React.FC<UserManagerProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <ActionButton
+                    variant="light"
+                    icon={Edit3}
                     onClick={() => handleOpenEditModal(user)}
-                    className="p-1.5 text-stone-400 hover:text-stone-100 hover:bg-stone-800 rounded-button transition-colors"
                     title="Editar membro"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (confirm(`Deseja remover o membro ${user.name}?`)) {
-                        onDeleteUser(user.id);
-                      }
-                    }}
-                    className="p-1.5 text-stone-400 hover:text-rose-400 hover:bg-stone-800 rounded-button transition-colors"
+                    aria-label="Editar membro"
+                  />
+                  <ActionButton
+                    variant="danger"
+                    icon={Trash2}
                     title="Remover membro"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                    aria-label="Remover membro"
+                    onClick={() => {
+                      void confirm({
+                        title: 'Remover membro',
+                        message: `${user.name} deixará de fazer parte desta igreja. A conta continua existindo.`,
+                        confirmLabel: 'Remover',
+                      }).then((ok) => {
+                        if (ok) onDeleteUser(user.id);
+                      });
+                    }}
+                  />
                 </div>
               </div>
             );
@@ -811,27 +821,29 @@ export const UserManager: React.FC<UserManagerProps> = ({
                 <div className="pt-3 border-t border-stone-800 flex items-center justify-between text-xs">
                   <span className="text-[10px] text-stone-500 font-mono">Membro</span>
 
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
+                  <div className="flex items-center gap-1.5">
+                    <ActionButton
+                      variant="light"
+                      icon={Edit3}
                       onClick={() => handleOpenEditModal(user)}
-                      className="p-1.5 text-stone-400 hover:text-stone-100 hover:bg-stone-800 rounded-button transition-colors"
                       title="Editar membro"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (confirm(`Deseja remover o membro ${user.name}?`)) {
-                          onDeleteUser(user.id);
-                        }
-                      }}
-                      className="p-1.5 text-stone-400 hover:text-rose-400 hover:bg-stone-800 rounded-button transition-colors"
+                      aria-label="Editar membro"
+                    />
+                    <ActionButton
+                      variant="danger"
+                      icon={Trash2}
                       title="Remover membro"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                      aria-label="Remover membro"
+                      onClick={() => {
+                        void confirm({
+                          title: 'Remover membro',
+                          message: `${user.name} deixará de fazer parte desta igreja. A conta continua existindo.`,
+                          confirmLabel: 'Remover',
+                        }).then((ok) => {
+                          if (ok) onDeleteUser(user.id);
+                        });
+                      }}
+                    />
                   </div>
                 </div>
               </div>
@@ -849,13 +861,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
                 <Mail className="w-5 h-5 text-emerald-400" />
                 <span>Convidar membro</span>
               </h3>
-              <button
-                type="button"
-                onClick={() => setInviteOpen(false)}
-                className="text-stone-400 hover:text-stone-100 p-1 rounded-button"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <ActionButton variant="light" icon={X} onClick={() => setInviteOpen(false)} aria-label="Fechar" title="Fechar" />
             </div>
 
             {createdInvite ? (
@@ -871,29 +877,15 @@ export const UserManager: React.FC<UserManagerProps> = ({
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => void copyInviteLink(createdInvite.token)}
-                    className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-button text-xs font-semibold inline-flex items-center gap-1.5"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
+                  <ActionButton variant="light" icon={Copy} onClick={() => void copyInviteLink(createdInvite.token)}>
                     Copiar link
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => mailtoInvite(createdInvite)}
-                    className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 rounded-button text-xs font-semibold inline-flex items-center gap-1.5"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
+                  </ActionButton>
+                  <ActionButton variant="light" icon={ExternalLink} onClick={() => mailtoInvite(createdInvite)}>
                     Abrir e-mail
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setInviteOpen(false)}
-                    className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 rounded-button text-xs font-bold"
-                  >
+                  </ActionButton>
+                  <ActionButton variant="primary" icon={Check} onClick={() => setInviteOpen(false)}>
                     Fechar
-                  </button>
+                  </ActionButton>
                 </div>
               </div>
             ) : (
@@ -949,22 +941,12 @@ export const UserManager: React.FC<UserManagerProps> = ({
                   </p>
                 </form>
                 <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-stone-800 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setInviteOpen(false)}
-                    className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold"
-                  >
+                  <ActionButton variant="light" onClick={() => setInviteOpen(false)}>
                     Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    form="invite-form"
-                    disabled={inviteSaving}
-                    className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-stone-950 rounded-button text-xs font-bold shadow-md shadow-emerald-500/20 inline-flex items-center gap-1.5"
-                  >
-                    {inviteSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  </ActionButton>
+                  <ActionButton type="submit" form="invite-form" variant="primary" icon={Mail} loading={inviteSaving}>
                     Enviar convite
-                  </button>
+                  </ActionButton>
                 </div>
               </>
             )}
@@ -981,13 +963,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
                 <UserPlus className="w-5 h-5 text-emerald-400" />
                 <span>Associar membro</span>
               </h3>
-              <button
-                type="button"
-                onClick={() => setAssociateOpen(false)}
-                className="text-stone-400 hover:text-stone-100 p-1 rounded-button"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <ActionButton variant="light" icon={X} onClick={() => setAssociateOpen(false)} aria-label="Fechar" title="Fechar" />
             </div>
 
             <form
@@ -1076,22 +1052,19 @@ export const UserManager: React.FC<UserManagerProps> = ({
             </form>
 
             <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-stone-800 shrink-0">
-              <button
-                type="button"
-                onClick={() => setAssociateOpen(false)}
-                className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold"
-              >
+              <ActionButton variant="light" onClick={() => setAssociateOpen(false)}>
                 Cancelar
-              </button>
-              <button
+              </ActionButton>
+              <ActionButton
                 type="submit"
                 form="associate-form"
-                disabled={associateSaving || !selectedAccount}
-                className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-stone-950 rounded-button text-xs font-bold shadow-md shadow-emerald-500/20 inline-flex items-center gap-1.5"
+                variant="primary"
+                icon={UserPlus}
+                loading={associateSaving}
+                disabled={!selectedAccount}
               >
-                {associateSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 Associar
-              </button>
+              </ActionButton>
             </div>
           </div>
         </div>
@@ -1106,13 +1079,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
                 <UserCheck className="w-5 h-5 text-emerald-400" />
                 <span>Editar membro</span>
               </h3>
-              <button
-                type="button"
-                onClick={() => setEditOpen(false)}
-                className="text-stone-400 hover:text-stone-100 p-1 rounded-button"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <ActionButton variant="light" icon={X} onClick={() => setEditOpen(false)} aria-label="Fechar" title="Fechar" />
             </div>
 
             <form
@@ -1264,15 +1231,9 @@ export const UserManager: React.FC<UserManagerProps> = ({
                     placeholder="Outra habilidade…"
                     className="flex-1 bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
                   />
-                  <button
-                    type="button"
-                    onClick={addCustomSkill}
-                    disabled={!customSkill.trim()}
-                    className="px-3 py-2 bg-stone-800 hover:bg-stone-700 disabled:opacity-40 border border-stone-700 rounded-button text-xs font-semibold inline-flex items-center gap-1"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
+                  <ActionButton variant="secondary" icon={Plus} onClick={addCustomSkill} disabled={!customSkill.trim()}>
                     Adicionar
-                  </button>
+                  </ActionButton>
                 </div>
               </div>
 
@@ -1404,20 +1365,12 @@ export const UserManager: React.FC<UserManagerProps> = ({
             </form>
 
             <div className="flex items-center justify-end gap-2 px-6 py-3 border-t border-stone-800 shrink-0">
-              <button
-                type="button"
-                onClick={() => setEditOpen(false)}
-                className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold"
-              >
+              <ActionButton variant="light" onClick={() => setEditOpen(false)}>
                 Cancelar
-              </button>
-              <button
-                type="submit"
-                form="edit-member-form"
-                className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 rounded-button text-xs font-bold shadow-md shadow-emerald-500/20"
-              >
+              </ActionButton>
+              <ActionButton type="submit" form="edit-member-form" variant="primary" icon={Check}>
                 Salvar
-              </button>
+              </ActionButton>
             </div>
           </div>
         </div>

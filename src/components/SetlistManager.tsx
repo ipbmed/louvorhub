@@ -29,7 +29,8 @@ import {
   Share2,
   Pencil,
 } from 'lucide-react';
-import { PageHeader, PageHeaderButton } from './PageHeader';
+import { PageShell, PageHeaderButton } from './PageHeader';
+import { ActionButton } from './ui';
 import { isGroupSetlist, setlistShareUrl } from '@/services/playlists';
 import { ShareQrCode } from './ShareQrCode';
 
@@ -326,8 +327,8 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
   );
 
   return (
-    <div className="w-full space-y-6 animate-in fade-in duration-300">
-      <PageHeader
+    <PageShell
+        width="full"
         icon={ListMusic}
         title="Playlists"
         description="Suas listas pessoais. Você pode criar até 5 playlists pessoais e compartilhar com outras pessoas."
@@ -349,40 +350,70 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
             Adicionar
           </PageHeaderButton>
         }
-      />
+    >
+      {/* Tela grande: lista de playlists à esquerda, conteúdo à direita (como no catálogo). */}
+      {/* Em tela grande a lista encosta na sidebar e na barra do topo, ocupando a altura toda. */}
+      <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[24rem_minmax(0,1fr)] 2xl:grid-cols-[26rem_minmax(0,1fr)] lg:items-start lg:-mt-3 lg:-ml-4 lg:-mb-8">
+      <aside className="lg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)] lg:flex lg:flex-col space-y-2 lg:space-y-0 lg:bg-surface lg:border-r lg:border-line">
+        <p className="text-[11px] text-fg-subtle lg:shrink-0 lg:px-5 lg:py-3 lg:border-b lg:border-line lg:text-xs lg:font-semibold">
+          Minhas playlists · {mySetlists.length}/{MAX_INDIVIDUAL_SETLISTS}
+          {atIndividualLimit ? ' · limite atingido' : ''}
+        </p>
 
-      <p className="text-[11px] text-stone-500">
-        Minhas playlists · {mySetlists.length}/{MAX_INDIVIDUAL_SETLISTS}
-        {atIndividualLimit ? ' · limite atingido' : ''}
-      </p>
+        {visibleSetlists.length > 0 && (
+          <nav
+            aria-label="Minhas playlists"
+            className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 lg:p-2 lg:flex-col lg:items-stretch lg:gap-0.5 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain"
+          >
+            {visibleSetlists.map((s) => {
+              const selected = activeSetlist?.id === s.id;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSelectedSetlistId(s.id)}
+                  aria-current={selected ? 'true' : undefined}
+                  className={`shrink-0 flex items-center gap-2 lg:gap-3 px-4 py-2.5 lg:px-3 lg:py-2.5 rounded-button lg:!rounded-lg text-xs font-semibold whitespace-nowrap lg:whitespace-normal lg:text-left transition-colors border lg:border-0 ${
+                    selected
+                      ? 'bg-brand-soft text-brand-text border-brand-line'
+                      : 'bg-surface text-fg-muted border-line hover:text-fg lg:bg-transparent lg:hover:bg-surface-2'
+                  }`}
+                >
+                  <span
+                    className={`hidden lg:flex w-11 h-11 rounded-full items-center justify-center shrink-0 ${
+                      selected ? 'btn-gradient' : 'bg-brand-soft text-brand-text'
+                    }`}
+                  >
+                    <ListMusic className="w-[18px] h-[18px]" />
+                  </span>
+                  <span className="lg:flex-1 lg:min-w-0 lg:border-b lg:border-line/70 lg:pb-2.5 lg:-mb-2.5">
+                    <span className={`block lg:truncate lg:text-[15px] ${selected ? 'lg:text-brand-text' : 'lg:text-fg'}`}>
+                      {s.title}
+                    </span>
+                    <span className="hidden lg:flex items-center gap-1.5 mt-0.5 text-xs font-medium text-fg-subtle">
+                      {s.items.length} {s.items.length === 1 ? 'música' : 'músicas'}
+                      {s.visibility === 'public_link' && (
+                        <>
+                          <span aria-hidden>·</span>
+                          <Globe className="w-3 h-3" /> Público
+                        </>
+                      )}
+                    </span>
+                  </span>
+                  {isGroupSetlist(s) && <span className="text-[10px] text-teal-500">Grupo</span>}
+                  {s.archived && <span className="text-[10px] text-amber-500">Arquivado</span>}
+                  <span className="lg:hidden px-1.5 bg-muted text-fg-muted rounded-full text-[10px] font-mono">
+                    {s.items.length}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+        )}
+      </aside>
 
-      {visibleSetlists.length > 0 ? (
-        <div className="flex items-center gap-2 overflow-x-auto pb-2">
-          {visibleSetlists.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setSelectedSetlistId(s.id)}
-              className={`px-4 py-2.5 rounded-button text-xs font-semibold whitespace-nowrap transition-all border flex items-center gap-2 ${
-                selectedSetlistId === s.id
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-md'
-                  : 'bg-stone-900 text-stone-400 border-stone-800 hover:text-stone-200'
-              }`}
-            >
-              <span>{s.title}</span>
-              {isGroupSetlist(s) && (
-                <span className="text-[10px] text-teal-300">Grupo</span>
-              )}
-              {s.archived && (
-                <span className="text-[10px] text-amber-300/90">Arquivado</span>
-              )}
-              <span className="px-1.5 py-0.2 bg-stone-800 text-stone-400 rounded-full text-[10px] font-mono">
-                {s.items.length}
-              </span>
-            </button>
-          ))}
-        </div>
-      ) : (
+      <div className="min-w-0 lg:pl-4 lg:pt-3 lg:pb-8">
+      {visibleSetlists.length === 0 && (
         <div className="bg-stone-900/50 border border-stone-800 rounded-3xl p-8 text-center text-stone-400 space-y-3">
           <ListMusic className="w-10 h-10 text-stone-600 mx-auto" />
           <p className="font-display text-lg text-stone-300">
@@ -395,12 +426,12 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
       )}
 
       {activeSetlist && (
-        <div className="bg-stone-900 border border-stone-800 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-xl space-y-3 sm:space-y-4">
+        <div className="bg-stone-900 border border-stone-800 rounded-xl p-3 sm:p-4 shadow-xl space-y-3 sm:space-y-4">
           <div
             className={
               editingDetails
                 ? 'pb-3 border-b border-stone-800'
-                : 'flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 border-b border-stone-800 gap-2.5 sm:gap-3'
+                : 'flex flex-col 2xl:flex-row items-start 2xl:items-center justify-between pb-3 border-b border-stone-800 gap-2.5 sm:gap-3'
             }
           >
             {editingDetails ? (
@@ -436,7 +467,7 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
               </form>
             ) : (
               <>
-            <div className="min-w-0 flex-1 w-full sm:w-auto">
+            <div className="min-w-0 flex-1 w-full 2xl:w-auto">
                   <div className="flex flex-wrap items-center gap-2 text-xs mb-1">
                     <span
                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-button border text-[10px] font-bold ${
@@ -468,7 +499,7 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                     )}
                   </div>
                   <div className="flex items-start gap-2">
-                    <h3 className="text-lg sm:text-xl font-display font-bold text-stone-100">
+                    <h3 className="text-lg sm:text-xl leading-tight font-display font-bold text-stone-100">
                       {activeSetlist.title}
                     </h3>
                     {canEdit && (
@@ -485,111 +516,72 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                   </div>
             </div>
 
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto sm:justify-end">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap w-full 2xl:w-auto 2xl:justify-end">
               {activeSongsInOrder.length > 0 && (
-                <button
-                  type="button"
+                <ActionButton
+                  variant="primary"
+                  icon={Tv}
                   onClick={() => onOpenProjectionPlaylist(activeSongsInOrder)}
-                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs flex items-center gap-1.5"
                 >
-                  <Tv className="w-4 h-4" />
                   Projeção
-                </button>
+                </ActionButton>
               )}
 
               {canEdit && (
-                <button
-                  type="button"
+                <ActionButton
+                  variant="secondary"
+                  icon={activeSetlist.visibility === 'public_link' ? Globe : Lock}
+                  collapseLabel
                   onClick={handleToggleVisibility}
-                  className="p-1.5 sm:p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
                   title="Alternar público/privado"
                 >
-                  {activeSetlist.visibility === 'public_link' ? (
-                    <Globe className="w-4 h-4 text-emerald-400" />
-                  ) : (
-                    <Lock className="w-4 h-4" />
-                  )}
-                  <span className="hidden sm:inline">
-                    {activeSetlist.visibility === 'public_link' ? 'Público' : 'Privado'}
-                  </span>
-                </button>
+                  {activeSetlist.visibility === 'public_link' ? 'Público' : 'Privado'}
+                </ActionButton>
               )}
 
               {canEdit && !isGroupSetlist(activeSetlist) && (
-                <button
-                  type="button"
-                  onClick={openSharePeople}
-                  className="p-1.5 sm:p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
-                >
-                  <Users className="w-4 h-4" />
-                  <span className="hidden sm:inline">Pessoas</span>
-                </button>
+                <ActionButton icon={Users} collapseLabel onClick={openSharePeople}>
+                  Pessoas
+                </ActionButton>
               )}
 
-              <button
-                type="button"
-                onClick={() => void handleShare()}
-                className="p-1.5 sm:p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
-                title="Compartilhar"
-              >
-                <Share2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Compartilhar</span>
-              </button>
+              <ActionButton icon={Share2} collapseLabel onClick={() => void handleShare()}>
+                Compartilhar
+              </ActionButton>
 
               {activeSetlist.visibility === 'public_link' && shareUrl && (
-                <button
-                  type="button"
-                  onClick={() => setShowQr(true)}
-                  className="p-1.5 sm:p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
-                  title="Mostrar QR Code"
-                >
-                  <QrCode className="w-4 h-4" />
-                  <span className="hidden sm:inline">QR</span>
-                </button>
+                <ActionButton icon={QrCode} collapseLabel onClick={() => setShowQr(true)} title="Mostrar QR Code">
+                  QR
+                </ActionButton>
               )}
 
-              <button
-                type="button"
+              <ActionButton
+                icon={copiedHint === 'text' ? Check : Copy}
+                collapseLabel
                 onClick={handleCopyText}
-                className="p-1.5 sm:p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
+                title="Copiar como texto"
               >
-                {copiedHint === 'text' ? (
-                  <Check className="w-4 h-4 text-emerald-400" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-                <span className="hidden sm:inline">Texto</span>
-              </button>
+                Texto
+              </ActionButton>
 
               {canEdit && isGroupSetlist(activeSetlist) && onArchiveSetlist && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    void onArchiveSetlist(activeSetlist.id, !activeSetlist.archived)
-                  }
-                  className="p-1.5 sm:p-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button border border-stone-700 text-xs font-semibold inline-flex items-center gap-1.5"
-                  title={activeSetlist.archived ? 'Desarquivar' : 'Arquivar'}
+                <ActionButton
+                  icon={activeSetlist.archived ? ArchiveRestore : Archive}
+                  collapseLabel
+                  onClick={() => void onArchiveSetlist(activeSetlist.id, !activeSetlist.archived)}
                 >
-                  {activeSetlist.archived ? (
-                    <ArchiveRestore className="w-4 h-4 text-emerald-400" />
-                  ) : (
-                    <Archive className="w-4 h-4 text-amber-300" />
-                  )}
-                  <span className="hidden sm:inline">
-                    {activeSetlist.archived ? 'Desarquivar' : 'Arquivar'}
-                  </span>
-                </button>
+                  {activeSetlist.archived ? 'Desarquivar' : 'Arquivar'}
+                </ActionButton>
               )}
 
               {canEdit && !isGroupSetlist(activeSetlist) && (
-                <button
-                  type="button"
+                <ActionButton
+                  variant="danger"
+                  icon={Trash2}
                   onClick={() => onDeleteSetlist(activeSetlist.id)}
-                  className="p-1.5 sm:p-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 rounded-button border border-rose-800/40"
                   title="Excluir"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                  aria-label="Excluir playlist"
+                />
               )}
             </div>
               </>
@@ -609,61 +601,66 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
           )}
 
           {activeSongsInOrder.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {activeSongsInOrder.map((song, idx) => (
                 <div
                   key={song.id}
-                  className="bg-stone-950 light:bg-stone-50 border border-stone-800/80 light:border-stone-200 hover:border-emerald-500/40 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-2 sm:gap-3"
+                  className="bg-stone-950 light:bg-stone-50 border border-stone-800/80 light:border-stone-200 hover:border-emerald-500/40 rounded-lg px-2.5 py-2 sm:px-3 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-3"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="w-7 h-7 rounded-lg bg-stone-800 light:bg-stone-100 text-emerald-300 light:text-emerald-700 font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <span className="w-6 h-6 rounded bg-stone-800 light:bg-stone-100 text-emerald-300 light:text-emerald-700 font-mono font-bold text-[11px] flex items-center justify-center shrink-0">
                       {idx + 1}
                     </span>
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 light:bg-emerald-50 border border-emerald-500/20 light:border-emerald-200 font-mono font-bold text-emerald-300 light:text-emerald-800 text-sm flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 rounded-md bg-emerald-500/10 light:bg-emerald-50 border border-emerald-500/20 light:border-emerald-200 font-mono font-bold text-emerald-300 light:text-emerald-800 text-sm flex items-center justify-center shrink-0">
                       {song.number ? `#${song.number}` : '·'}
                     </div>
                     <div className="min-w-0">
                       <h4
                         onClick={() => onSelectSong(song)}
-                        className="text-base font-display font-bold text-stone-100 light:text-stone-900 hover:text-emerald-200 light:hover:text-emerald-700 cursor-pointer truncate"
+                        className="text-[15px] leading-snug font-display font-bold text-stone-100 light:text-stone-900 hover:text-emerald-200 light:hover:text-emerald-700 cursor-pointer truncate"
                       >
                         {song.title}
                       </h4>
-                      <div className="flex items-center gap-2 text-xs text-stone-400 light:text-stone-500 mt-0.5 font-medium">
+                      <div className="flex items-center gap-2 text-xs text-stone-400 light:text-stone-500 font-medium">
                         <span>
                           Tom: <strong>{song.originalKey || 'C'}</strong>
                         </span>
-                        <span>·</span>
-                        <span>{song.category}</span>
+                        {song.category && (
+                          <>
+                            <span>·</span>
+                            <span className="truncate">{song.category}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
 
                   {canEdit && (
                     <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        type="button"
+                      <ActionButton
+                        icon={ArrowUp}
                         onClick={() => handleMoveItem(idx, 'up')}
                         disabled={idx === 0}
-                        className="p-1.5 bg-stone-900 light:bg-stone-100 text-stone-400 light:text-stone-700 hover:text-stone-100 light:hover:text-stone-900 border border-transparent light:border-stone-200 disabled:opacity-20 rounded-button"
-                      >
-                        <ArrowUp className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
+                        aria-label="Mover para cima"
+                        title="Mover para cima"
+                        className="disabled:opacity-30"
+                      />
+                      <ActionButton
+                        icon={ArrowDown}
                         onClick={() => handleMoveItem(idx, 'down')}
                         disabled={idx === activeSongsInOrder.length - 1}
-                        className="p-1.5 bg-stone-900 light:bg-stone-100 text-stone-400 light:text-stone-700 hover:text-stone-100 light:hover:text-stone-900 border border-transparent light:border-stone-200 disabled:opacity-20 rounded-button"
-                      >
-                        <ArrowDown className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
+                        aria-label="Mover para baixo"
+                        title="Mover para baixo"
+                        className="disabled:opacity-30"
+                      />
+                      <ActionButton
+                        variant="danger"
+                        icon={Trash2}
                         onClick={() => handleRemoveItem(song.id)}
-                        className="p-1.5 bg-stone-900 light:bg-stone-100 text-rose-400 light:text-rose-600 hover:bg-rose-950/60 light:hover:bg-rose-50 border border-transparent light:border-stone-200 rounded-button ml-1"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                        aria-label="Remover da playlist"
+                        title="Remover da playlist"
+                        className="ml-1"
+                      />
                     </div>
                   )}
                 </div>
@@ -680,6 +677,8 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
           )}
         </div>
       )}
+      </div>
+      </div>
 
       {showCreateModal && (
         <div className="fixed inset-0 z-50 bg-stone-950/80 backdrop-blur-md flex items-center justify-center p-4">
@@ -735,19 +734,12 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                 </div>
               </div>
               <div className="pt-3 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 bg-stone-800 text-stone-300 rounded-button font-semibold"
-                >
+                <ActionButton variant="light" onClick={() => setShowCreateModal(false)}>
                   Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-emerald-500 text-stone-950 font-bold rounded-button"
-                >
+                </ActionButton>
+                <ActionButton type="submit" variant="primary" icon={Plus}>
                   Criar
-                </button>
+                </ActionButton>
               </div>
             </form>
           </div>
@@ -774,14 +766,13 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                 <Share2 className="w-5 h-5 text-emerald-400 light:text-emerald-600" />
                 Compartilhar
               </h3>
-              <button
-                type="button"
+              <ActionButton
+                variant="light"
+                icon={X}
                 onClick={() => setShowShareOptions(false)}
-                className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
                 aria-label="Fechar"
-              >
-                <X className="w-4 h-4" />
-              </button>
+                title="Fechar"
+              />
             </div>
 
             <p className="text-xs text-stone-400 light:text-stone-500">
@@ -843,14 +834,13 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                 <QrCode className="w-5 h-5 text-emerald-400 light:text-emerald-600" />
                 QR Code
               </h3>
-              <button
-                type="button"
+              <ActionButton
+                variant="light"
+                icon={X}
                 onClick={() => setShowQr(false)}
-                className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
                 aria-label="Fechar"
-              >
-                <X className="w-4 h-4" />
-              </button>
+                title="Fechar"
+              />
             </div>
 
             <p className="text-xs text-stone-400 light:text-stone-500">
@@ -865,25 +855,16 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
             <p className="text-[11px] text-stone-500 break-all text-center font-mono">{shareUrl}</p>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-stone-800">
-              <button
-                type="button"
+              <ActionButton
+                variant="light"
+                icon={copiedHint === 'link' ? Check : Link2}
                 onClick={() => void handleCopyLink()}
-                className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-button text-xs font-semibold inline-flex items-center gap-1.5"
               >
-                {copiedHint === 'link' ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                ) : (
-                  <Link2 className="w-3.5 h-3.5" />
-                )}
                 Copiar link
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowQr(false)}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button text-xs"
-              >
+              </ActionButton>
+              <ActionButton variant="light" onClick={() => setShowQr(false)}>
                 Fechar
-              </button>
+              </ActionButton>
             </div>
           </div>
         </div>
@@ -897,13 +878,12 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                 <Users className="w-5 h-5" />
                 Compartilhar com pessoas
               </h3>
-              <button
-                type="button"
+              <ActionButton
+                icon={X}
                 onClick={() => setShowSharePeople(false)}
-                className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
-              >
-                <X className="w-4 h-4" />
-              </button>
+                aria-label="Fechar"
+                title="Fechar"
+              />
             </div>
             <p className="text-xs text-stone-500">
               Conceda acesso para visualizar ou editar. Para quem não tem conta, use o link público.
@@ -913,7 +893,8 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
               <select
                 value={pickUserId}
                 onChange={(e) => setPickUserId(e.target.value)}
-                className="flex-1 bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs"
+                aria-label="Usuário"
+                className="flex-1 min-w-0 h-9 bg-surface border border-line text-fg rounded-lg px-3 text-xs"
               >
                 <option value="">Selecionar usuário…</option>
                 {availableUsers.map((u) => (
@@ -925,19 +906,15 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
               <select
                 value={pickPermission}
                 onChange={(e) => setPickPermission(e.target.value as 'view' | 'edit')}
-                className="bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs"
+                aria-label="Permissão"
+                className="h-9 bg-surface border border-line text-fg rounded-lg px-3 text-xs"
               >
                 <option value="view">Visualizar</option>
                 <option value="edit">Editar</option>
               </select>
-              <button
-                type="button"
-                onClick={addPersonShare}
-                disabled={!pickUserId}
-                className="px-3 py-2 bg-emerald-500 disabled:opacity-40 text-stone-950 font-bold rounded-button text-xs"
-              >
+              <ActionButton variant="secondary" icon={Plus} onClick={addPersonShare} disabled={!pickUserId}>
                 Adicionar
-              </button>
+              </ActionButton>
             </div>
 
             <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -964,45 +941,36 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                             ),
                           )
                         }
-                        className="bg-stone-900 border border-stone-700 rounded-lg px-2 py-1"
+                        aria-label="Permissão"
+                        className="h-9 bg-surface border border-line text-fg rounded-lg px-2"
                       >
                         <option value="view">Ver</option>
                         <option value="edit">Editar</option>
                       </select>
-                      <button
-                        type="button"
+                      <ActionButton
+                        variant="danger"
+                        icon={Trash2}
                         onClick={() =>
                           setShareDraft((prev) => prev.filter((x) => x.userId !== s.userId))
                         }
-                        className="text-rose-400 p-1"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                        aria-label="Remover pessoa"
+                        title="Remover"
+                      />
                     </div>
                   </div>
                 ))
               )}
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-stone-800">
-              <button
-                type="button"
-                onClick={() => setShowSharePeople(false)}
-                className="px-4 py-2 bg-stone-800 text-stone-300 rounded-button text-xs font-semibold"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={savePeopleShares}
-                className="px-5 py-2 bg-emerald-500 text-stone-950 font-bold rounded-button text-xs"
-              >
+            <div className="flex justify-end gap-2 pt-3 border-t border-stone-800">
+              <ActionButton onClick={() => setShowSharePeople(false)}>Cancelar</ActionButton>
+              <ActionButton variant="primary" icon={Check} onClick={savePeopleShares}>
                 Salvar
-              </button>
+              </ActionButton>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 };

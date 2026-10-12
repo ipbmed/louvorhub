@@ -5,15 +5,16 @@ export function dbScheduleToWorship(
   s: DbSchedule,
   options?: { customSongs?: ScheduleSongCustomization[]; songIds?: string[] },
 ): WorshipSchedule {
+  const ev = s.events;
   return {
     id: s.id,
     churchId: s.org_id,
-    eventId: s.event_id ?? undefined,
+    eventId: s.event_id,
     musicGroupId: s.group_id ?? undefined,
-    date: s.service_date,
-    time: s.service_time ?? undefined,
-    serviceType: s.service_type || s.title || 'Culto',
-    theme: s.theme ?? undefined,
+    date: ev?.service_date ?? '',
+    time: ev?.service_time ?? undefined,
+    serviceType: ev?.service_type || ev?.title || 'Culto',
+    theme: ev?.theme ?? undefined,
     rehearsalDate: s.rehearsal_date ?? undefined,
     rehearsalTime: s.rehearsal_time ?? undefined,
     assignments: [...(s.schedule_assignments || [])]
@@ -30,7 +31,6 @@ export function dbScheduleToWorship(
     songIds: options?.songIds || [],
     customSongs: options?.customSongs || [],
     notes: s.notes ?? undefined,
-    status: s.status,
     isFinalized: s.is_finalized,
     finalizedAt: s.finalized_at ?? undefined,
     finalizedBy: s.finalized_by ?? undefined,

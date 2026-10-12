@@ -2,6 +2,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -20,8 +21,12 @@ interface ApiBusyContextValue {
 
 const ApiBusyContext = createContext<ApiBusyContextValue | null>(null);
 
+/** Atraso antes de exibir o overlay — evita "piscar" em operações rápidas. */
+const SHOW_DELAY_MS = 220;
+
 export function ApiBusyProvider({ children }: { children: React.ReactNode }) {
   const [count, setCount] = useState(0);
+  const [visible, setVisible] = useState(false);
   const countRef = useRef(0);
 
   const begin = useCallback(() => {
@@ -33,6 +38,15 @@ export function ApiBusyProvider({ children }: { children: React.ReactNode }) {
     countRef.current = Math.max(0, countRef.current - 1);
     setCount(countRef.current);
   }, []);
+
+  useEffect(() => {
+    if (count > 0) {
+      const t = setTimeout(() => setVisible(true), SHOW_DELAY_MS);
+      return () => clearTimeout(t);
+    }
+    setVisible(false);
+    return undefined;
+  }, [count]);
 
   const withBusy = useCallback(
     async <T,>(fn: () => Promise<T>): Promise<T> => {
@@ -55,20 +69,30 @@ export function ApiBusyProvider({ children }: { children: React.ReactNode }) {
     <ApiBusyContext.Provider value={value}>
       {children}
       {count > 0 && (
-        <div
-          className="fixed inset-0 z-[200] bg-stone-950/55 backdrop-blur-[2px] flex items-center justify-center"
-          role="status"
-          aria-live="polite"
-          aria-busy="true"
-        >
-          <div className="flex flex-col items-center gap-3 px-6 py-5 rounded-2xl bg-stone-900/95 border border-stone-700 shadow-2xl">
-            <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
-            <p className="text-xs font-semibold text-stone-300 tracking-wide">
-              Aguarde…
-            </p>
+        <>
+          {/* Barra de progresso no topo — feedback imediato e discreto */}
+          <div
+            className="fixed top-0 inset-x-0 z-[210] h-0.5 overflow-hidden pointer-events-none"
+            aria-hidden
+          >
+            <div className="h-full w-1/3 bg-brand rounded-full animate-[busybar_1.1s_ease-in-out_infinite]" />
           </div>
-        </div>
+          {visible && (
+            <div
+              className="fixed inset-0 z-[200] bg-overlay/60 backdrop-blur-[1.5px] flex items-center justify-center animate-in fade-in duration-150"
+              role="status"
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <div className="flex flex-col items-center gap-3 px-7 py-5 rounded-2xl bg-surface border border-line shadow-2xl">
+                <Loader2 className="w-8 h-8 text-brand-text animate-spin" />
+                <p className="text-xs font-semibold text-fg-muted tracking-wide">Aguarde…</p>
+              </div>
+            </div>
+          )}
+        </>
       )}
+      <style>{`@keyframes busybar{0%{transform:translateX(-100%)}100%{transform:translateX(400%)}}`}</style>
     </ApiBusyContext.Provider>
   );
 }

@@ -10,14 +10,26 @@ const SONG_SELECT = `
 `;
 
 /** Lista músicas do catálogo (global). */
+/** O PostgREST limita cada resposta (padrão 1000 linhas); o catálogo é lido em páginas. */
+const SONGS_PAGE_SIZE = 1000;
+
 export async function listSongs(_orgId?: string, _includeGlobal = true): Promise<Song[]> {
   const sb = requireSupabase();
-  const { data, error } = await sb
-    .from('songs')
-    .select(SONG_SELECT)
-    .order('number', { ascending: true, nullsFirst: false });
-  if (error) throw error;
-  return ((data || []) as unknown as DbSong[]).map(dbSongToSong);
+  const rows: DbSong[] = [];
+  for (let from = 0; ; from += SONGS_PAGE_SIZE) {
+    const { data, error } = await sb
+      .from('songs')
+      .select(SONG_SELECT)
+      .order('number', { ascending: true, nullsFirst: false })
+      .order('title', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, from + SONGS_PAGE_SIZE - 1);
+    if (error) throw error;
+    const page = (data || []) as unknown as DbSong[];
+    rows.push(...page);
+    if (page.length < SONGS_PAGE_SIZE) break;
+  }
+  return rows.map(dbSongToSong);
 }
 
 export async function getSong(id: string): Promise<Song | null> {

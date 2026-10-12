@@ -4,7 +4,6 @@ export type SongKind = 'hino' | 'cantico';
 export type PlaylistVisibility = 'public_link' | 'org' | 'group' | 'private';
 export type PlaylistKind = 'individual' | 'group_schedule';
 export type PlaylistSharePermission = 'view' | 'edit';
-export type ScheduleStatus = 'pending' | 'confirmed' | 'completed';
 export type AvailabilityStatus = 'pending' | 'confirmed' | 'declined';
 export type MemberStatus = 'active' | 'inactive';
 export type AccountStatus = 'pending' | 'approved' | 'rejected';
@@ -220,22 +219,17 @@ export interface DbPlaylistItem {
 export interface DbSchedule {
   id: string;
   org_id: string;
-  event_id?: string | null;
-  title: string;
-  service_date: string;
-  service_time: string | null;
-  service_type: string;
-  theme: string | null;
+  event_id: string;
   rehearsal_date: string | null;
   rehearsal_time: string | null;
   notes: string | null;
-  status: ScheduleStatus;
   is_finalized: boolean;
   finalized_at: string | null;
   finalized_by: string | null;
   playlist_id: string | null;
   group_id: string | null;
   created_at: string;
+  events?: Pick<DbEvent, 'title' | 'service_date' | 'service_time' | 'service_type' | 'theme'> | null;
   schedule_assignments?: DbScheduleAssignment[];
 }
 

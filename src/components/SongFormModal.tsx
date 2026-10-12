@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { Song, Category, SongType, MediaLink, MediaLinkType } from '../types';
 import { 
   X, 
-  Save, 
+  Check, 
   Eye, 
   Code, 
   Plus, 
@@ -31,6 +31,7 @@ import { ChordLyricLine } from './ChordLyricLine';
 import { LyricSectionHeading } from './LyricSectionHeading';
 import { getCombinedMediaLinks, detectMediaType } from '../utils/mediaUtils';
 import { validateBpmField, validateTimeSignatureField } from '@/lib/songVersionFields';
+import { ActionButton } from './ui';
 interface SongFormModalProps {
   songToEdit?: Song | null;
   categories: Category[];
@@ -397,12 +398,7 @@ export const SongFormModal: React.FC<SongFormModalProps> = ({
               </button>
             </div>
 
-            <button
-              onClick={onClose}
-              className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <ActionButton variant="light" icon={X} onClick={onClose} aria-label="Fechar" title="Fechar" />
           </div>
         </div>
 
@@ -708,14 +704,13 @@ export const SongFormModal: React.FC<SongFormModalProps> = ({
                             onChange={(e) => handleUpdateMediaLink(link.id, 'title', e.target.value)}
                             className="min-w-0 bg-stone-950 border border-stone-750 rounded-lg px-2 py-1.5 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-emerald-500"
                           />
-                          <button
-                            type="button"
+                          <ActionButton
+                            variant="danger"
+                            icon={Trash2}
                             onClick={() => handleRemoveMediaLink(link.id)}
-                            className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-950/50 rounded-button transition-colors shrink-0"
+                            aria-label="Remover este link"
                             title="Remover este link"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          />
                         </div>
                         <input
                           type="url"
@@ -955,22 +950,18 @@ Então mi[C]nh'alma [F]canta a ti, Se[C]nhor:
               {!isFormValid ? 'Preencha os campos obrigatórios para salvar.' : '\u00A0'}
             </p>
             <div className="flex items-center gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={saving}
-              className="px-4 py-2.5 bg-stone-800 text-stone-300 rounded-button font-semibold hover:bg-stone-700 disabled:opacity-50"
-            >
+            <ActionButton variant="light" onClick={onClose} disabled={saving}>
               Cancelar
-            </button>
-            <button
+            </ActionButton>
+            <ActionButton
               type="submit"
-              disabled={saving || !isFormValid}
-              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button shadow-md shadow-emerald-500/20 flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-emerald-500"
+              variant="primary"
+              icon={Check}
+              loading={saving}
+              disabled={!isFormValid}
             >
-              <Save className="w-4 h-4" />
-              <span>{saving ? 'Salvando…' : songToEdit ? 'Salvar Alterações' : 'Salvar'}</span>
-            </button>
+              {saving ? 'Salvando…' : songToEdit ? 'Salvar Alterações' : 'Salvar'}
+            </ActionButton>
             </div>
           </div>
 
@@ -993,13 +984,13 @@ Então mi[C]nh'alma [F]canta a ti, Se[C]nhor:
                     Use as ferramentas para marcar as partes da música. Cifras ficam em colchetes na própria linha.
                   </p>
                 </div>
-                <button
-                  type="button"
+                <ActionButton
+                  variant="light"
+                  icon={X}
                   onClick={() => setShowLyricsHelp(false)}
-                  className="p-1.5 text-stone-400 hover:text-stone-100 rounded-button"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                  aria-label="Fechar"
+                  title="Fechar"
+                />
               </div>
 
               <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
@@ -1074,13 +1065,9 @@ Então mi[C]nh'alma [F]canta a ti, Se[C]nhor:
               </div>
 
               <div className="shrink-0 px-5 py-3.5 border-t border-stone-800 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowLyricsHelp(false)}
-                  className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold rounded-button"
-                >
+                <ActionButton variant="primary" icon={Check} onClick={() => setShowLyricsHelp(false)}>
                   Entendi
-                </button>
+                </ActionButton>
               </div>
             </div>
           </div>
