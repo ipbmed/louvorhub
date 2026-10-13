@@ -3,11 +3,43 @@ import { Check, ListMusic, Search, X } from 'lucide-react';
 import type { Song } from '../types';
 import { ActionButton, Input } from './ui';
 import { SongTypeFilter, resolveSongType, type SongTypeMode } from './SongTypeFilter';
+import { plainLyrics } from './assistant/SongProposal';
 
 const PAGE_SIZE = 80;
 
 const normalize = (text: string) =>
   text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+/** Sem acentos, pontuação nem espaços repetidos: "Hoje, é" e "hoje é" se equivalem. */
+const searchable = (text: string) => normalize(text).replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+
+interface LyricsIndex {
+  lines: string[];
+  text: string;
+  /** Posição, em `text`, onde começa cada linha. */
+  starts: number[];
+}
+
+function buildLyricsIndex(lyrics: string): LyricsIndex {
+  const lines = plainLyrics(lyrics)
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const starts: number[] = [];
+  let text = '';
+  for (const line of lines) {
+    if (text) text += ' ';
+    starts.push(text.length);
+    text += searchable(line);
+  }
+  return { lines, text, starts };
+}
+
+function lyricSnippet(index: LyricsIndex, at: number): string {
+  let i = 0;
+  while (i + 1 < index.starts.length && index.starts[i + 1] <= at) i++;
+  return index.lines[i] ?? '';
+}
 
 interface AddSongsToEventSetlistModalProps {
   songs: Song[];
@@ -34,18 +66,36 @@ export const AddSongsToEventSetlistModal: React.FC<AddSongsToEventSetlistModalPr
 
   const existing = useMemo(() => new Set(existingSongIds), [existingSongIds]);
 
+  const lyricsIndex = useMemo(
+    () => new Map(songs.map((s) => [s.id, buildLyricsIndex(s.lyrics || '')])),
+    [songs],
+  );
+
+  /** Título/número/artista primeiro; depois as que só batem na letra (com o trecho encontrado). */
   const filtered = useMemo(() => {
     const q = normalize(query.trim());
-    return songs.filter((s) => {
-      if (typeMode !== 'todos' && resolveSongType(s) !== typeMode) return false;
-      if (!q) return true;
-      return (
+    const ofType = songs.filter((s) => typeMode === 'todos' || resolveSongType(s) === typeMode);
+    if (!q) return ofType.map((song) => ({ song, snippet: null as string | null }));
+
+    const lyricQuery = searchable(q);
+    const byMeta: { song: Song; snippet: string | null }[] = [];
+    const byLyrics: { song: Song; snippet: string | null }[] = [];
+    for (const s of ofType) {
+      if (
         normalize(s.title).includes(q) ||
         (s.number != null && String(s.number).includes(q)) ||
         (s.author != null && normalize(s.author).includes(q))
-      );
-    });
-  }, [songs, query, typeMode]);
+      ) {
+        byMeta.push({ song: s, snippet: null });
+        continue;
+      }
+      if (lyricQuery.length < 3) continue;
+      const index = lyricsIndex.get(s.id);
+      const at = index ? index.text.indexOf(lyricQuery) : -1;
+      if (index && at >= 0) byLyrics.push({ song: s, snippet: lyricSnippet(index, at) });
+    }
+    return [...byMeta, ...byLyrics];
+  }, [songs, query, typeMode, lyricsIndex]);
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
@@ -145,7 +195,7 @@ export const AddSongsToEventSetlistModal: React.FC<AddSongsToEventSetlistModalPr
               aria-label="Buscar músicas"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar por título, número ou artista..."
+              placeholder="Buscar por título, número, artista ou trecho da letra..."
               className="pl-10"
             />
           </div>
@@ -155,7 +205,7 @@ export const AddSongsToEventSetlistModal: React.FC<AddSongsToEventSetlistModalPr
           {filtered.length === 0 ? (
             <p className="text-xs text-stone-500 text-center py-8">Nenhuma música encontrada.</p>
           ) : (
-            filtered.slice(0, visibleCount).map((song) => {
+            filtered.slice(0, visibleCount).map(({ song, snippet }) => {
               const already = existing.has(song.id);
               const isSelected = selected.has(song.id);
               return (
@@ -184,7 +234,14 @@ export const AddSongsToEventSetlistModal: React.FC<AddSongsToEventSetlistModalPr
                   <span className="font-mono text-emerald-400 shrink-0">
                     {song.number != null ? `#${song.number}` : '♪'}
                   </span>
-                  <span className="truncate flex-1 font-medium">{song.title}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{song.title}</span>
+                    {snippet && (
+                      <span className="block truncate text-[11px] font-normal italic text-stone-500">
+                        “{snippet}”
+                      </span>
+                    )}
+                  </span>
                   {already && (
                     <span className="text-[10px] text-stone-500 shrink-0">Já no repertório</span>
                   )}

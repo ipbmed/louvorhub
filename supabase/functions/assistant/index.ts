@@ -6,6 +6,7 @@ import {
   type AssistantMode,
   buildCatalogPrompt,
   buildLiturgyPrompt,
+  buildPlaylistPrompt,
   buildSchedulePrompt,
   buildSetlistPrompt,
   LITURGY_ITEM_TYPES,
@@ -21,7 +22,7 @@ const corsHeaders = {
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 /** Padrão gratuito com suporte a tool calling e contexto longo. */
 const DEFAULT_MODEL = "google/gemma-4-31b-it:free";
-const MODES: AssistantMode[] = ["setlist", "catalog", "liturgy", "schedule"];
+const MODES: AssistantMode[] = ["setlist", "playlist", "catalog", "liturgy", "schedule"];
 const MAX_ITERATIONS = 4;
 const MAX_HISTORY_MESSAGES = 12;
 const MAX_LYRICS_PER_CALL = 8;
@@ -244,6 +245,27 @@ async function setupMode(
       catalog,
       recent: [],
       repertoire: new Set(),
+      members: [],
+    };
+  }
+
+  if (mode === "playlist") {
+    const catalog = await loadCatalog(sb);
+    const rawIds: unknown[] = Array.isArray(body.playlist?.songIds) ? body.playlist.songIds.slice(0, 300) : [];
+    const current = rawIds
+      .map((id) => catalog.byId.get(String(id)))
+      .filter((s) => s != null);
+    return {
+      systemPrompt: buildPlaylistPrompt({
+        catalog,
+        title: typeof body.playlist?.title === "string" ? sanitize(body.playlist.title.slice(0, 120)) : "",
+        theme,
+        bibleVerse,
+        current: current.map((s) => `${s!.ref}|${songLabel(s!)}|${s!.title}`),
+      }),
+      catalog,
+      recent: [],
+      repertoire: new Set(current.map((s) => s!.id)),
       members: [],
     };
   }

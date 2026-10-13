@@ -23,6 +23,7 @@ interface Conversation {
 
 export const MODE_TITLE: Record<AssistantMode, string> = {
   setlist: 'Músicas para o repertório',
+  playlist: 'Músicas para a playlist',
   liturgy: 'Ordem do culto',
   schedule: 'Escala da equipe',
   catalog: 'Busca no catálogo',
@@ -33,6 +34,11 @@ const QUICK_PROMPTS: Record<AssistantMode, string[]> = {
     'Sugira as músicas para este culto.',
     'Quero 2 hinos e 3 cânticos.',
     'Algo mais contemplativo para o final.',
+  ],
+  playlist: [
+    'Sugira músicas para esta playlist.',
+    'Hinos sobre a cruz para meditar.',
+    'Complete com cânticos no mesmo estilo.',
   ],
   liturgy: [
     'Monte a liturgia completa deste culto.',
@@ -63,6 +69,13 @@ function buildRequest(screen: AssistantScreen, conv: Conversation, messages: Ass
   switch (screen.mode) {
     case 'catalog':
       return base;
+    case 'playlist':
+      return {
+        ...base,
+        theme: conv.theme,
+        bibleVerse: conv.bibleVerse,
+        playlist: { title: screen.playlistTitle, songIds: screen.existingSongIds },
+      };
     case 'setlist':
       return {
         ...base,
@@ -213,6 +226,20 @@ export const AssistantLauncher: React.FC<AssistantLauncherProps> = ({ screen, op
   };
 
   const renderProposal = (m: AssistantMessage) => {
+    if (m.songs?.length && screen.mode === 'playlist') {
+      return (
+        <SongProposal
+          variant="setlist"
+          suggestions={m.songs}
+          songs={screen.songs}
+          existingSongIds={screen.existingSongIds}
+          canApply={screen.canApply}
+          onAdd={screen.onAddSongs}
+          addLabel="Adicionar à playlist"
+          existingLabel="Já na playlist"
+        />
+      );
+    }
     if (m.songs?.length && (screen.mode === 'setlist' || screen.mode === 'catalog')) {
       return screen.mode === 'setlist' ? (
         <SongProposal
@@ -232,6 +259,7 @@ export const AssistantLauncher: React.FC<AssistantLauncherProps> = ({ screen, op
             screen.onOpenSong(song);
             if (!isDesktop) setOpen(false);
           }}
+          onAddToPlaylist={screen.onAddToPlaylist}
         />
       );
     }
@@ -260,12 +288,14 @@ export const AssistantLauncher: React.FC<AssistantLauncherProps> = ({ screen, op
     return null;
   };
 
-  const hasThemeFields = screen.mode === 'setlist' || screen.mode === 'liturgy' || screen.mode === 'schedule';
-  const hasVerseField = screen.mode === 'setlist' || screen.mode === 'liturgy';
+  const isPlaylist = screen.mode === 'playlist';
+  const hasThemeFields = screen.mode !== 'catalog';
+  const hasVerseField = screen.mode === 'setlist' || screen.mode === 'liturgy' || isPlaylist;
+  const contextTitle = isPlaylist ? 'Contexto da playlist' : 'Contexto do culto';
   const contextSummary =
     [conv.theme && `Tema: ${conv.theme}`, hasVerseField && conv.bibleVerse && `Texto: ${conv.bibleVerse}`]
       .filter(Boolean)
-      .join(' · ') || 'Contexto do culto';
+      .join(' · ') || contextTitle;
   const noMembers = screen.mode === 'schedule' && screen.members.length === 0;
 
   if (!open) return null;
@@ -298,7 +328,7 @@ export const AssistantLauncher: React.FC<AssistantLauncherProps> = ({ screen, op
               onClick={() => setContextOpen((v) => !v)}
               className="w-full flex items-center justify-between gap-2 text-xs text-fg-muted"
             >
-              <span className="truncate font-medium">{contextOpen ? 'Contexto do culto' : contextSummary}</span>
+              <span className="truncate font-medium">{contextOpen ? contextTitle : contextSummary}</span>
               {contextOpen ? <ChevronUp className="w-4 h-4 shrink-0" /> : <ChevronDown className="w-4 h-4 shrink-0" />}
             </button>
             {contextOpen && (
@@ -317,22 +347,24 @@ export const AssistantLauncher: React.FC<AssistantLauncherProps> = ({ screen, op
                     className={inputClass}
                   />
                 )}
-                <label className="flex items-center justify-between gap-2 text-xs text-fg-muted">
-                  {screen.mode === 'schedule'
-                    ? 'Considerar escalas das últimas'
-                    : 'Evitar músicas tocadas nas últimas'}
-                  <select
-                    value={conv.avoidWeeks}
-                    onChange={(e) => update({ avoidWeeks: Number(e.target.value) })}
-                    className="bg-surface-2 border border-line rounded-lg px-2 py-1 text-xs text-fg"
-                  >
-                    {AVOID_WEEKS_OPTIONS.map((w) => (
-                      <option key={w} value={w}>
-                        {w === 0 ? (screen.mode === 'schedule' ? 'nenhuma' : 'não evitar') : `${w} semanas`}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                {!isPlaylist && (
+                  <label className="flex items-center justify-between gap-2 text-xs text-fg-muted">
+                    {screen.mode === 'schedule'
+                      ? 'Considerar escalas das últimas'
+                      : 'Evitar músicas tocadas nas últimas'}
+                    <select
+                      value={conv.avoidWeeks}
+                      onChange={(e) => update({ avoidWeeks: Number(e.target.value) })}
+                      className="bg-surface-2 border border-line rounded-lg px-2 py-1 text-xs text-fg"
+                    >
+                      {AVOID_WEEKS_OPTIONS.map((w) => (
+                        <option key={w} value={w}>
+                          {w === 0 ? (screen.mode === 'schedule' ? 'nenhuma' : 'não evitar') : `${w} semanas`}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
               </div>
             )}
           </div>

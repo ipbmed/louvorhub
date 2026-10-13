@@ -264,7 +264,7 @@ export default function App() {
   const [joinCode, setJoinCode] = useState('');
   const [churchEditRequestKey, setChurchEditRequestKey] = useState(0);
   const [showChurchCreate, setShowChurchCreate] = useState(false);
-  const [songToAddToSetlist, setSongToAddToSetlist] = useState<Song | null>(null);
+  const [songsToAddToSetlist, setSongsToAddToSetlist] = useState<Song[] | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   const isEventDetail = Boolean(user && selectedEventId);
@@ -537,6 +537,7 @@ export default function App() {
 
   const openSongRef = useRef(openSong);
   openSongRef.current = openSong;
+  const addToPlaylistRef = useRef<(songs: Song[]) => void>(() => {});
   const catalogAssistant = useMemo<AssistantScreen | null>(
     () =>
       user && !isEventDetail && currentView === 'public' && songs.length > 0
@@ -546,6 +547,7 @@ export default function App() {
             label: `${songs.length} hinos e cânticos`,
             songs,
             onOpenSong: (song) => openSongRef.current(song),
+            onAddToPlaylist: (picked) => addToPlaylistRef.current(picked),
           }
         : null,
     [user, isEventDetail, currentView, songs],
@@ -1079,30 +1081,48 @@ export default function App() {
     });
   };
 
-  const handleAddToSetlist = (song: Song) => {
+  const handleAddToSetlist = (songsToAdd: Song | Song[]) => {
     if (!user) {
       showToast('Faça login para adicionar à playlist.');
       return;
     }
-    setSongToAddToSetlist(song);
+    const list = Array.isArray(songsToAdd) ? songsToAdd : [songsToAdd];
+    if (list.length) setSongsToAddToSetlist(list);
   };
+  addToPlaylistRef.current = handleAddToSetlist;
 
   const handleConfirmAddToSetlist = async (setlist: Setlist) => {
-    if (!songToAddToSetlist || !user) return;
-    const song = songToAddToSetlist;
-    const name = song.number ? `Hino #${song.number}` : `Cântico "${song.title}"`;
+    if (!songsToAddToSetlist?.length || !user) return;
+    const existing = new Set((setlist.items ?? []).map((i) => i.songId));
+    const toAdd = songsToAddToSetlist.filter((s) => !existing.has(s.id));
+    const skipped = songsToAddToSetlist.length - toAdd.length;
+    const nameOf = (song: Song) => (song.number ? `Hino #${song.number}` : `Cântico "${song.title}"`);
     return withBusy(async () => {
-      if ((setlist.items ?? []).some((i) => i.songId === song.id)) {
-        throw new Error(`${name} já está nesta playlist.`);
+      if (!toAdd.length) {
+        throw new Error(
+          songsToAddToSetlist.length === 1
+            ? `${nameOf(songsToAddToSetlist[0])} já está nesta playlist.`
+            : 'Todas essas músicas já estão nesta playlist.',
+        );
       }
+      const now = Date.now();
       await playlistsService.upsertSetlist(user.id, {
         ...setlist,
         orgId: null,
         groupId: null,
-        items: [...(setlist.items ?? []), { id: `item-${Date.now()}`, songId: song.id }],
+        items: [
+          ...(setlist.items ?? []),
+          ...toAdd.map((song, i) => ({ id: `item-${now}-${i}`, songId: song.id })),
+        ],
       });
       await queryClient.invalidateQueries({ queryKey: ['setlists'] });
-      showToast(`${name} adicionado a "${setlist.title}"!`);
+      showToast(
+        toAdd.length === 1 && !skipped
+          ? `${nameOf(toAdd[0])} adicionado a "${setlist.title}"!`
+          : `${toAdd.length} música${toAdd.length === 1 ? '' : 's'} adicionada${toAdd.length === 1 ? '' : 's'} a "${setlist.title}"${
+              skipped ? ` (${skipped} já estava${skipped === 1 ? '' : 'm'} lá)` : ''
+            }!`,
+      );
     });
   };
 
@@ -2183,11 +2203,11 @@ export default function App() {
         />
       )}
 
-      {songToAddToSetlist && (
+      {songsToAddToSetlist && (
         <AddToSetlistModal
-          song={songToAddToSetlist}
+          songs={songsToAddToSetlist}
           setlists={setlists}
-          onClose={() => setSongToAddToSetlist(null)}
+          onClose={() => setSongsToAddToSetlist(null)}
           onConfirm={handleConfirmAddToSetlist}
         />
       )}

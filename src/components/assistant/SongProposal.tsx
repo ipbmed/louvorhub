@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { BookOpen, Check, ExternalLink, ListPlus } from 'lucide-react';
+import { BookOpen, Check, ExternalLink, ListMusic, ListPlus } from 'lucide-react';
 import type { Song } from '@/types';
 import type { AssistantSong } from '@/services/assistant';
 import { ActionButton, cn } from '../ui';
@@ -28,12 +28,15 @@ export function songBadge(kind: string | undefined, number: number | null | unde
 interface SongProposalProps {
   suggestions: AssistantSong[];
   songs: Song[];
-  /** Repertório: seleção + adicionar. Catálogo: abrir a música. */
+  /** Repertório: seleção + adicionar. Catálogo: abrir a música ou levar a seleção para uma playlist. */
   variant: 'setlist' | 'catalog';
   existingSongIds?: string[];
   canApply?: boolean;
   onAdd?: (songIds: string[]) => Promise<void>;
   onOpen?: (song: Song) => void;
+  onAddToPlaylist?: (songs: Song[]) => void;
+  addLabel?: string;
+  existingLabel?: string;
 }
 
 export const SongProposal: React.FC<SongProposalProps> = ({
@@ -44,6 +47,9 @@ export const SongProposal: React.FC<SongProposalProps> = ({
   canApply = false,
   onAdd,
   onOpen,
+  onAddToPlaylist,
+  addLabel = 'Adicionar ao repertório',
+  existingLabel = 'Já no repertório',
 }) => {
   const existing = useMemo(() => new Set(existingSongIds), [existingSongIds]);
   const songsById = useMemo(() => new Map(songs.map((s) => [s.id, s])), [songs]);
@@ -56,7 +62,9 @@ export const SongProposal: React.FC<SongProposalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const isSetlist = variant === 'setlist';
+  const selectable = isSetlist ? canApply : Boolean(onAddToPlaylist);
   const pending = [...selected].filter((id) => !existing.has(id));
+  const pendingSongs = pending.map((id) => songsById.get(id)).filter((s): s is Song => Boolean(s));
 
   const toggle = (songId: string) => {
     setSelected((prev) => {
@@ -95,13 +103,13 @@ export const SongProposal: React.FC<SongProposalProps> = ({
               'rounded-xl border text-xs transition-colors',
               already
                 ? 'bg-surface-2 border-line opacity-70'
-                : isSetlist && isSelected
+                : selectable && isSelected
                   ? 'bg-brand-soft border-brand-line'
                   : 'bg-surface border-line',
             )}
           >
             <div className="flex items-start gap-2.5 px-3 py-2.5">
-              {isSetlist && canApply && (
+              {selectable && (
                 <button
                   type="button"
                   disabled={already || saving || added}
@@ -122,7 +130,7 @@ export const SongProposal: React.FC<SongProposalProps> = ({
                 </div>
                 {s.reason && <p className="mt-1 text-fg-muted leading-snug">{s.reason}</p>}
                 <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[11px]">
-                  {already && <span className="text-fg-subtle">Já no repertório</span>}
+                  {already && <span className="text-fg-subtle">{existingLabel}</span>}
                   {s.lastPlayedAt && (
                     <span className="text-warning-text">
                       Tocada em {formatShortDate(s.lastPlayedAt)}
@@ -170,7 +178,20 @@ export const SongProposal: React.FC<SongProposalProps> = ({
             disabled={added || pending.length === 0}
             onClick={() => void add()}
           >
-            {added ? 'Adicionadas' : `Adicionar ao repertório${pending.length ? ` (${pending.length})` : ''}`}
+            {added ? 'Adicionadas' : `${addLabel}${pending.length ? ` (${pending.length})` : ''}`}
+          </ActionButton>
+        </div>
+      )}
+
+      {!isSetlist && onAddToPlaylist && (
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <ActionButton
+            variant="primary"
+            icon={ListMusic}
+            disabled={pendingSongs.length === 0}
+            onClick={() => onAddToPlaylist(pendingSongs)}
+          >
+            {`Adicionar à playlist${pendingSongs.length ? ` (${pendingSongs.length})` : ''}`}
           </ActionButton>
         </div>
       )}

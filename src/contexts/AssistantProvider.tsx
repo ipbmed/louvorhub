@@ -21,6 +21,15 @@ export interface SetlistScreen extends ScreenBase {
   onAddSongs: (songIds: string[]) => Promise<void>;
 }
 
+export interface PlaylistScreen extends ScreenBase {
+  mode: 'playlist';
+  playlistTitle: string;
+  songs: Song[];
+  existingSongIds: string[];
+  canApply: boolean;
+  onAddSongs: (songIds: string[]) => Promise<void>;
+}
+
 export interface LiturgyScreen extends ScreenBase {
   mode: 'liturgy';
   eventId: string;
@@ -49,9 +58,10 @@ export interface CatalogScreen extends ScreenBase {
   mode: 'catalog';
   songs: Song[];
   onOpenSong: (song: Song) => void;
+  onAddToPlaylist: (songs: Song[]) => void;
 }
 
-export type AssistantScreen = SetlistScreen | LiturgyScreen | ScheduleScreen | CatalogScreen;
+export type AssistantScreen = SetlistScreen | PlaylistScreen | LiturgyScreen | ScheduleScreen | CatalogScreen;
 
 type Owner = symbol;
 

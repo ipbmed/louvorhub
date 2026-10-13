@@ -1078,7 +1078,7 @@ export const UserManager: React.FC<UserManagerProps> = ({
       {/* Edit member modal */}
       {editOpen && editingUser && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-hidden">
-          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-lg max-h-[min(92vh,720px)] flex flex-col shadow-2xl overflow-hidden">
+          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-lg lg:max-w-3xl max-h-[min(92vh,720px)] flex flex-col shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between border-b border-stone-800 px-6 py-3 shrink-0">
               <h3 className="font-display font-bold text-stone-100 text-base flex items-center gap-2 tracking-tight">
                 <UserCheck className="w-5 h-5 text-emerald-400" />
@@ -1093,81 +1093,85 @@ export const UserManager: React.FC<UserManagerProps> = ({
               className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 py-4 space-y-4"
               noValidate
             >
-              <Field label="Nome" required error={editErrors.name}>
-                {(id, describedBy) => (
-                  <div className="relative">
-                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
-                    <Input
-                      id={id}
-                      aria-describedby={describedBy}
-                      invalid={Boolean(editErrors.name)}
-                      type="text"
-                      required
-                      placeholder="Nome completo"
-                      value={editForm.name}
-                      onChange={(e) => {
-                        setEditForm({ ...editForm, name: e.target.value });
-                        if (editErrors.name) {
-                          setEditErrors((prev) => {
-                            const next = { ...prev };
-                            delete next.name;
-                            return next;
-                          });
-                        }
-                      }}
-                      className="pl-10"
-                    />
-                  </div>
-                )}
-              </Field>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <Field label="Nome" required error={editErrors.name}>
+                  {(id, describedBy) => (
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
+                      <Input
+                        id={id}
+                        aria-describedby={describedBy}
+                        invalid={Boolean(editErrors.name)}
+                        type="text"
+                        required
+                        placeholder="Nome completo"
+                        value={editForm.name}
+                        onChange={(e) => {
+                          setEditForm({ ...editForm, name: e.target.value });
+                          if (editErrors.name) {
+                            setEditErrors((prev) => {
+                              const next = { ...prev };
+                              delete next.name;
+                              return next;
+                            });
+                          }
+                        }}
+                        className="pl-10"
+                      />
+                    </div>
+                  )}
+                </Field>
 
-              <Field
-                label={
-                  <>
-                    E-mail <span className="text-fg-subtle font-normal">(login)</span>
-                  </>
-                }
-              >
-                {(id) => (
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
-                    <Input id={id} type="email" value={editForm.email} disabled className="pl-10" />
-                  </div>
-                )}
-              </Field>
+                <Field
+                  label={
+                    <>
+                      E-mail <span className="text-fg-subtle font-normal">(login)</span>
+                    </>
+                  }
+                >
+                  {(id) => (
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
+                      <Input id={id} type="email" value={editForm.email} disabled className="pl-10" />
+                    </div>
+                  )}
+                </Field>
+              </div>
 
-              <Field label="Telefone">
-                {(id) => (
-                  <div className="relative">
-                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
-                    <Input
-                      id={id}
-                      type="text"
-                      placeholder="(00) 00000-0000"
-                      inputMode="tel"
-                      value={editForm.phone}
-                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                      className="pl-10"
-                    />
-                  </div>
-                )}
-              </Field>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <Field label="Telefone">
+                  {(id) => (
+                    <div className="relative">
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
+                      <Input
+                        id={id}
+                        type="text"
+                        placeholder="(00) 00000-0000"
+                        inputMode="tel"
+                        value={editForm.phone}
+                        onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                        className="pl-10"
+                      />
+                    </div>
+                  )}
+                </Field>
 
-              <Field label="Data de nascimento">
-                {(id) => (
-                  <div className="relative">
-                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
-                    <Input
-                      id={id}
-                      type="date"
-                      value={editForm.birthDate}
-                      max={new Date().toISOString().slice(0, 10)}
-                      onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
-                      className="pl-10"
-                    />
-                  </div>
-                )}
-              </Field>
+                <Field label="Data de nascimento">
+                  {(id) => (
+                    <div className="relative">
+                      <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
+                      <Input
+                        id={id}
+                        type="date"
+                        value={editForm.birthDate}
+                        max={new Date().toISOString().slice(0, 10)}
+                        onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
+                        className="pl-10"
+                      />
+                    </div>
+                  )}
+                </Field>
+              </div>
 
               <Field label="Habilidades">
                 {(id) => (

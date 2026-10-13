@@ -1,7 +1,7 @@
 import { requireSupabase } from '@/lib/supabase';
 import type { LiturgyItemType, SongType } from '@/types';
 
-export type AssistantMode = 'setlist' | 'catalog' | 'liturgy' | 'schedule';
+export type AssistantMode = 'setlist' | 'playlist' | 'catalog' | 'liturgy' | 'schedule';
 
 export interface AssistantSong {
   songId: string;
@@ -56,6 +56,7 @@ export interface AssistantRequest {
   theme?: string;
   bibleVerse?: string;
   avoidWeeks?: number;
+  playlist?: { title: string; songIds: string[] };
   liturgy?: {
     preacher?: string;
     leader?: string;

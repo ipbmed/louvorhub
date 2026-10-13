@@ -33,6 +33,7 @@ import { PageShell, PageHeaderButton } from './PageHeader';
 import { ActionButton, Field, Input, Select } from './ui';
 import { isGroupSetlist, setlistShareUrl } from '@/services/playlists';
 import { ShareQrCode } from './ShareQrCode';
+import { type AssistantScreen, useAssistantScreen } from '@/contexts/AssistantProvider';
 
 type SetlistTab = 'mine' | 'group' | 'all';
 
@@ -136,6 +137,30 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
         .map((item) => songs.find((s) => s.id === item.songId))
         .filter((s): s is Song => Boolean(s))
     : [];
+
+  const assistantScreen = useMemo<AssistantScreen | null>(() => {
+    if (!activeSetlist || !currentUserId) return null;
+    const existingSongIds = activeSetlist.items.map((i) => i.songId);
+    return {
+      mode: 'playlist',
+      key: `playlist:${activeSetlist.id}`,
+      label: activeSetlist.title,
+      playlistTitle: activeSetlist.title,
+      songs,
+      existingSongIds,
+      canApply: canEdit,
+      onAddSongs: async (songIds) => {
+        const existing = new Set(existingSongIds);
+        const now = Date.now();
+        const added = songIds
+          .filter((id) => !existing.has(id))
+          .map((songId, i) => ({ id: `item-${now}-${i}`, songId }));
+        if (!added.length) return;
+        await Promise.resolve(onSaveSetlist({ ...activeSetlist, items: [...activeSetlist.items, ...added] }));
+      },
+    };
+  }, [activeSetlist, currentUserId, songs, canEdit, onSaveSetlist]);
+  useAssistantScreen(assistantScreen);
 
   const shareUrl = useMemo(
     () => (activeSetlist?.shareCode ? setlistShareUrl(activeSetlist.shareCode) : ''),
@@ -670,7 +695,7 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
               <Music className="w-8 h-8 text-stone-600 mx-auto" />
               <p className="text-sm">Nenhuma música nesta playlist.</p>
               <p className="text-xs text-stone-500">
-                Adicione músicas pela lista principal.
+                Adicione músicas pela lista principal ou peça sugestões ao assistente de IA.
               </p>
             </div>
           )}

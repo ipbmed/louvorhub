@@ -5,14 +5,14 @@ import { isGroupSetlist } from '@/services/playlists';
 import { ActionButton, Alert, Badge, EmptyState, Modal, cn } from './ui';
 
 interface AddToSetlistModalProps {
-  song: Song;
+  songs: Song[];
   setlists: Setlist[];
   onClose: () => void;
   onConfirm: (setlist: Setlist) => void | Promise<void>;
 }
 
 export const AddToSetlistModal: React.FC<AddToSetlistModalProps> = ({
-  song,
+  songs,
   setlists,
   onClose,
   onConfirm,
@@ -26,7 +26,17 @@ export const AddToSetlistModal: React.FC<AddToSetlistModalProps> = ({
     [setlists],
   );
 
-  const songLabel = song.number ? `#${song.number} · ${song.title}` : song.title;
+  const single = songs.length === 1 ? songs[0] : null;
+  const subtitle = single
+    ? single.number
+      ? `#${single.number} · ${single.title}`
+      : single.title
+    : `${songs.length} músicas`;
+
+  const countAlreadyIn = (s: Setlist) => {
+    const ids = new Set((s.items ?? []).map((i) => i.songId));
+    return songs.filter((song) => ids.has(song.id)).length;
+  };
 
   const handleConfirm = async () => {
     const target = options.find((s) => s.id === selectedId);
@@ -34,8 +44,8 @@ export const AddToSetlistModal: React.FC<AddToSetlistModalProps> = ({
       setError('Selecione uma playlist.');
       return;
     }
-    if ((target.items ?? []).some((i) => i.songId === song.id)) {
-      setError('Esta música já está nesta playlist.');
+    if (countAlreadyIn(target) === songs.length) {
+      setError(single ? 'Esta música já está nesta playlist.' : 'Todas essas músicas já estão nesta playlist.');
       return;
     }
     setSaving(true);
@@ -57,9 +67,9 @@ export const AddToSetlistModal: React.FC<AddToSetlistModalProps> = ({
       locked={saving}
       icon={ListMusic}
       title="Adicionar à playlist"
-      subtitle={songLabel}
+      subtitle={subtitle}
       size="sm"
-      zIndexClassName="z-[60]"
+      zIndexClassName="z-[120]"
       footer={
         <>
           <ActionButton variant="light" onClick={onClose} disabled={saving}>
@@ -90,7 +100,7 @@ export const AddToSetlistModal: React.FC<AddToSetlistModalProps> = ({
           <div role="radiogroup" aria-label="Playlists" className="space-y-1.5">
             {options.map((s) => {
               const selected = selectedId === s.id;
-              const alreadyHas = (s.items ?? []).some((i) => i.songId === song.id);
+              const alreadyIn = countAlreadyIn(s);
               const count = (s.items ?? []).length;
               return (
                 <button
@@ -123,7 +133,11 @@ export const AddToSetlistModal: React.FC<AddToSetlistModalProps> = ({
                       {count} {count === 1 ? 'música' : 'músicas'}
                     </span>
                   </span>
-                  {alreadyHas && <Badge tone="warning">Já contém</Badge>}
+                  {alreadyIn > 0 && (
+                    <Badge tone="warning">
+                      {single || alreadyIn === songs.length ? 'Já contém' : `Já contém ${alreadyIn}`}
+                    </Badge>
+                  )}
                 </button>
               );
             })}

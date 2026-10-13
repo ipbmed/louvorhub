@@ -1,7 +1,7 @@
 import { type Catalog, compactCatalogLines, songLabel } from "./catalog.ts";
 import type { RecentUsage } from "./history.ts";
 
-export type AssistantMode = "setlist" | "catalog" | "liturgy" | "schedule";
+export type AssistantMode = "setlist" | "playlist" | "catalog" | "liturgy" | "schedule";
 
 export const LITURGY_ITEM_TYPES = [
   "hymn",
@@ -72,6 +72,37 @@ ${params.repertoire.length ? params.repertoire.join("\n") : "(vazio)"}
 
 # TOCADAS RECENTEMENTE (ref|tipo|título|datas)
 ${recentLines(params.recent)}
+
+# CATÁLOGO (ref|tipo|título|tags|início da letra)
+${compactCatalogLines(params.catalog)}`;
+}
+
+export function buildPlaylistPrompt(params: {
+  catalog: Catalog;
+  title: string;
+  theme?: string;
+  bibleVerse?: string;
+  current: string[];
+}): string {
+  return `${ROLE}
+Sua tarefa: sugerir músicas para uma PLAYLIST pessoal (ensaio, estudo, devocional ou preparação de repertório).
+
+# Regras
+${CATALOG_RULES}
+- Cada sugestão precisa de uma justificativa curta (1-2 frases) ligando a letra ao pedido, ao tema e/ou ao texto bíblico.
+- Não repita músicas que já estão na PLAYLIST ATUAL.
+- Quando fizer sentido, equilibre hinos (H + número) e cânticos (C).
+- Sem quantidade definida pelo usuário, sugira entre 5 e 8 músicas.
+- Sempre finalize chamando suggest_songs. Use "message" para conversar (breve, em português) e "suggestions" para a lista ordenada. Se o usuário só fizer uma pergunta, responda em "message" com "suggestions" vazio.
+- Em refinamentos ("troque a 3ª", "algo mais animado"), devolva a lista completa atualizada.
+
+# Contexto
+Playlist: ${params.title || "(sem nome)"}
+Tema: ${params.theme?.trim() || "(não informado)"}
+Texto bíblico: ${params.bibleVerse?.trim() || "(não informado)"}
+
+# PLAYLIST ATUAL (ref|tipo|título)
+${params.current.length ? params.current.join("\n") : "(vazia)"}
 
 # CATÁLOGO (ref|tipo|título|tags|início da letra)
 ${compactCatalogLines(params.catalog)}`;
@@ -268,6 +299,7 @@ const PROPOSE_TEAM = {
 
 export const MODE_TOOLS: Record<AssistantMode, { tools: unknown[]; finalTool: string }> = {
   setlist: { tools: [GET_SONG_LYRICS, SUGGEST_SONGS], finalTool: "suggest_songs" },
+  playlist: { tools: [GET_SONG_LYRICS, SUGGEST_SONGS], finalTool: "suggest_songs" },
   catalog: { tools: [GET_SONG_LYRICS, SUGGEST_SONGS], finalTool: "suggest_songs" },
   liturgy: { tools: [GET_SONG_LYRICS, PROPOSE_LITURGY], finalTool: "propose_liturgy" },
   schedule: { tools: [PROPOSE_TEAM], finalTool: "propose_team" },
