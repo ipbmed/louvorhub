@@ -22,6 +22,7 @@ interface AuthState {
   accountStatus: AccountStatus | null;
   authNotice: string | null;
   signInWithEmail: (email: string) => Promise<{ error?: string }>;
+  verifyEmailCode: (email: string, code: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   refreshMemberships: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -164,6 +165,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return {};
   }, []);
 
+  const verifyEmailCode = useCallback(async (email: string, code: string) => {
+    if (!isSupabaseConfigured) return { error: 'Supabase não configurado' };
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: code.trim(),
+      type: 'email',
+    });
+
+    if (error) {
+      const msg = error.message || '';
+      if (/expired|invalid/i.test(msg)) {
+        return { error: 'Código inválido ou expirado. Confira os números ou peça um novo código.' };
+      }
+      if (/rate limit|too many/i.test(msg)) {
+        return { error: 'Muitas tentativas. Aguarde alguns minutos e tente novamente.' };
+      }
+      return { error: msg };
+    }
+
+    // onAuthStateChange encerra a sessão de contas não aprovadas; aqui só devolvemos o motivo.
+    if (data.user) {
+      const blocked = accountBlockedMessage(await getMyAccountStatus(data.user.id));
+      if (blocked) return { error: blocked };
+    }
+    return {};
+  }, []);
+
   const signOut = useCallback(async () => {
     if (!isSupabaseConfigured) return;
     await supabase.auth.signOut();
@@ -184,6 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       accountStatus,
       authNotice,
       signInWithEmail,
+      verifyEmailCode,
       signOut,
       refreshMemberships,
       refreshProfile,
@@ -198,6 +227,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       accountStatus,
       authNotice,
       signInWithEmail,
+      verifyEmailCode,
       signOut,
       refreshMemberships,
       refreshProfile,

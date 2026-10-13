@@ -458,7 +458,7 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
         </div>
 
         {account.account_status === 'pending' && (
-          <Alert tone="warning">Cadastro aguardando aprovação para poder entrar com magic link.</Alert>
+          <Alert tone="warning">Cadastro aguardando aprovação para poder entrar com o código enviado por e-mail.</Alert>
         )}
         {account.account_status === 'rejected' && (
           <Alert tone="danger">Cadastro rejeitado: esta pessoa não consegue entrar no sistema.</Alert>
@@ -664,7 +664,7 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
             >
               <p className="text-xs text-stone-500">
                 {modalMode === 'create'
-                  ? 'Preencha os dados da conta. A pessoa poderá entrar com magic link neste e-mail.'
+                  ? 'Preencha os dados da conta. A pessoa poderá entrar com o código de acesso enviado para este e-mail.'
                   : 'Atualize os dados da conta, habilidades e foto de perfil.'}
               </p>
 

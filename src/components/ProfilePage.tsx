@@ -398,7 +398,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = () => {
             hint={
               editing
                 ? canLoginWithEmail
-                  ? 'Este e-mail é usado para entrar na conta (magic link).'
+                  ? 'Este e-mail é usado para entrar na conta (código de acesso).'
                   : 'Sem e-mail cadastrado não é possível fazer login.'
                 : undefined
             }

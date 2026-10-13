@@ -58,7 +58,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onBack, onGoToLogin 
 
         <p className="text-sm text-stone-400 leading-relaxed">
           Preencha seus dados para solicitar acesso. Após a aprovação do administrador, você poderá
-          entrar com magic link no e-mail informado.
+          entrar com o código de acesso enviado para o e-mail informado.
         </p>
 
         {errorMsg && (

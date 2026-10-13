@@ -43,7 +43,7 @@ const TOPICS: HelpTopic[] = [
       'Central de hinário, cifras, playlists e organização da igreja para o ministério de louvor.',
     points: [
       'Visitantes podem consultar o catálogo e eventos públicos sem login.',
-      'Para playlists, favoritos e áreas da igreja, use Entrar com o e-mail (magic link).',
+      'Para playlists, favoritos e áreas da igreja, use Entrar com o e-mail (você recebe um código de acesso de 6 dígitos).',
       'Se ainda não tiver conta, faça o Cadastro geral e aguarde a aprovação do administrador.',
       'No celular, abra o menu (☰) para navegar entre Catálogo, Playlists e a igreja ativa.',
     ],

@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Mail, ShieldCheck, Sparkles } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, LogIn, Mail, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { Logo } from './Logo';
 import { ActionButton, Alert, Field, Input, Modal } from './ui';
+
+const CODE_LENGTH = 6;
+/** Intervalo mínimo do Supabase entre dois envios para o mesmo e-mail. */
+const RESEND_SECONDS = 60;
 
 interface AdminLoginModalProps {
   onClose: () => void;
@@ -12,24 +16,39 @@ interface AdminLoginModalProps {
 }
 
 /**
- * Login por link mágico. No desktop é um diálogo centralizado; no celular vira
- * uma tela cheia com o conteúdo no topo, para o teclado não cobrir o formulário.
+ * Login sem senha: o e-mail traz um código de 6 dígitos (digitado aqui) e também o link mágico.
+ * No desktop é um diálogo centralizado; no celular vira uma tela cheia com o conteúdo no topo,
+ * para o teclado não cobrir o formulário.
  */
 export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   onClose,
   onSent,
   onGoToRegister,
 }) => {
-  const { signInWithEmail, configured, authNotice, clearAuthNotice } = useAuth();
+  const { signInWithEmail, verifyEmailCode, configured, authNotice, clearAuthNotice } = useAuth();
   const isWide = useMediaQuery('(min-width: 640px)');
   const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resendIn, setResendIn] = useState(0);
+  const codeRef = useRef<HTMLInputElement>(null);
+  const lastSubmittedCode = useRef('');
 
   useEffect(() => {
     if (authNotice) setErrorMsg(authNotice);
   }, [authNotice]);
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const timer = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendIn]);
+
+  useEffect(() => {
+    if (sent) codeRef.current?.focus();
+  }, [sent]);
 
   const handleClose = () => {
     if (loading) return;
@@ -44,8 +63,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       }
     : undefined;
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const sendCode = async () => {
     setErrorMsg('');
     clearAuthNotice();
     if (!configured) {
@@ -59,9 +77,46 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       setErrorMsg(error);
       return;
     }
-    (document.activeElement as HTMLElement | null)?.blur();
+    setCode('');
+    lastSubmittedCode.current = '';
+    setResendIn(RESEND_SECONDS);
     setSent(true);
     onSent?.();
+  };
+
+  const handleSend = (e: React.FormEvent) => {
+    e.preventDefault();
+    void sendCode();
+  };
+
+  const verify = async (value: string) => {
+    if (value.length !== CODE_LENGTH || loading) return;
+    lastSubmittedCode.current = value;
+    setErrorMsg('');
+    clearAuthNotice();
+    setLoading(true);
+    const { error } = await verifyEmailCode(email.trim(), value);
+    setLoading(false);
+    if (error) {
+      setErrorMsg(error);
+      requestAnimationFrame(() => codeRef.current?.select());
+      return;
+    }
+    onClose();
+  };
+
+  const handleCodeChange = (raw: string) => {
+    const digits = raw.replace(/\D/g, '').slice(0, CODE_LENGTH);
+    setCode(digits);
+    if (errorMsg) setErrorMsg('');
+    if (digits.length === CODE_LENGTH && digits !== lastSubmittedCode.current) void verify(digits);
+  };
+
+  const changeEmail = () => {
+    setSent(false);
+    setCode('');
+    setErrorMsg('');
+    clearAuthNotice();
   };
 
   const emailField = (
@@ -90,37 +145,102 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     <span className="inline-flex items-start gap-1.5">
       <Sparkles className="w-3.5 h-3.5 shrink-0 mt-0.5" />
       <span>
-        Só contas já cadastradas e aprovadas recebem o link. Ainda não tem cadastro? Crie sua conta
+        Só contas já cadastradas e aprovadas recebem o código. Ainda não tem cadastro? Crie sua conta
         e aguarde a aprovação do administrador.
       </span>
     </span>
   );
 
-  const sentMessage = (
-    <>
-      <p className="text-sm text-fg font-semibold break-words">Link enviado para {email}</p>
-      <p className="text-xs text-fg-muted leading-relaxed">
-        Abra o e-mail neste aparelho e toque no link para entrar. Se não aparecer em alguns minutos,
-        confira a caixa de spam.
-      </p>
-    </>
+  const codeForm = (
+    <form
+      id="otp-form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void verify(code);
+      }}
+      className="space-y-4"
+    >
+      <div className="text-center space-y-1.5">
+        <p className="text-sm text-fg">
+          Enviamos um código de {CODE_LENGTH} dígitos para{' '}
+          <strong className="font-semibold break-words">{email.trim()}</strong>
+        </p>
+        <p className="text-xs text-fg-muted leading-relaxed">
+          Digite o código abaixo ou toque no link do e-mail. Não chegou? Confira a caixa de spam.
+        </p>
+      </div>
+
+      <Field label="Código de acesso">
+        {(id) => (
+          <Input
+            ref={codeRef}
+            id={id}
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="\d*"
+            maxLength={CODE_LENGTH}
+            enterKeyHint="go"
+            value={code}
+            onChange={(e) => handleCodeChange(e.target.value)}
+            placeholder={'•'.repeat(CODE_LENGTH)}
+            readOnly={loading}
+            className="text-center font-mono text-2xl tracking-[0.5em] h-14 placeholder:tracking-[0.5em]"
+          />
+        )}
+      </Field>
+
+      {errorMsg && <Alert tone="danger">{errorMsg}</Alert>}
+
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <button
+          type="button"
+          onClick={changeEmail}
+          disabled={loading}
+          className="font-semibold text-fg-muted hover:text-fg disabled:opacity-50"
+        >
+          Trocar e-mail
+        </button>
+        <button
+          type="button"
+          onClick={() => void sendCode()}
+          disabled={loading || resendIn > 0}
+          className="inline-flex items-center gap-1.5 font-semibold text-brand-text hover:underline underline-offset-4 disabled:text-fg-subtle disabled:no-underline"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+          {resendIn > 0 ? `Reenviar em ${resendIn}s` : 'Reenviar código'}
+        </button>
+      </div>
+    </form>
+  );
+
+  const verifyButton = (
+    <ActionButton
+      type="submit"
+      form="otp-form"
+      variant="primary"
+      icon={LogIn}
+      loading={loading}
+      disabled={code.length !== CODE_LENGTH}
+      className={isWide ? undefined : 'w-full'}
+    >
+      Entrar
+    </ActionButton>
   );
 
   if (!isWide) {
     return (
       <LoginScreen onClose={handleClose} locked={loading}>
         {sent ? (
-          <div className="text-center space-y-3 pt-6">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-brand-soft border border-brand-line text-brand-text flex items-center justify-center">
-              <ShieldCheck className="w-8 h-8" />
+          <div className="space-y-5 pt-4">
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-brand-soft border border-brand-line text-brand-text flex items-center justify-center">
+                <ShieldCheck className="w-8 h-8" />
+              </div>
+              <h1 className="text-2xl font-extrabold tracking-tight text-fg">Verifique seu e-mail</h1>
             </div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-fg">Verifique seu e-mail</h1>
-            {sentMessage}
-            <div className="pt-4">
-              <ActionButton variant="light" className="w-full" onClick={handleClose}>
-                Voltar ao catálogo
-              </ActionButton>
-            </div>
+            {codeForm}
+            {verifyButton}
           </div>
         ) : (
           <>
@@ -128,14 +248,14 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
               <Logo size="lg" className="flex-col gap-3" />
               <h1 className="mt-6 text-2xl font-extrabold tracking-tight text-fg">Entrar</h1>
               <p className="mt-1 text-sm text-fg-muted">
-                Receba o link de acesso para no seu e-mail.
+                Receba um código de acesso no seu e-mail.
               </p>
             </div>
-            <form onSubmit={(e) => void handleLogin(e)} className="space-y-4">
+            <form onSubmit={handleSend} className="space-y-4">
               {errorMsg && <Alert tone="danger">{errorMsg}</Alert>}
               {emailField}
               <ActionButton type="submit" variant="primary" className="w-full" loading={loading} icon={Mail}>
-                Enviar link de acesso
+                Enviar código
               </ActionButton>
             </form>
             {handleRegister && (
@@ -166,13 +286,16 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       locked={loading}
       icon={sent ? ShieldCheck : Mail}
       title={sent ? 'Verifique seu e-mail' : 'Entrar no LouvorHub'}
-      subtitle={sent ? undefined : 'Sem senha: enviamos um link de acesso para o seu e-mail.'}
+      subtitle={sent ? undefined : 'Sem senha: enviamos um código de acesso para o seu e-mail.'}
       size="sm"
       footer={
         sent ? (
-          <ActionButton variant="light" className="w-full" onClick={handleClose}>
-            Fechar
-          </ActionButton>
+          <>
+            <ActionButton variant="light" onClick={handleClose} disabled={loading} className="mr-auto">
+              Cancelar
+            </ActionButton>
+            {verifyButton}
+          </>
         ) : (
           <>
             {handleRegister && (
@@ -181,21 +304,16 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
               </ActionButton>
             )}
             <ActionButton type="submit" form="login-form" variant="primary" loading={loading} icon={Mail}>
-              Enviar link de acesso
+              Enviar código
             </ActionButton>
           </>
         )
       }
     >
       {sent ? (
-        <div className="text-center space-y-3 py-2">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-brand-soft border border-brand-line text-brand-text flex items-center justify-center">
-            <ShieldCheck className="w-8 h-8" />
-          </div>
-          {sentMessage}
-        </div>
+        codeForm
       ) : (
-        <form id="login-form" onSubmit={(e) => void handleLogin(e)} className="space-y-4">
+        <form id="login-form" onSubmit={handleSend} className="space-y-4">
           <Alert tone="info">{approvalNote}</Alert>
           {errorMsg && <Alert tone="danger">{errorMsg}</Alert>}
           {emailField}

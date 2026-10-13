@@ -8,19 +8,20 @@ major_version = 15
 
 [auth]
 enabled = true
-# Em produção, defina site_url com o domínio público e inclua-o em additional_redirect_urls.
-# URLs fora desta lista são ignoradas no magic link e o Supabase usa site_url como destino.
-site_url = "http://localhost:3000"
-additional_redirect_urls = [
-  "http://localhost:3000/**",
-  "http://127.0.0.1:3000/**",
-  "http://localhost:4173/**",
-  "https://*.github.io/**",
-]
+# `npx supabase config push` envia estes valores para o projeto remoto: mantenha-os iguais à produção.
+# URLs fora de additional_redirect_urls são ignoradas no link do e-mail e o Supabase usa site_url.
+site_url = "https://ipblouvorhub.vercel.app"
+additional_redirect_urls = []
 
 [auth.email]
 enable_signup = true
-enable_confirmations = false
+enable_confirmations = true
+otp_length = 6
+otp_expiry = 3600
+
+[auth.email.template.magic_link]
+subject = "[LouvorHub] Código de acesso"
+content_path = "./supabase/templates/magic_link.html"
 
 [functions.create-member]
 verify_jwt = true
