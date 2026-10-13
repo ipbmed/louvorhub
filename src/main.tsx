@@ -8,6 +8,7 @@ import { ToastProvider } from '@/contexts/ToastProvider';
 import { ApiBusyProvider } from '@/contexts/ApiBusyProvider';
 import { ConfirmProvider } from '@/contexts/ConfirmProvider';
 import { PwaProvider } from '@/contexts/PwaProvider';
+import { AssistantProvider } from '@/contexts/AssistantProvider';
 import App from './App.tsx';
 import './index.css';
 
@@ -31,7 +32,9 @@ createRoot(document.getElementById('root')!).render(
               <ApiBusyProvider>
                 <PwaProvider>
                   <BrowserRouter>
-                    <App />
+                    <AssistantProvider>
+                      <App />
+                    </AssistantProvider>
                   </BrowserRouter>
                 </PwaProvider>
               </ApiBusyProvider>

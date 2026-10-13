@@ -15,6 +15,9 @@ export interface PublicEventShareMeta {
   date: string;
   time?: string | null;
   theme?: string | null;
+  bibleVerse?: string | null;
+  preacher?: string | null;
+  leader?: string | null;
   shareCode: string;
   flags: EventShareFlags;
 }
@@ -40,10 +43,6 @@ export interface PublicEventLiturgyItem {
 export interface PublicEventLiturgy {
   id: string;
   title: string;
-  theme?: string | null;
-  bibleVerse?: string | null;
-  preacher?: string | null;
-  leader?: string | null;
   notes?: string | null;
   items: PublicEventLiturgyItem[];
 }
@@ -123,10 +122,6 @@ type RpcLiturgyItemRow = {
 type RpcLiturgyRow = {
   id: string;
   title: string;
-  theme?: string | null;
-  bible_verse?: string | null;
-  preacher?: string | null;
-  leader?: string | null;
   notes?: string | null;
   items?: RpcLiturgyItemRow[] | null;
 };
@@ -146,6 +141,9 @@ type RpcPayload = {
     date: string;
     time?: string | null;
     theme?: string | null;
+    bible_verse?: string | null;
+    preacher?: string | null;
+    leader?: string | null;
     share_code: string;
     share_expires_at?: string | null;
     share_include_songs?: boolean;
@@ -205,10 +203,6 @@ function mapLiturgy(row: RpcLiturgyRow | null | undefined): PublicEventLiturgy |
   return {
     id: row.id,
     title: row.title,
-    theme: row.theme,
-    bibleVerse: row.bible_verse,
-    preacher: row.preacher,
-    leader: row.leader,
     notes: row.notes,
     items,
   };
@@ -264,6 +258,9 @@ export async function getPublicEvent(shareCode: string): Promise<PublicEventShar
       date: payload.event.date,
       time: payload.event.time,
       theme: payload.event.theme,
+      bibleVerse: payload.event.bible_verse,
+      preacher: payload.event.preacher,
+      leader: payload.event.leader,
       shareCode: payload.event.share_code,
       flags,
     },

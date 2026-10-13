@@ -53,6 +53,31 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 3. Rode: `npm run dev` (porta 3000)
 4. Typecheck: `npm run lint`
 
+## Assistente (IA)
+
+Um botão flutuante ✨ abre o assistente, que se adapta à tela atual:
+
+| Tela | O assistente | Ao aplicar |
+|------|--------------|------------|
+| Catálogo | Busca músicas por assunto, ocasião ou trecho de letra | Abre a música |
+| Evento → Repertório | Sugere músicas pelo tema/texto bíblico, evitando as tocadas recentemente | Adiciona ao repertório |
+| Evento → Liturgia | Monta a ordem do culto (leituras, orações, músicas) | Substitui os momentos e inclui as músicas no repertório |
+| Evento → Equipe | Sugere a escala por habilidade, equilibrando a participação recente | Substitui a escala (mantém confirmações de quem continua na mesma função) |
+
+Nada é gravado até o usuário clicar em aplicar. A LLM é chamada via [OpenRouter](https://openrouter.ai)
+pela Edge Function `supabase/functions/assistant`, então a chave nunca vai para o navegador.
+
+```bash
+npx supabase secrets set OPENROUTER_API_KEY=sk-or-... OPENROUTER_MODEL=google/gemma-4-31b-it:free
+npx supabase functions deploy assistant
+```
+
+`OPENROUTER_MODEL` é opcional (padrão `google/gemma-4-31b-it:free`). O modelo **precisa**
+suportar *tool calling* — é assim que as propostas estruturadas voltam. Em conta free, use um
+slug com `:free`. Modelos pagos exigem crédito. Lista filtrada:
+[openrouter.ai/models?supported_parameters=tools](https://openrouter.ai/models?supported_parameters=tools).
+O catálogo inteiro vai no prompt, então contexto longo (≥128k) ajuda.
+
 ## Domínio (UI)
 
 | UI | Tabela Supabase |

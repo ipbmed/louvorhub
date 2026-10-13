@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, CheckCircle2, Loader2, Mail, UserPlus, AlertCircle } from 'lucide-react';
 import { registerAccount } from '@/services/accounts';
+import { Field, Input } from './ui';
 
 interface RegisterPageProps {
   onBack: () => void;
@@ -82,28 +83,30 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onBack, onGoToLogin 
           </div>
         ) : (
           <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4 text-sm">
-            <div>
-              <label className="block text-stone-400 font-semibold mb-1">Nome completo</label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Seu nome"
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-              />
-            </div>
-            <div>
-              <label className="block text-stone-400 font-semibold mb-1">E-mail</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="voce@igreja.org"
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-              />
-            </div>
+            <Field label="Nome completo">
+              {(id) => (
+                <Input
+                  id={id}
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Seu nome"
+                />
+              )}
+            </Field>
+            <Field label="E-mail">
+              {(id) => (
+                <Input
+                  id={id}
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="voce@igreja.org"
+                />
+              )}
+            </Field>
             <button
               type="submit"
               disabled={loading}

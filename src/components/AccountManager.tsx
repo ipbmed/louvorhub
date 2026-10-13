@@ -37,7 +37,7 @@ import { KNOWN_SKILLS } from '@/constants/skills';
 import { getAvatarPublicUrl } from '@/utils/avatarUrl';
 import { AvatarCropDialog } from './AvatarCropDialog';
 import { useConfirm } from '@/contexts/ConfirmProvider';
-import { ActionButton, Alert, Avatar, Badge, EmptyState, Input, Select, cn } from './ui';
+import { ActionButton, Alert, Avatar, Badge, EmptyState, Field, Input, Select, cn } from './ui';
 
 interface AccountManagerProps {
   onAccountsChanged?: () => void;
@@ -718,128 +718,128 @@ export const AccountManager: React.FC<AccountManagerProps> = ({ onAccountsChange
                 </div>
               </div>
 
-              <div>
-                <label className="block text-stone-400 font-semibold mb-1 text-xs">
-                  Nome <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={form.name}
-                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder="Nome completo"
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-stone-100"
-                  autoFocus
-                />
-              </div>
-              <div>
-                <label className="block text-stone-400 font-semibold mb-1 text-xs">
-                  E-mail <span className="text-rose-400">*</span>
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={form.email}
-                  onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
-                  placeholder="usuario@email.com"
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-stone-100"
-                />
-              </div>
-              <div>
-                <label className="block text-stone-400 font-semibold mb-1 text-xs">Telefone</label>
-                <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
-                  placeholder="(00) 00000-0000"
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-stone-100"
-                />
-              </div>
-
-              <div>
-                <label className="block text-stone-400 font-semibold mb-1 text-xs">
-                  Data de nascimento
-                </label>
-                <div className="relative">
-                  <Calendar className="w-4 h-4 text-stone-500 absolute left-3 top-2.5 pointer-events-none" />
-                  <input
-                    type="date"
-                    value={form.birthDate}
-                    max={new Date().toISOString().slice(0, 10)}
-                    onChange={(e) => setForm((prev) => ({ ...prev, birthDate: e.target.value }))}
-                    className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 pl-9 text-stone-100"
+              <Field label="Nome" required>
+                {(id) => (
+                  <Input
+                    id={id}
+                    type="text"
+                    required
+                    value={form.name}
+                    onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                    placeholder="Nome completo"
+                    autoFocus
                   />
-                </div>
-              </div>
+                )}
+              </Field>
+              <Field label="E-mail" required>
+                {(id) => (
+                  <Input
+                    id={id}
+                    type="email"
+                    required
+                    value={form.email}
+                    onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                    placeholder="usuario@email.com"
+                  />
+                )}
+              </Field>
+              <Field label="Telefone">
+                {(id) => (
+                  <Input
+                    id={id}
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
+                    placeholder="(00) 00000-0000"
+                  />
+                )}
+              </Field>
 
-              <div>
-                <label className="block text-stone-400 font-semibold mb-2 text-xs">
-                  Habilidades
-                </label>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {KNOWN_SKILLS.map((skill) => {
-                    const selected = form.skills.some(
-                      (s) => s.toLowerCase() === skill.toLowerCase(),
-                    );
-                    return (
-                      <button
-                        key={skill}
-                        type="button"
-                        onClick={() => toggleSkill(skill)}
-                        className={`px-2.5 py-1.5 rounded-button text-[11px] font-semibold border transition-colors ${
-                          selected
-                            ? 'bg-emerald-500 text-stone-950 border-emerald-400'
-                            : 'bg-stone-950 text-stone-300 border-stone-700 hover:border-emerald-700/60'
-                        }`}
+              <Field label="Data de nascimento">
+                {(id) => (
+                  <div className="relative">
+                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
+                    <Input
+                      id={id}
+                      type="date"
+                      value={form.birthDate}
+                      max={new Date().toISOString().slice(0, 10)}
+                      onChange={(e) => setForm((prev) => ({ ...prev, birthDate: e.target.value }))}
+                      className="pl-10"
+                    />
+                  </div>
+                )}
+              </Field>
+
+              <Field label="Habilidades">
+                {(id) => (
+                  <>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {KNOWN_SKILLS.map((skill) => {
+                        const selected = form.skills.some(
+                          (s) => s.toLowerCase() === skill.toLowerCase(),
+                        );
+                        return (
+                          <button
+                            key={skill}
+                            type="button"
+                            onClick={() => toggleSkill(skill)}
+                            className={`px-2.5 py-1.5 rounded-button text-[11px] font-semibold border transition-colors ${
+                              selected
+                                ? 'bg-emerald-500 text-stone-950 border-emerald-400'
+                                : 'bg-stone-950 text-stone-300 border-stone-700 hover:border-emerald-700/60'
+                            }`}
+                          >
+                            {skill}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id={id}
+                        value={customSkill}
+                        onChange={(e) => setCustomSkill(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addCustomSkill();
+                          }
+                        }}
+                        placeholder="Outra habilidade…"
+                        className="flex-1"
+                      />
+                      <ActionButton
+                        variant="secondary"
+                        icon={Plus}
+                        onClick={addCustomSkill}
+                        disabled={!customSkill.trim()}
                       >
-                        {skill}
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    value={customSkill}
-                    onChange={(e) => setCustomSkill(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addCustomSkill();
-                      }
-                    }}
-                    placeholder="Outra habilidade…"
-                    className="flex-1 bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100"
-                  />
-                  <ActionButton
-                    variant="secondary"
-                    icon={Plus}
-                    onClick={addCustomSkill}
-                    disabled={!customSkill.trim()}
-                  >
-                    Adicionar
-                  </ActionButton>
-                </div>
-              </div>
+                        Adicionar
+                      </ActionButton>
+                    </div>
+                  </>
+                )}
+              </Field>
 
-              <div>
-                <label className="block text-stone-400 font-semibold mb-1 text-xs">
-                  Status da conta
-                </label>
-                <select
-                  value={form.accountStatus}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      accountStatus: e.target.value as AccountStatus,
-                    }))
-                  }
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-stone-100"
-                >
-                  <option value="pending">Pendente</option>
-                  <option value="approved">Aprovado</option>
-                  <option value="rejected">Rejeitado</option>
-                </select>
-              </div>
+              <Field label="Status da conta">
+                {(id) => (
+                  <Select
+                    id={id}
+                    value={form.accountStatus}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        accountStatus: e.target.value as AccountStatus,
+                      }))
+                    }
+                  >
+                    <option value="pending">Pendente</option>
+                    <option value="approved">Aprovado</option>
+                    <option value="rejected">Rejeitado</option>
+                  </Select>
+                )}
+              </Field>
 
               <label className="flex items-center gap-2 text-xs text-stone-300 cursor-pointer select-none">
                 <input

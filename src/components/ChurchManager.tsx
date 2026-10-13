@@ -24,7 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton } from './PageHeader';
-import { ActionButton } from './ui';
+import { ActionButton, Field, Input, Select } from './ui';
 import { getProfileSkills } from '@/constants/skills';
 import { useConfirm } from '@/contexts/ConfirmProvider';
 
@@ -667,90 +667,85 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
             </div>
 
             <form onSubmit={handleSaveChurch} className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  Nome da Igreja <span className="text-emerald-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Igreja Presbiteriana de Medianeira"
-                  value={churchForm.name}
-                  onChange={e => setChurchForm({ ...churchForm, name: e.target.value })}
-                  className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Cidade / UF <span className="text-emerald-400">*</span>
-                  </label>
-                  <input
+              <Field label="Nome da Igreja" required>
+                {(id) => (
+                  <Input
+                    id={id}
                     type="text"
                     required
-                    placeholder="Ex: Medianeira - PR"
-                    value={churchForm.city}
-                    onChange={e => setChurchForm({ ...churchForm, city: e.target.value })}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                    placeholder="Ex: Igreja Presbiteriana de Medianeira"
+                    value={churchForm.name}
+                    onChange={e => setChurchForm({ ...churchForm, name: e.target.value })}
                   />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Cor Distintiva
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={churchForm.color}
-                      onChange={e => setChurchForm({ ...churchForm, color: e.target.value })}
-                      className="w-10 h-9 rounded-lg border border-stone-700 bg-stone-800 cursor-pointer p-0.5"
-                    />
-                    <span className="text-xs text-stone-400 font-mono">{churchForm.color}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  Endereço Completo
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: Rua Argentina, 1420 - Centro"
-                  value={churchForm.address}
-                  onChange={e => setChurchForm({ ...churchForm, address: e.target.value })}
-                  className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
+                )}
+              </Field>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Líder
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Nome do líder"
-                    value={churchForm.leader}
-                    onChange={e => setChurchForm({ ...churchForm, leader: e.target.value })}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                  />
-                </div>
+                <Field label="Cidade / UF" required>
+                  {(id) => (
+                    <Input
+                      id={id}
+                      type="text"
+                      required
+                      placeholder="Ex: Medianeira - PR"
+                      value={churchForm.city}
+                      onChange={e => setChurchForm({ ...churchForm, city: e.target.value })}
+                    />
+                  )}
+                </Field>
 
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Telefone de Contato
-                  </label>
-                  <input
+                <Field label="Cor Distintiva">
+                  {(id) => (
+                    <div className="flex items-center gap-2">
+                      <input
+                        id={id}
+                        type="color"
+                        value={churchForm.color}
+                        onChange={e => setChurchForm({ ...churchForm, color: e.target.value })}
+                        className="w-10 h-9 rounded-lg border border-stone-700 bg-stone-800 cursor-pointer p-0.5"
+                      />
+                      <span className="text-xs text-stone-400 font-mono">{churchForm.color}</span>
+                    </div>
+                  )}
+                </Field>
+              </div>
+
+              <Field label="Endereço Completo">
+                {(id) => (
+                  <Input
+                    id={id}
                     type="text"
-                    placeholder="Ex: (45) 99822-1100"
-                    value={churchForm.phone}
-                    onChange={e => setChurchForm({ ...churchForm, phone: e.target.value })}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                    placeholder="Ex: Rua Argentina, 1420 - Centro"
+                    value={churchForm.address}
+                    onChange={e => setChurchForm({ ...churchForm, address: e.target.value })}
                   />
-                </div>
+                )}
+              </Field>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Líder">
+                  {(id) => (
+                    <Input
+                      id={id}
+                      type="text"
+                      placeholder="Ex: Nome do líder"
+                      value={churchForm.leader}
+                      onChange={e => setChurchForm({ ...churchForm, leader: e.target.value })}
+                    />
+                  )}
+                </Field>
+
+                <Field label="Telefone de Contato">
+                  {(id) => (
+                    <Input
+                      id={id}
+                      type="text"
+                      placeholder="Ex: (45) 99822-1100"
+                      value={churchForm.phone}
+                      onChange={e => setChurchForm({ ...churchForm, phone: e.target.value })}
+                    />
+                  )}
+                </Field>
               </div>
 
               <div className="pt-4 flex items-center justify-end gap-3 border-t border-stone-800">
@@ -791,32 +786,30 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
             </div>
 
             <form onSubmit={handleSaveMusicGroup} className="p-6 space-y-5 overflow-y-auto flex-1">
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  Nome do Grupo / Banda <span className="text-emerald-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Banda do Culto Principal"
-                  value={musicGroupForm.name}
-                  onChange={e => setMusicGroupForm({ ...musicGroupForm, name: e.target.value })}
-                  className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
+              <Field label="Nome do Grupo / Banda" required>
+                {(id) => (
+                  <Input
+                    id={id}
+                    type="text"
+                    required
+                    placeholder="Ex: Banda do Culto Principal"
+                    value={musicGroupForm.name}
+                    onChange={e => setMusicGroupForm({ ...musicGroupForm, name: e.target.value })}
+                  />
+                )}
+              </Field>
 
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  Descrição / Observações
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: Equipe para os cultos de domingo à noite e eventos especiais."
-                  value={musicGroupForm.description}
-                  onChange={e => setMusicGroupForm({ ...musicGroupForm, description: e.target.value })}
-                  className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
+              <Field label="Descrição / Observações">
+                {(id) => (
+                  <Input
+                    id={id}
+                    type="text"
+                    placeholder="Ex: Equipe para os cultos de domingo à noite e eventos especiais."
+                    value={musicGroupForm.description}
+                    onChange={e => setMusicGroupForm({ ...musicGroupForm, description: e.target.value })}
+                  />
+                )}
+              </Field>
 
               {/* Members Section */}
               <div className="pt-2 border-t border-stone-800">
@@ -845,36 +838,35 @@ export const ChurchManager: React.FC<ChurchManagerProps> = ({
                   ) : (
                     <>
                       <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
-                        <div className="flex-1 min-w-0">
-                          <label className="block text-[10px] uppercase font-mono text-stone-400 mb-1">
-                            Usuário
-                          </label>
-                          <select
-                            value={selectedUserId}
-                            onChange={(e) => {
-                              setSelectedUserId(e.target.value);
-                              setMemberFormError(null);
-                            }}
-                            className="w-full bg-stone-950 border border-stone-800 rounded-lg px-2.5 py-1.5 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
-                          >
-                            <option value="">Selecione um usuário…</option>
-                            {systemUsers
-                              .filter(
-                                (u) =>
-                                  u.status === 'active' &&
-                                  !musicGroupForm.members.some((m) => m.userId === u.id),
-                              )
-                              .map((u) => {
-                                const skills = getProfileSkills(u);
-                                return (
-                                  <option key={u.id} value={u.id}>
-                                    {u.name}
-                                    {skills.length ? ` · ${skills.slice(0, 3).join(', ')}` : ''}
-                                  </option>
-                                );
-                              })}
-                          </select>
-                        </div>
+                        <Field label="Usuário" className="flex-1">
+                          {(id) => (
+                            <Select
+                              id={id}
+                              value={selectedUserId}
+                              onChange={(e) => {
+                                setSelectedUserId(e.target.value);
+                                setMemberFormError(null);
+                              }}
+                            >
+                              <option value="">Selecione um usuário…</option>
+                              {systemUsers
+                                .filter(
+                                  (u) =>
+                                    u.status === 'active' &&
+                                    !musicGroupForm.members.some((m) => m.userId === u.id),
+                                )
+                                .map((u) => {
+                                  const skills = getProfileSkills(u);
+                                  return (
+                                    <option key={u.id} value={u.id}>
+                                      {u.name}
+                                      {skills.length ? ` · ${skills.slice(0, 3).join(', ')}` : ''}
+                                    </option>
+                                  );
+                                })}
+                            </Select>
+                          )}
+                        </Field>
                         <ActionButton
                           variant="secondary"
                           icon={Plus}

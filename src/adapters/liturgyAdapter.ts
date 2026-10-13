@@ -65,10 +65,6 @@ export function dbLiturgyToUi(row: DbLiturgy): Liturgy {
     eventId: row.event_id ?? undefined,
     date: row.service_date || '',
     serviceTitle: row.title,
-    theme: row.theme ?? undefined,
-    bibleVerse: row.bible_verse ?? undefined,
-    preacher: row.preacher ?? undefined,
-    leader: row.leader ?? undefined,
     items: [...(row.liturgy_items || [])]
       .sort((a, b) => a.sort_order - b.sort_order)
       .map(dbItemToUi),

@@ -123,6 +123,9 @@ export interface ChurchEvent {
   time?: string;
   serviceType?: string;
   theme?: string;
+  bibleVerse?: string;
+  preacher?: string;
+  leader?: string;
   notes?: string;
   musicGroupId?: string;
   createdAt: string;
@@ -326,10 +329,6 @@ export interface Liturgy {
   eventId?: string;
   date: string;
   serviceTitle: string;
-  theme?: string;
-  bibleVerse?: string;
-  preacher?: string;
-  leader?: string;
   items: LiturgyItem[];
   createdAt: string;
 }

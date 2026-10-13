@@ -177,6 +177,9 @@ export interface DbEvent {
   service_time: string | null;
   service_type: string | null;
   theme: string | null;
+  bible_verse?: string | null;
+  preacher?: string | null;
+  leader?: string | null;
   notes: string | null;
   group_id: string | null;
   created_by: string | null;
@@ -253,10 +256,6 @@ export interface DbLiturgy {
   title: string;
   service_date: string | null;
   notes: string | null;
-  theme: string | null;
-  bible_verse: string | null;
-  preacher: string | null;
-  leader: string | null;
   created_at: string;
   liturgy_items?: DbLiturgyItem[];
 }

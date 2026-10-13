@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton } from './PageHeader';
+import { Input, Select } from './ui';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 
@@ -212,23 +213,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-4 border-b border-stone-800">
           
           <div className="relative w-full sm:w-80">
-            <input
+            <Input
               type="text"
+              aria-label="Buscar músicas"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por nº, título, letra..."
-              className={`w-full bg-stone-950 border border-stone-800 rounded-xl py-2 pl-9 text-xs text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
-                searchTerm.trim() ? 'pr-9' : 'pr-3'
-              }`}
+              className={`pl-10 ${searchTerm.trim() ? 'pr-10' : ''}`}
             />
-            <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-2.5" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-subtle w-4 h-4 pointer-events-none" />
             {searchTerm.trim() && (
               <button
                 type="button"
                 onClick={() => setSearchTerm('')}
                 title="Limpar busca"
                 aria-label="Limpar busca"
-                className="absolute right-2 top-1.5 p-1 rounded-button text-stone-400 hover:text-stone-100 hover:bg-stone-800 transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-button text-stone-400 hover:text-stone-100 hover:bg-stone-800 transition-colors"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -236,16 +236,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <select
+            <Select
+              aria-label="Filtrar por categoria"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-200 focus:outline-none"
+              className="sm:w-auto"
             >
               <option value="">Todas as Categorias</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.name}>{c.name}</option>
               ))}
-            </select>
+            </Select>
           </div>
 
         </div>
@@ -340,17 +341,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
             <label className="flex items-center gap-2 text-xs text-stone-400">
               <span className="whitespace-nowrap">Por página</span>
-              <select
+              <Select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value) as (typeof PAGE_SIZE_OPTIONS)[number])}
-                className="bg-stone-950 border border-stone-800 rounded-button px-2.5 py-1.5 text-xs text-stone-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                className="w-auto h-9 py-0 text-xs"
               >
                 {PAGE_SIZE_OPTIONS.map((size) => (
                   <option key={size} value={size}>
                     {size}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
           </div>
 
@@ -370,14 +371,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               className="flex items-center gap-1.5 text-xs text-stone-300"
             >
               <span>Página</span>
-              <input
+              <Input
                 type="number"
                 min={1}
                 max={totalPages}
                 value={pageInput}
                 onChange={(e) => setPageInput(e.target.value)}
                 onBlur={() => goToPage(parseInt(pageInput, 10))}
-                className="w-14 bg-stone-950 border border-stone-800 rounded-button px-2 py-1.5 text-center text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-14 h-9 py-0 px-2 text-center text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 aria-label="Ir para página"
               />
               <span className="text-stone-500">/ {totalPages}</span>

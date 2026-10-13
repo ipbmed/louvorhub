@@ -40,10 +40,6 @@ export async function upsertLiturgy(
     title: liturgy.serviceTitle,
     service_date: liturgy.date || null,
     notes: null as string | null,
-    theme: liturgy.theme ?? null,
-    bible_verse: liturgy.bibleVerse ?? null,
-    preacher: liturgy.preacher ?? null,
-    leader: liturgy.leader ?? null,
     created_by: userId ?? null,
   };
 

@@ -25,6 +25,7 @@ import { PageShell, PageHeaderButton } from './PageHeader';
 import { AvatarCropDialog } from './AvatarCropDialog';
 import { CameraCaptureDialog } from './CameraCaptureDialog';
 import { KNOWN_SKILLS } from '@/constants/skills';
+import { Field, Input, Select } from './ui';
 
 interface ProfilePageProps {
   onBack?: () => void;
@@ -250,15 +251,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = () => {
     .slice(0, 2)
     .toUpperCase();
 
-  const inputClass = (hasError?: boolean) =>
-    `w-full border rounded-xl p-3 pl-10 focus:outline-none ${
-      editing
-        ? `bg-stone-950 text-stone-100 focus:ring-2 focus:ring-emerald-500/40 ${
-            hasError ? 'border-rose-600' : 'border-stone-800'
-          }`
-        : 'bg-stone-950/50 text-stone-300 border-stone-800/80 cursor-default'
-    }`;
-
   const customSkills = skills.filter(
     (s) => !KNOWN_SKILLS.some((k) => k.toLowerCase() === s.toLowerCase()),
   );
@@ -365,213 +357,233 @@ export const ProfilePage: React.FC<ProfilePageProps> = () => {
         )}
 
         <form onSubmit={(e) => void handleSave(e)} className="space-y-4 text-sm" noValidate>
-          <div>
-            <label className="block text-stone-400 font-semibold mb-1 text-xs">
-              Nome {editing && <span className="text-rose-400">*</span>}
-            </label>
-            <div className="relative">
-              <User className="w-4 h-4 text-stone-500 absolute left-3 top-3" />
-              <input
-                value={displayName}
-                onChange={(e) => {
-                  setDisplayName(e.target.value);
-                  if (fieldErrors.displayName) {
-                    setFieldErrors((prev) => {
-                      const next = { ...prev };
-                      delete next.displayName;
-                      return next;
-                    });
-                  }
-                }}
-                readOnly={!editing}
-                required={editing}
-                placeholder={editing ? 'Seu nome completo' : '—'}
-                className={inputClass(Boolean(fieldErrors.displayName))}
-              />
-            </div>
-            {editing && fieldErrors.displayName && (
-              <p className="text-[11px] text-rose-300 mt-1">{fieldErrors.displayName}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-stone-400 font-semibold mb-1 text-xs">
-              E-mail <span className="text-stone-600 font-normal">(opcional · login)</span>
-            </label>
-            <div className="relative">
-              <Mail className="w-4 h-4 text-stone-500 absolute left-3 top-3" />
-              <input
-                value={email}
-                readOnly
-                placeholder="Não informado"
-                className="w-full bg-stone-950/50 border border-stone-800/80 rounded-xl p-3 pl-10 text-stone-400 cursor-not-allowed"
-              />
-            </div>
-            {editing && (
-              <p className="text-[11px] text-stone-500 mt-1">
-                {canLoginWithEmail
-                  ? 'Este e-mail é usado para entrar na conta (magic link).'
-                  : 'Sem e-mail cadastrado não é possível fazer login.'}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-stone-400 font-semibold mb-1 text-xs">Telefone</label>
-            <div className="relative">
-              <Phone className="w-4 h-4 text-stone-500 absolute left-3 top-3" />
-              <input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                readOnly={!editing}
-                placeholder={editing ? '(00) 00000-0000' : '—'}
-                inputMode="tel"
-                className={inputClass()}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-stone-400 font-semibold mb-1 text-xs">
-              Data de nascimento
-            </label>
-            <div className="relative">
-              <Calendar className="w-4 h-4 text-stone-500 absolute left-3 top-3 pointer-events-none" />
-              <input
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                readOnly={!editing}
-                disabled={!editing}
-                max={new Date().toISOString().slice(0, 10)}
-                className={`${inputClass()} disabled:opacity-100`}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-stone-400 font-semibold mb-1 text-xs">
-              Membro da igreja{' '}
-              {editing && <span className="text-stone-600 font-normal">(opcional)</span>}
-            </label>
-            <div className="relative">
-              <Building2 className="w-4 h-4 text-stone-500 absolute left-3 top-3 pointer-events-none" />
-              {editing ? (
-                <select
-                  value={churchId}
-                  onChange={(e) => setChurchId(e.target.value)}
-                  className={`${inputClass()} appearance-none`}
-                >
-                  <option value="">Não informado</option>
-                  {churches.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  value={selectedChurchName || (churchId ? 'Igreja não listada' : '')}
-                  readOnly
-                  placeholder="—"
-                  className={inputClass()}
+          <Field
+            label="Nome"
+            required={editing}
+            error={editing ? fieldErrors.displayName : undefined}
+          >
+            {(id, describedBy) => (
+              <div className="relative">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
+                <Input
+                  id={id}
+                  aria-describedby={describedBy}
+                  invalid={editing && Boolean(fieldErrors.displayName)}
+                  value={displayName}
+                  onChange={(e) => {
+                    setDisplayName(e.target.value);
+                    if (fieldErrors.displayName) {
+                      setFieldErrors((prev) => {
+                        const next = { ...prev };
+                        delete next.displayName;
+                        return next;
+                      });
+                    }
+                  }}
+                  readOnly={!editing}
+                  required={editing}
+                  placeholder={editing ? 'Seu nome completo' : '—'}
+                  className="pl-10"
                 />
-              )}
-            </div>
-          </div>
+              </div>
+            )}
+          </Field>
 
-          <div>
-            <label className="block text-stone-400 font-semibold mb-2 text-xs">
-              Minhas habilidades
-            </label>
-
-            {editing ? (
+          <Field
+            label={
               <>
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {KNOWN_SKILLS.map((skill) => {
-                    const selected = skills.some((s) => s.toLowerCase() === skill.toLowerCase());
-                    return (
-                      <button
-                        key={skill}
-                        type="button"
-                        onClick={() => toggleSkill(skill)}
-                        className={`px-2.5 py-1.5 rounded-button text-[11px] font-semibold border transition-colors ${
-                          selected
-                            ? 'bg-emerald-500 text-stone-950 border-emerald-400'
-                            : 'bg-stone-950 text-stone-300 border-stone-700 hover:border-emerald-700/60'
-                        }`}
-                      >
-                        {skill}
-                      </button>
-                    );
-                  })}
-                </div>
+                E-mail <span className="text-fg-subtle font-normal">(opcional · login)</span>
+              </>
+            }
+            hint={
+              editing
+                ? canLoginWithEmail
+                  ? 'Este e-mail é usado para entrar na conta (magic link).'
+                  : 'Sem e-mail cadastrado não é possível fazer login.'
+                : undefined
+            }
+          >
+            {(id, describedBy) => (
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
+                <Input
+                  id={id}
+                  aria-describedby={describedBy}
+                  value={email}
+                  readOnly
+                  placeholder="Não informado"
+                  className="pl-10"
+                />
+              </div>
+            )}
+          </Field>
 
-                {customSkills.length > 0 && (
+          <Field label="Telefone">
+            {(id) => (
+              <div className="relative">
+                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
+                <Input
+                  id={id}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  readOnly={!editing}
+                  placeholder={editing ? '(00) 00000-0000' : '—'}
+                  inputMode="tel"
+                  className="pl-10"
+                />
+              </div>
+            )}
+          </Field>
+
+          <Field label="Data de nascimento">
+            {(id) => (
+              <div className="relative">
+                <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
+                <Input
+                  id={id}
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  readOnly={!editing}
+                  disabled={!editing}
+                  max={new Date().toISOString().slice(0, 10)}
+                  className="pl-10 disabled:opacity-100 disabled:cursor-default"
+                />
+              </div>
+            )}
+          </Field>
+
+          <Field
+            label={
+              <>
+                Membro da igreja{' '}
+                {editing && <span className="text-fg-subtle font-normal">(opcional)</span>}
+              </>
+            }
+          >
+            {(id) => (
+              <div className="relative">
+                <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-subtle pointer-events-none" />
+                {editing ? (
+                  <Select
+                    id={id}
+                    value={churchId}
+                    onChange={(e) => setChurchId(e.target.value)}
+                    className="pl-10"
+                  >
+                    <option value="">Não informado</option>
+                    {churches.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </Select>
+                ) : (
+                  <Input
+                    id={id}
+                    value={selectedChurchName || (churchId ? 'Igreja não listada' : '')}
+                    readOnly
+                    placeholder="—"
+                    className="pl-10"
+                  />
+                )}
+              </div>
+            )}
+          </Field>
+
+          <Field
+            label="Minhas habilidades"
+            hint={
+              editing && availableKnownSkills.length === 0
+                ? 'Todas as habilidades da lista foram selecionadas.'
+                : undefined
+            }
+          >
+            {(id) =>
+              editing ? (
+                <>
                   <div className="flex flex-wrap gap-1.5 mb-3">
-                    {customSkills.map((skill) => (
-                      <span
-                        key={skill}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-button text-[11px] font-semibold bg-teal-950/60 text-teal-200 border border-teal-800/60"
-                      >
-                        {skill}
+                    {KNOWN_SKILLS.map((skill) => {
+                      const selected = skills.some((s) => s.toLowerCase() === skill.toLowerCase());
+                      return (
                         <button
+                          key={skill}
                           type="button"
                           onClick={() => toggleSkill(skill)}
-                          className="text-teal-300/80 hover:text-rose-300"
-                          title="Remover"
+                          className={`px-2.5 py-1.5 rounded-button text-[11px] font-semibold border transition-colors ${
+                            selected
+                              ? 'bg-emerald-500 text-stone-950 border-emerald-400'
+                              : 'bg-stone-950 text-stone-300 border-stone-700 hover:border-emerald-700/60'
+                          }`}
                         >
-                          <X className="w-3 h-3" />
+                          {skill}
                         </button>
-                      </span>
-                    ))}
+                      );
+                    })}
                   </div>
-                )}
 
-                <div className="flex items-center gap-2">
-                  <input
-                    value={customSkill}
-                    onChange={(e) => setCustomSkill(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addCustomSkill();
-                      }
-                    }}
-                    placeholder="Outra habilidade…"
-                    className="flex-1 bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
-                  />
-                  <button
-                    type="button"
-                    onClick={addCustomSkill}
-                    disabled={!customSkill.trim()}
-                    className="px-3 py-2 bg-stone-800 hover:bg-stone-700 disabled:opacity-40 border border-stone-700 rounded-button text-xs font-semibold inline-flex items-center gap-1"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Adicionar
-                  </button>
+                  {customSkills.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {customSkills.map((skill) => (
+                        <span
+                          key={skill}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-button text-[11px] font-semibold bg-teal-950/60 text-teal-200 border border-teal-800/60"
+                        >
+                          {skill}
+                          <button
+                            type="button"
+                            onClick={() => toggleSkill(skill)}
+                            className="text-teal-300/80 hover:text-rose-300"
+                            title="Remover"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id={id}
+                      value={customSkill}
+                      onChange={(e) => setCustomSkill(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addCustomSkill();
+                        }
+                      }}
+                      placeholder="Outra habilidade…"
+                      className="flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={addCustomSkill}
+                      disabled={!customSkill.trim()}
+                      className="px-3 py-2 bg-stone-800 hover:bg-stone-700 disabled:opacity-40 border border-stone-700 rounded-button text-xs font-semibold inline-flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Adicionar
+                    </button>
+                  </div>
+                </>
+              ) : skills.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="px-2.5 py-1.5 rounded-button text-[11px] font-semibold bg-stone-950 text-emerald-200 border border-emerald-800/50"
+                    >
+                      {skill}
+                    </span>
+                  ))}
                 </div>
-                {availableKnownSkills.length === 0 && (
-                  <p className="text-[11px] text-stone-500 mt-1.5">
-                    Todas as habilidades da lista foram selecionadas.
-                  </p>
-                )}
-              </>
-            ) : skills.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="px-2.5 py-1.5 rounded-button text-[11px] font-semibold bg-stone-950 text-emerald-200 border border-emerald-800/50"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-stone-500">Nenhuma habilidade informada.</p>
-            )}
-          </div>
+              ) : (
+                <p className="text-xs text-stone-500">Nenhuma habilidade informada.</p>
+              )
+            }
+          </Field>
 
           {editing && (
             <button

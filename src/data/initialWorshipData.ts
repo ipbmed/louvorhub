@@ -291,10 +291,6 @@ export const INITIAL_LITURGIES: Liturgy[] = [
     churchId: 'church-medianeira',
     date: '2026-08-16',
     serviceTitle: 'Culto Solene de Adoração',
-    theme: 'O Deus Criador e Redentor',
-    bibleVerse: 'Salmo 95:1-7',
-    preacher: 'Rev. Marcos Silva',
-    leader: 'Presb. João Mendes',
     items: [
       {
         id: 'li-1',

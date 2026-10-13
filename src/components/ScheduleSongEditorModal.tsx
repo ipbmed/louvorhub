@@ -21,7 +21,7 @@ import { transposeLyrics, transposeNote, parseLyricSections } from '../utils/cho
 import { LyricSectionHeading } from './LyricSectionHeading';
 import { ChordLyricLine } from './ChordLyricLine';
 import { useConfirm } from '@/contexts/ConfirmProvider';
-import { ActionButton } from './ui';
+import { ActionButton, Field, Input, Select, Textarea } from './ui';
 
 interface ScheduleSongEditorModalProps {
   schedule: WorshipSchedule;
@@ -247,85 +247,96 @@ export const ScheduleSongEditorModal: React.FC<ScheduleSongEditorModalProps> = (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-stone-950/80 p-3.5 rounded-2xl border border-stone-800">
                 
                 {/* Tom / Key Selector */}
-                <div>
-                  <label className="block text-xs font-bold text-stone-300 mb-1 flex items-center justify-between">
-                    <span className="flex items-center gap-1">
-                      <Music className="w-3.5 h-3.5 text-emerald-400" />
-                      Tom da Escala
-                    </span>
-                    {song.originalKey && (
-                      <span className="text-[10px] text-stone-500 font-normal">
-                        Original: {song.originalKey}
+                <Field
+                  label={
+                    <span className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-1">
+                        <Music className="w-3.5 h-3.5 text-emerald-400" />
+                        Tom da Escala
                       </span>
-                    )}
-                  </label>
-                  <select
-                    value={key}
-                    onChange={(e) => {
-                      setKey(e.target.value);
-                      clearFieldError('key');
-                    }}
-                    className={`w-full bg-stone-900 border rounded-xl px-3 py-2 text-stone-100 text-xs font-mono focus:outline-none focus:border-emerald-500 font-bold ${
-                      fieldErrors.key ? 'border-rose-500' : 'border-stone-750'
-                    }`}
-                  >
-                    {COMMON_KEYS.map(k => (
-                      <option key={k} value={k}>
-                        {k} {song.originalKey === k ? '(Original)' : ''}
-                      </option>
-                    ))}
-                  </select>
-                  {fieldErrors.key && (
-                    <p className="mt-1 text-[11px] text-rose-300">{fieldErrors.key}</p>
+                      {song.originalKey && (
+                        <span className="text-[10px] text-fg-subtle font-normal">
+                          Original: {song.originalKey}
+                        </span>
+                      )}
+                    </span>
+                  }
+                  error={fieldErrors.key}
+                >
+                  {(id, describedBy) => (
+                    <Select
+                      id={id}
+                      aria-describedby={describedBy}
+                      invalid={Boolean(fieldErrors.key)}
+                      value={key}
+                      onChange={(e) => {
+                        setKey(e.target.value);
+                        clearFieldError('key');
+                      }}
+                      className="font-mono font-bold"
+                    >
+                      {COMMON_KEYS.map(k => (
+                        <option key={k} value={k}>
+                          {k} {song.originalKey === k ? '(Original)' : ''}
+                        </option>
+                      ))}
+                    </Select>
                   )}
-                </div>
+                </Field>
 
                 {/* BPM / Tempo */}
-                <div>
-                  <label className="block text-xs font-bold text-stone-300 mb-1 flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                    Andamento / BPM
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={bpm}
-                    onChange={(e) => {
-                      setBpm(e.target.value);
-                      clearFieldError('bpm');
-                    }}
-                    placeholder="Ex: 72 (30–300)"
-                    className={`w-full bg-stone-900 border rounded-xl px-3 py-2 text-stone-100 placeholder-stone-600 text-xs focus:outline-none focus:border-emerald-500 ${
-                      fieldErrors.bpm ? 'border-rose-500' : 'border-stone-750'
-                    }`}
-                  />
-                  {fieldErrors.bpm && (
-                    <p className="mt-1 text-[11px] text-rose-300">{fieldErrors.bpm}</p>
+                <Field
+                  label={
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                      Andamento / BPM
+                    </span>
+                  }
+                  error={fieldErrors.bpm}
+                >
+                  {(id, describedBy) => (
+                    <Input
+                      id={id}
+                      aria-describedby={describedBy}
+                      invalid={Boolean(fieldErrors.bpm)}
+                      type="text"
+                      inputMode="numeric"
+                      value={bpm}
+                      onChange={(e) => {
+                        setBpm(e.target.value);
+                        clearFieldError('bpm');
+                      }}
+                      placeholder="Ex: 72 (30–300)"
+                    />
                   )}
-                </div>
+                </Field>
 
                 {/* Compass / Time Signature */}
-                <div>
-                  <label className="block text-xs font-bold text-stone-300 mb-1 flex items-center gap-1">
-                    <Tag className="w-3.5 h-3.5 text-emerald-400" />
-                    Fórmula de Compasso
-                  </label>
-                  <input
-                    type="text"
-                    value={timeSignature}
-                    onChange={(e) => {
-                      setTimeSignature(e.target.value);
-                      clearFieldError('timeSignature');
-                    }}
-                    placeholder="Ex: 4/4, 3/4, 6/8"
-                    className={`w-full bg-stone-900 border rounded-xl px-3 py-2 text-stone-100 placeholder-stone-600 text-xs focus:outline-none focus:border-emerald-500 font-mono ${
-                      fieldErrors.timeSignature ? 'border-rose-500' : 'border-stone-750'
-                    }`}
-                  />
-                  {fieldErrors.timeSignature && (
-                    <p className="mt-1 text-[11px] text-rose-300">{fieldErrors.timeSignature}</p>
+                <Field
+                  label={
+                    <span className="flex items-center gap-1">
+                      <Tag className="w-3.5 h-3.5 text-emerald-400" />
+                      Fórmula de Compasso
+                    </span>
+                  }
+                  error={fieldErrors.timeSignature}
+                >
+                  {(id, describedBy) => (
+                    <Input
+                      id={id}
+                      aria-describedby={describedBy}
+                      invalid={Boolean(fieldErrors.timeSignature)}
+                      type="text"
+                      value={timeSignature}
+                      onChange={(e) => {
+                        setTimeSignature(e.target.value);
+                        clearFieldError('timeSignature');
+                      }}
+                      placeholder="Ex: 4/4, 3/4, 6/8"
+                      className="font-mono"
+                    />
                   )}
-                </div>
+                </Field>
               </div>
 
               {/* Row 2: Transpose Controls & Quick Arrangement Notes */}
@@ -356,89 +367,93 @@ export const ScheduleSongEditorModal: React.FC<ScheduleSongEditorModalProps> = (
                 </div>
 
                 {/* Specific Arrangement Notes for this Schedule */}
-                <div>
-                  <label className="block text-xs font-bold text-stone-300 mb-1">
-                    Observações de Arranjo / Instruções da Banda para este Dia
-                  </label>
-                  <input
-                    type="text"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Ex: Início solo no violão, repete o refrão 2x no final, solo de guitarras após verso 2"
-                    className="w-full bg-stone-900 border border-stone-750 rounded-xl p-2.5 text-stone-100 placeholder-stone-600 text-xs focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
+                <Field label="Observações de Arranjo / Instruções da Banda para este Dia">
+                  {(id) => (
+                    <Input
+                      id={id}
+                      type="text"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Ex: Início solo no violão, repete o refrão 2x no final, solo de guitarras após verso 2"
+                    />
+                  )}
+                </Field>
               </div>
 
               {/* Row 3: Lyrics & Chords Textarea Editor */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <label className="block text-xs font-bold text-stone-300 flex items-center gap-1.5">
-                    <FileText className="w-4 h-4 text-emerald-400" />
-                    Letra e Cifra da Música para o Dia
-                  </label>
-                  
-                  {/* Quick Helper Tags */}
-                  <div className="flex items-center gap-1 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={() => insertTextAtCursor(`[Tom: ${key}]`)}
-                      className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-emerald-300 rounded text-[10px] font-mono border border-stone-700 rounded-button"
-                    >
-                      +[Tom]
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertTextAtCursor('[Introdução]\n[C] [G] [Am] [F]')}
-                      className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded text-[10px] font-mono border border-stone-700 rounded-button"
-                    >
-                      +[Intro]
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertTextAtCursor('[Verso 1]')}
-                      className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded text-[10px] font-mono border border-stone-700 rounded-button"
-                    >
-                      +[Verso]
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertTextAtCursor('[Refrão]')}
-                      className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-emerald-400 rounded text-[10px] font-mono border border-stone-700 font-bold rounded-button"
-                    >
-                      +[Refrão]
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => insertTextAtCursor('[Ponte]')}
-                      className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded text-[10px] font-mono border border-stone-700 rounded-button"
-                    >
-                      +[Ponte]
-                    </button>
-                  </div>
-                </div>
-
-                <textarea
-                  value={lyrics}
-                  onChange={(e) => {
-                    setLyrics(e.target.value);
-                    clearFieldError('lyrics');
-                  }}
-                  rows={12}
-                  placeholder="Escreva ou cole a letra e cifra no formato [C] Letra [G] aqui..."
-                  className={`w-full bg-stone-950 border rounded-2xl p-4 text-stone-100 placeholder-stone-600 text-xs sm:text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${
-                    fieldErrors.lyrics ? 'border-rose-500' : 'border-stone-800'
-                  }`}
-                />
-                {fieldErrors.lyrics ? (
-                  <p className="text-[11px] text-rose-300">{fieldErrors.lyrics}</p>
-                ) : (
-                  <p className="text-[11px] text-stone-500 flex items-center gap-1">
-                    <Info className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+              <Field
+                error={fieldErrors.lyrics}
+                hint={
+                  <span className="flex items-center gap-1">
+                    <Info className="w-3.5 h-3.5 shrink-0" />
                     <span>Dica: Coloque as cifras dentro de colchetes ex: <code className="bg-stone-900 px-1 py-0.5 rounded text-emerald-300">[C] Grandioso [G] és Tu</code></span>
-                  </p>
+                  </span>
+                }
+              >
+                {(id, describedBy) => (
+                  <>
+                    <div className="flex items-center justify-between flex-wrap gap-2 mb-1.5">
+                      <label htmlFor={id} className="ui-label mb-0 flex items-center gap-1.5">
+                        <FileText className="w-4 h-4 text-emerald-400" />
+                        Letra e Cifra da Música para o Dia
+                      </label>
+
+                      {/* Quick Helper Tags */}
+                      <div className="flex items-center gap-1 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => insertTextAtCursor(`[Tom: ${key}]`)}
+                          className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-emerald-300 rounded text-[10px] font-mono border border-stone-700 rounded-button"
+                        >
+                          +[Tom]
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => insertTextAtCursor('[Introdução]\n[C] [G] [Am] [F]')}
+                          className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded text-[10px] font-mono border border-stone-700 rounded-button"
+                        >
+                          +[Intro]
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => insertTextAtCursor('[Verso 1]')}
+                          className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded text-[10px] font-mono border border-stone-700 rounded-button"
+                        >
+                          +[Verso]
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => insertTextAtCursor('[Refrão]')}
+                          className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-emerald-400 rounded text-[10px] font-mono border border-stone-700 font-bold rounded-button"
+                        >
+                          +[Refrão]
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => insertTextAtCursor('[Ponte]')}
+                          className="px-2 py-0.5 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded text-[10px] font-mono border border-stone-700 rounded-button"
+                        >
+                          +[Ponte]
+                        </button>
+                      </div>
+                    </div>
+
+                    <Textarea
+                      id={id}
+                      aria-describedby={describedBy}
+                      invalid={Boolean(fieldErrors.lyrics)}
+                      value={lyrics}
+                      onChange={(e) => {
+                        setLyrics(e.target.value);
+                        clearFieldError('lyrics');
+                      }}
+                      rows={12}
+                      placeholder="Escreva ou cole a letra e cifra no formato [C] Letra [G] aqui..."
+                      className="font-mono leading-relaxed"
+                    />
+                  </>
                 )}
-              </div>
+              </Field>
             </>
           ) : (
             /* Preview Mode */

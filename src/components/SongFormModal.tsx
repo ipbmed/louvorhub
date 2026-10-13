@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useId, useMemo, useRef, useState } from 'react';
 import { Song, Category, SongType, MediaLink, MediaLinkType } from '../types';
 import { 
   X, 
@@ -31,7 +31,7 @@ import { ChordLyricLine } from './ChordLyricLine';
 import { LyricSectionHeading } from './LyricSectionHeading';
 import { getCombinedMediaLinks, detectMediaType } from '../utils/mediaUtils';
 import { validateBpmField, validateTimeSignatureField } from '@/lib/songVersionFields';
-import { ActionButton } from './ui';
+import { ActionButton, Field, Input, Select, Textarea } from './ui';
 interface SongFormModalProps {
   songToEdit?: Song | null;
   categories: Category[];
@@ -165,6 +165,7 @@ export const SongFormModal: React.FC<SongFormModalProps> = ({
   const [touched, setTouched] = useState<Partial<Record<SongFormField, boolean>>>({});
   const [showLyricsHelp, setShowLyricsHelp] = useState(false);
   const lyricsTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const lyricsFieldId = useId();
   const fieldErrors = useMemo(
     () =>
       computeSongFormErrors({
@@ -199,11 +200,6 @@ export const SongFormModal: React.FC<SongFormModalProps> = ({
 
   const showFieldError = (field: SongFormField) =>
     Boolean(touched[field] && fieldErrors[field]);
-
-  const fieldBorderClass = (field: SongFormField) =>
-    showFieldError(field)
-      ? 'border-rose-500 focus:ring-rose-500/40'
-      : 'border-stone-800 focus:ring-emerald-500/50';
 
   // Media links list handlers
   const handleAddMediaLink = (type: MediaLinkType = 'youtube') => {
@@ -457,167 +453,168 @@ export const SongFormModal: React.FC<SongFormModalProps> = ({
 
               {songType === 'hino' && (
                 <div className="grid grid-cols-1 min-[380px]:grid-cols-[1fr_5.5rem] gap-3">
-                  <div className="min-w-0">
-                    <label className="block text-stone-400 font-semibold mb-1.5">
-                      Hinário
-                    </label>
-                    <select
-                      value={hymnal}
-                      onChange={(e) => setHymnal(e.target.value)}
-                      className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2.5 text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                    >
-                      <option value="Novo Cântico">Novo Cântico</option>
-                      <option value="Cantor Cristão">Cantor Cristão</option>
-                      <option value="Harpa Cristã">Harpa Cristã</option>
-                      <option value="Hinário Evangélico">Hinário Evangélico</option>
-                      <option value="Outro Hinário">Outro Hinário</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-stone-400 font-semibold mb-1.5">
-                      Nº
-                    </label>
-                    <input
-                      type="number"
-                      required={songType === 'hino'}
-                      value={number || ''}
-                      onChange={(e) => setNumber(Number(e.target.value))}
-                      onBlur={() => markTouched('number')}
-                      className={`w-full bg-stone-950 border rounded-xl px-3 py-2.5 font-mono font-bold text-emerald-300 focus:outline-none focus:ring-2 ${fieldBorderClass('number')}`}
-                    />
-                    {showFieldError('number') && (
-                      <p className="mt-1 text-[11px] text-rose-300">{fieldErrors.number}</p>
+                  <Field label="Hinário">
+                    {(id) => (
+                      <Select id={id} value={hymnal} onChange={(e) => setHymnal(e.target.value)}>
+                        <option value="Novo Cântico">Novo Cântico</option>
+                        <option value="Cantor Cristão">Cantor Cristão</option>
+                        <option value="Harpa Cristã">Harpa Cristã</option>
+                        <option value="Hinário Evangélico">Hinário Evangélico</option>
+                        <option value="Outro Hinário">Outro Hinário</option>
+                      </Select>
                     )}
-                  </div>
+                  </Field>
+                  <Field
+                    label="Nº"
+                    required
+                    error={showFieldError('number') ? fieldErrors.number : undefined}
+                  >
+                    {(id, describedBy) => (
+                      <Input
+                        id={id}
+                        aria-describedby={describedBy}
+                        type="number"
+                        required={songType === 'hino'}
+                        value={number || ''}
+                        onChange={(e) => setNumber(Number(e.target.value))}
+                        onBlur={() => markTouched('number')}
+                        invalid={showFieldError('number')}
+                        className="font-mono font-bold"
+                      />
+                    )}
+                  </Field>
                 </div>
               )}
 
               <div className="grid grid-cols-1 gap-3">
-                <div>
-                  <label className="block text-stone-400 font-semibold mb-1.5">
-                    Título
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    onBlur={() => markTouched('title')}
-                    placeholder={songType === 'hino' ? 'Ex: Grandioso És Tu' : 'Ex: Aclame ao Senhor'}
-                    className={`w-full bg-stone-950 border rounded-xl px-3 py-2.5 text-stone-100 placeholder-stone-500 focus:outline-none focus:ring-2 ${fieldBorderClass('title')}`}
-                  />
-                  {showFieldError('title') && (
-                    <p className="mt-1 text-[11px] text-rose-300">{fieldErrors.title}</p>
+                <Field
+                  label="Título"
+                  required
+                  error={showFieldError('title') ? fieldErrors.title : undefined}
+                >
+                  {(id, describedBy) => (
+                    <Input
+                      id={id}
+                      aria-describedby={describedBy}
+                      type="text"
+                      required
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      onBlur={() => markTouched('title')}
+                      placeholder={songType === 'hino' ? 'Ex: Grandioso És Tu' : 'Ex: Aclame ao Senhor'}
+                      invalid={showFieldError('title')}
+                    />
                   )}
-                </div>
+                </Field>
 
-                <div>
-                  <label className="block text-stone-400 font-semibold mb-1.5">
-                    Subtítulo
-                  </label>
-                  <input
-                    type="text"
-                    value={subtitle}
-                    onChange={(e) => setSubtitle(e.target.value)}
-                    placeholder="Opcional"
-                    className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2.5 text-stone-100 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                  />
-                </div>
+                <Field label="Subtítulo">
+                  {(id) => (
+                    <Input
+                      id={id}
+                      type="text"
+                      value={subtitle}
+                      onChange={(e) => setSubtitle(e.target.value)}
+                      placeholder="Opcional"
+                    />
+                  )}
+                </Field>
               </div>
 
               {/* Tom / Compasso / BPM — 3 cols se couber, senão empilha */}
               <div className="grid grid-cols-2 min-[420px]:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-stone-400 font-semibold mb-1.5">
-                    Tom
-                  </label>
-                  <select
-                    value={originalKey}
-                    onChange={(e) => setOriginalKey(e.target.value)}
-                    className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2.5 text-stone-100 font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                  >
-                    {MUSICAL_KEYS.map((k) => (
-                      <option key={k} value={k}>{k}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-stone-400 font-semibold mb-1.5">
-                    Compasso
-                  </label>
-                  <input
-                    type="text"
-                    value={timeSignature}
-                    onChange={(e) => setTimeSignature(e.target.value)}
-                    onBlur={() => markTouched('timeSignature')}
-                    placeholder="4/4"
-                    className={`w-full bg-stone-950 border rounded-xl px-3 py-2.5 text-stone-100 font-mono focus:outline-none focus:ring-2 ${fieldBorderClass('timeSignature')}`}
-                  />
-                  {showFieldError('timeSignature') && (
-                    <p className="mt-1 text-[11px] text-rose-300">{fieldErrors.timeSignature}</p>
+                <Field label="Tom">
+                  {(id) => (
+                    <Select
+                      id={id}
+                      value={originalKey}
+                      onChange={(e) => setOriginalKey(e.target.value)}
+                      className="font-mono"
+                    >
+                      {MUSICAL_KEYS.map((k) => (
+                        <option key={k} value={k}>{k}</option>
+                      ))}
+                    </Select>
                   )}
-                </div>
+                </Field>
 
-                <div className="col-span-2 min-[420px]:col-span-1">
-                  <label className="block text-stone-400 font-semibold mb-1.5">
-                    BPM
-                  </label>
-                  <input
-                    type="number"
-                    min={30}
-                    max={300}
-                    value={bpm}
-                    onChange={(e) => setBpm(e.target.value)}
-                    onBlur={() => markTouched('bpm')}
-                    placeholder="72"
-                    className={`w-full bg-stone-950 border rounded-xl px-3 py-2.5 text-stone-100 font-mono focus:outline-none focus:ring-2 ${fieldBorderClass('bpm')}`}
-                  />
-                  {showFieldError('bpm') && (
-                    <p className="mt-1 text-[11px] text-rose-300">{fieldErrors.bpm}</p>
+                <Field
+                  label="Compasso"
+                  error={showFieldError('timeSignature') ? fieldErrors.timeSignature : undefined}
+                >
+                  {(id, describedBy) => (
+                    <Input
+                      id={id}
+                      aria-describedby={describedBy}
+                      type="text"
+                      value={timeSignature}
+                      onChange={(e) => setTimeSignature(e.target.value)}
+                      onBlur={() => markTouched('timeSignature')}
+                      placeholder="4/4"
+                      invalid={showFieldError('timeSignature')}
+                      className="font-mono"
+                    />
                   )}
-                </div>
+                </Field>
+
+                <Field
+                  label="BPM"
+                  className="col-span-2 min-[420px]:col-span-1"
+                  error={showFieldError('bpm') ? fieldErrors.bpm : undefined}
+                >
+                  {(id, describedBy) => (
+                    <Input
+                      id={id}
+                      aria-describedby={describedBy}
+                      type="number"
+                      min={30}
+                      max={300}
+                      value={bpm}
+                      onChange={(e) => setBpm(e.target.value)}
+                      onBlur={() => markTouched('bpm')}
+                      placeholder="72"
+                      invalid={showFieldError('bpm')}
+                      className="font-mono"
+                    />
+                  )}
+                </Field>
               </div>
 
               <div className="grid grid-cols-1 gap-3">
-                <div className="min-w-0">
-                  <label className="block text-stone-400 font-semibold mb-1.5">
-                    Autor
-                  </label>
-                  <input
-                    type="text"
-                    value={author}
-                    onChange={(e) => setAuthor(e.target.value)}
-                    placeholder="Letra"
-                    className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2.5 text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                  />
-                </div>
-                <div className="min-w-0">
-                  <label className="block text-stone-400 font-semibold mb-1.5">
-                    Compositor
-                  </label>
-                  <input
-                    type="text"
-                    value={composer}
-                    onChange={(e) => setComposer(e.target.value)}
-                    placeholder="Melodia"
-                    className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2.5 text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                  />
-                </div>
+                <Field label="Autor">
+                  {(id) => (
+                    <Input
+                      id={id}
+                      type="text"
+                      value={author}
+                      onChange={(e) => setAuthor(e.target.value)}
+                      placeholder="Letra"
+                    />
+                  )}
+                </Field>
+                <Field label="Compositor">
+                  {(id) => (
+                    <Input
+                      id={id}
+                      type="text"
+                      value={composer}
+                      onChange={(e) => setComposer(e.target.value)}
+                      placeholder="Melodia"
+                    />
+                  )}
+                </Field>
               </div>
 
-              <div>
-                <label className="block text-stone-400 font-semibold mb-1.5">
-                  Instruções / Observações
-                </label>
-                <textarea
-                  rows={2}
-                  value={instructions}
-                  onChange={(e) => setInstructions(e.target.value)}
-                  placeholder="Ex.: Entrada instrumental, solo no refrão…"
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2.5 text-stone-100 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
+              <Field label="Instruções / Observações">
+                {(id) => (
+                  <Textarea
+                    id={id}
+                    rows={2}
+                    value={instructions}
+                    onChange={(e) => setInstructions(e.target.value)}
+                    placeholder="Ex.: Entrada instrumental, solo no refrão…"
+                  />
+                )}
+              </Field>
 
               {/* Links de mídia — layout empilhado (lateral estreita) */}
               <div className="bg-stone-950/90 border border-stone-800 px-3.5 py-3.5 sm:px-4 sm:py-4 rounded-xl space-y-3">
@@ -687,22 +684,24 @@ export const SongFormModal: React.FC<SongFormModalProps> = ({
                         className="bg-stone-900 border border-stone-800 p-2 rounded-xl space-y-1.5"
                       >
                         <div className="grid grid-cols-[1fr_1fr_auto] gap-1.5 items-center">
-                          <select
+                          <Select
+                            aria-label="Tipo de link"
                             value={link.type}
                             onChange={(e) => handleUpdateMediaLink(link.id, 'type', e.target.value as MediaLinkType)}
-                            className="min-w-0 bg-stone-950 border border-stone-750 rounded-lg px-2 py-1.5 text-xs text-stone-200 focus:outline-none focus:border-emerald-500 font-medium"
+                            className="min-w-0 h-9 py-0 font-medium"
                           >
                             <option value="youtube">YouTube</option>
                             <option value="ytmusic">YT Music</option>
                             <option value="spotify">Spotify</option>
                             <option value="other">Outro</option>
-                          </select>
-                          <input
+                          </Select>
+                          <Input
+                            aria-label="Rótulo do link"
                             type="text"
                             placeholder="Rótulo"
                             value={link.title || ''}
                             onChange={(e) => handleUpdateMediaLink(link.id, 'title', e.target.value)}
-                            className="min-w-0 bg-stone-950 border border-stone-750 rounded-lg px-2 py-1.5 text-xs text-stone-100 placeholder-stone-600 focus:outline-none focus:border-emerald-500"
+                            className="min-w-0 h-9 py-0"
                           />
                           <ActionButton
                             variant="danger"
@@ -712,29 +711,32 @@ export const SongFormModal: React.FC<SongFormModalProps> = ({
                             title="Remover este link"
                           />
                         </div>
-                        <input
-                          type="url"
-                          placeholder={
-                            link.type === 'youtube'
-                              ? 'https://youtube.com/...'
-                              : link.type === 'ytmusic'
-                              ? 'https://music.youtube.com/...'
-                              : link.type === 'spotify'
-                              ? 'https://open.spotify.com/...'
-                              : 'https://...'
-                          }
-                          value={link.url}
-                          onChange={(e) => handleUpdateMediaLink(link.id, 'url', e.target.value)}
-                          onBlur={() => markTouched(`media:${link.id}`)}
-                          className={`w-full bg-stone-950 border rounded-lg px-2 py-1.5 text-xs text-stone-100 placeholder-stone-600 focus:outline-none font-mono ${
-                            showFieldError(`media:${link.id}`)
-                              ? 'border-rose-500 focus:border-rose-500'
-                              : 'border-stone-750 focus:border-emerald-500'
-                          }`}
-                        />
-                        {showFieldError(`media:${link.id}`) && (
-                          <p className="text-[11px] text-rose-300">{fieldErrors[`media:${link.id}`]}</p>
-                        )}
+                        <Field
+                          error={showFieldError(`media:${link.id}`) ? fieldErrors[`media:${link.id}`] : undefined}
+                        >
+                          {(id, describedBy) => (
+                            <Input
+                              id={id}
+                              aria-label="URL do link"
+                              aria-describedby={describedBy}
+                              type="url"
+                              placeholder={
+                                link.type === 'youtube'
+                                  ? 'https://youtube.com/...'
+                                  : link.type === 'ytmusic'
+                                  ? 'https://music.youtube.com/...'
+                                  : link.type === 'spotify'
+                                  ? 'https://open.spotify.com/...'
+                                  : 'https://...'
+                              }
+                              value={link.url}
+                              onChange={(e) => handleUpdateMediaLink(link.id, 'url', e.target.value)}
+                              onBlur={() => markTouched(`media:${link.id}`)}
+                              invalid={showFieldError(`media:${link.id}`)}
+                              className="h-9 py-0 font-mono"
+                            />
+                          )}
+                        </Field>
                       </div>
                     ))
                   )}
@@ -742,18 +744,17 @@ export const SongFormModal: React.FC<SongFormModalProps> = ({
               </div>
 
               {/* Tags string */}
-              <div>
-                <label className="block text-stone-400 font-semibold mb-1.5">
-                  Tags / Palavras-chave
-                </label>
-                <input
-                  type="text"
-                  value={tagsStr}
-                  onChange={(e) => setTagsStr(e.target.value)}
-                  placeholder="Ex: Criação, Exaltação, Majestade, Páscoa"
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2.5 text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
+              <Field label="Tags / Palavras-chave">
+                {(id) => (
+                  <Input
+                    id={id}
+                    type="text"
+                    value={tagsStr}
+                    onChange={(e) => setTagsStr(e.target.value)}
+                    placeholder="Ex: Criação, Exaltação, Majestade, Páscoa"
+                  />
+                )}
+              </Field>
 
               <label className="flex items-start gap-3 bg-stone-950/80 border border-stone-800 rounded-xl px-3.5 py-3 cursor-pointer">
                 <input
@@ -775,8 +776,9 @@ export const SongFormModal: React.FC<SongFormModalProps> = ({
               <div className="mt-4 lg:mt-0 flex-1 min-h-0 flex flex-col lg:border-l lg:border-stone-800 lg:pl-5 xl:pl-6">
                 <div className="flex items-center justify-between mb-2 flex-wrap gap-2 shrink-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <label className="block text-stone-400 font-semibold">
+                    <label htmlFor={lyricsFieldId} className="ui-label mb-0">
                       Letra e cifras
+                      <span className="text-brand-text ml-0.5">*</span>
                     </label>
                     <button
                       type="button"
@@ -863,13 +865,21 @@ export const SongFormModal: React.FC<SongFormModalProps> = ({
                   </p>
                 </div>
 
-                <textarea
-                  ref={lyricsTextareaRef}
-                  required
-                  value={lyrics}
-                  onChange={(e) => setLyrics(e.target.value)}
-                  onBlur={() => markTouched('lyrics')}
-                  placeholder={`[INTRO]
+                <Field
+                  className="flex-1 min-h-0 flex flex-col"
+                  error={showFieldError('lyrics') ? fieldErrors.lyrics : undefined}
+                >
+                  {(_id, describedBy) => (
+                    <Textarea
+                      ref={lyricsTextareaRef}
+                      id={lyricsFieldId}
+                      aria-describedby={describedBy}
+                      required
+                      value={lyrics}
+                      onChange={(e) => setLyrics(e.target.value)}
+                      onBlur={() => markTouched('lyrics')}
+                      invalid={showFieldError('lyrics')}
+                      placeholder={`[INTRO]
 [C]  [G]  [Am]  [F]
 
 [ESTROFE]
@@ -881,11 +891,10 @@ Então mi[C]nh'alma [F]canta a ti, Se[C]nhor:
 "Grandioso [G7] és Tu!"
 
 ### Subir 1 tom no último refrão`}
-                  className={`w-full flex-1 min-h-[50vh] lg:min-h-0 resize-y lg:resize-none bg-stone-950 border rounded-xl px-4 py-3.5 sm:px-5 sm:py-4 font-mono text-sm text-stone-100 placeholder-stone-600 focus:outline-none focus:ring-2 leading-relaxed ${fieldBorderClass('lyrics')}`}
-                />
-                {showFieldError('lyrics') && (
-                  <p className="mt-1.5 text-[11px] text-rose-300 shrink-0">{fieldErrors.lyrics}</p>
-                )}
+                      className="flex-1 !min-h-[50vh] lg:!min-h-0 lg:resize-none font-mono leading-relaxed"
+                    />
+                  )}
+                </Field>
               </div>
             </div>
           ) : (

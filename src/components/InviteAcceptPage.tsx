@@ -8,6 +8,7 @@ import {
   getOrgInvitationPublic,
   type PublicOrgInvitation,
 } from '@/services/invitations';
+import { Field, Input } from './ui';
 
 export const InviteAcceptPage: React.FC = () => {
   const { token = '' } = useParams<{ token: string }>();
@@ -118,22 +119,21 @@ export const InviteAcceptPage: React.FC = () => {
             {invite?.status === 'pending' && !successMsg && (
               <div className="space-y-3">
                 {!user && (
-                  <div>
-                    <label className="block text-xs font-semibold text-stone-400 mb-1">
-                      Seu nome
-                    </label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Nome completo"
-                      className="w-full bg-stone-950 border border-stone-800 rounded-xl p-2.5 text-sm text-stone-100"
-                    />
-                    <p className="text-[11px] text-stone-500 mt-1.5">
-                      Se ainda não tiver conta, ela será criada e aprovada automaticamente com o
-                      e-mail do convite.
-                    </p>
-                  </div>
+                  <Field
+                    label="Seu nome"
+                    hint="Se ainda não tiver conta, ela será criada e aprovada automaticamente com o e-mail do convite."
+                  >
+                    {(id, describedBy) => (
+                      <Input
+                        id={id}
+                        aria-describedby={describedBy}
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Nome completo"
+                      />
+                    )}
+                  </Field>
                 )}
 
                 {user && (

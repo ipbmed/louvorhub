@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowLeft, type LucideIcon } from 'lucide-react';
 import { Button, IconButton, type ButtonProps } from './ui/Button';
 import { cn } from './ui/cn';
+import { AssistantHeaderButton } from './assistant/AssistantHeaderButton';
 
 export interface PageHeaderProps {
   icon?: LucideIcon;
@@ -151,11 +152,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           </div>
         </div>
 
-        {actions && (
-          <div className="flex items-center gap-2 flex-wrap justify-end shrink-0 self-center">
-            {actions}
-          </div>
-        )}
+        <div className="flex items-center gap-2 flex-wrap justify-end shrink-0 self-center empty:hidden">
+          {actions}
+          <AssistantHeaderButton className="hidden lg:flex" />
+        </div>
       </div>
       {children && <div className="mt-3">{children}</div>}
     </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, ListMusic, Search, X } from 'lucide-react';
 import type { Song } from '../types';
-import { ActionButton } from './ui';
+import { ActionButton, Input } from './ui';
 import { SongTypeFilter, resolveSongType, type SongTypeMode } from './SongTypeFilter';
 
 const PAGE_SIZE = 80;
@@ -139,13 +139,14 @@ export const AddSongsToEventSetlistModal: React.FC<AddSongsToEventSetlistModalPr
             </span>
           </div>
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-stone-500 absolute left-2.5 top-2.5" />
-            <input
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-subtle w-4 h-4 pointer-events-none" />
+            <Input
               autoFocus
+              aria-label="Buscar músicas"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar por título, número ou artista..."
-              className="w-full bg-stone-800 border border-stone-700 rounded-xl pl-8 pr-3 py-2 text-xs text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+              className="pl-10"
             />
           </div>
         </div>

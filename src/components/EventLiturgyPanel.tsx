@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   FileDown,
@@ -8,6 +9,7 @@ import {
   GripVertical,
   HelpCircle,
   Layers,
+  Loader2,
   Music,
   Plus,
   Printer,
@@ -23,19 +25,21 @@ import {
   LITURGY_MARKDOWN_HELP,
   parseLiturgyMarkdown,
 } from '@/utils/liturgyMarkdown';
-import { SongSearchSelect } from './SongSearchSelect';
+import { LiturgySongField, liturgySongLabel } from './LiturgySongField';
 import { ActionButton, Field, Input, Select, Textarea, cn } from './ui';
 
-const ITEM_TYPES: { value: LiturgyItemType; label: string }[] = [
-  { value: 'hymn', label: '🎵 Música' },
-  { value: 'prayer', label: '🙏 Oração' },
-  { value: 'reading', label: '📖 Leitura bíblica' },
-  { value: 'sermon', label: '✝️ Pregação' },
-  { value: 'offertory', label: '💸 Dízimos e ofertas' },
-  { value: 'supper', label: '🍷 Ceia do Senhor' },
-  { value: 'benediction', label: '🕊️ Bênção final' },
-  { value: 'custom', label: '📌 Outro momento' },
+const ITEM_TYPES: { value: LiturgyItemType; emoji: string; label: string }[] = [
+  { value: 'hymn', emoji: '🎵', label: 'Música' },
+  { value: 'prayer', emoji: '🙏', label: 'Oração' },
+  { value: 'reading', emoji: '📖', label: 'Leitura bíblica' },
+  { value: 'sermon', emoji: '✝️', label: 'Pregação' },
+  { value: 'offertory', emoji: '💸', label: 'Dízimos e ofertas' },
+  { value: 'supper', emoji: '🍷', label: 'Ceia do Senhor' },
+  { value: 'benediction', emoji: '🕊️', label: 'Bênção final' },
+  { value: 'custom', emoji: '📌', label: 'Outro momento' },
 ];
+
+const typeInfo = (type: LiturgyItemType) => ITEM_TYPES.find((t) => t.value === type) ?? ITEM_TYPES[ITEM_TYPES.length - 1];
 
 const DEFAULT_ITEMS: Omit<LiturgyItem, 'id' | 'order'>[] = [
   { type: 'reading', title: 'Prelúdio e oração silenciosa', duration: '3 min' },
@@ -45,15 +49,18 @@ const DEFAULT_ITEMS: Omit<LiturgyItem, 'id' | 'order'>[] = [
   { type: 'benediction', title: 'Bênção apostólica e tríplice amém', duration: '3 min' },
 ];
 
-type Draft = Pick<Liturgy, 'preacher' | 'leader' | 'theme' | 'bibleVerse' | 'items'>;
+type Draft = Pick<Liturgy, 'items'>;
 
 const toDraft = (l: Liturgy): Draft => ({
-  preacher: l.preacher || '',
-  leader: l.leader || '',
-  theme: l.theme || '',
-  bibleVerse: l.bibleVerse || '',
   items: l.items.map((i) => ({ ...i })),
 });
+
+export interface LiturgyServiceInfo {
+  theme?: string;
+  bibleVerse?: string;
+  preacher?: string;
+  leader?: string;
+}
 
 const renumber = (items: LiturgyItem[]) => items.map((item, i) => ({ ...item, order: i + 1 }));
 
@@ -63,23 +70,38 @@ interface LiturgyItemRowProps {
   item: LiturgyItem;
   index: number;
   songs: Song[];
+  expanded: boolean;
+  onToggle: () => void;
   onChange: (patch: Partial<LiturgyItem>) => void;
   onMove: (delta: -1 | 1) => void;
+  onDragEnd: () => void;
   onRemove: () => void;
   onSelectSong?: (song: Song) => void;
 }
 
+/** Momento da liturgia: linha compacta que expande para edição ao tocar. */
 const LiturgyItemRow: React.FC<LiturgyItemRowProps> = ({
   item,
   index,
   songs,
+  expanded,
+  onToggle,
   onChange,
   onMove,
+  onDragEnd,
   onRemove,
   onSelectSong,
 }) => {
   const dragControls = useDragControls();
   const linkedSong = item.songId ? songs.find((s) => s.id === item.songId) : undefined;
+  const info = typeInfo(item.type);
+  const isHymn = item.type === 'hymn';
+  const title = isHymn && linkedSong ? liturgySongLabel(linkedSong) : item.title.trim();
+
+  const secondary: React.ReactNode[] = [];
+  if (isHymn && !linkedSong && title) secondary.push('Fora do catálogo');
+  if (item.details) secondary.push(item.details);
+  if (item.responsible) secondary.push(item.responsible);
 
   return (
     <Reorder.Item
@@ -87,10 +109,11 @@ const LiturgyItemRow: React.FC<LiturgyItemRowProps> = ({
       value={item.id}
       dragListener={false}
       dragControls={dragControls}
+      onDragEnd={onDragEnd}
       whileDrag={{ scale: 1.01, boxShadow: '0 12px 32px -12px rgba(0,0,0,0.35)', zIndex: 10 }}
-      className="relative bg-surface px-4 py-3 flex gap-2 sm:gap-3"
+      className={cn('relative bg-surface', expanded && 'bg-surface-2/50')}
     >
-      <div className="flex flex-col items-center gap-1 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-2 pl-2 pr-3 sm:pr-4 py-2">
         <button
           type="button"
           onPointerDown={(e) => dragControls.start(e)}
@@ -101,84 +124,140 @@ const LiturgyItemRow: React.FC<LiturgyItemRowProps> = ({
             }
           }}
           style={{ touchAction: 'none' }}
-          className="w-7 h-9 rounded-lg flex items-center justify-center text-fg-subtle hover:text-fg hover:bg-surface-2 cursor-grab active:cursor-grabbing"
+          className="w-7 h-9 shrink-0 rounded-lg flex items-center justify-center text-fg-subtle hover:text-fg hover:bg-surface-2 cursor-grab active:cursor-grabbing"
           aria-label={`Arrastar momento ${index + 1} (setas para mover)`}
           title="Arraste para reordenar"
         >
           <GripVertical className="w-4 h-4" />
         </button>
-        <span className="w-6 h-6 rounded-full bg-brand-soft text-brand-text text-[11px] font-bold flex items-center justify-center">
-          {index + 1}
-        </span>
-      </div>
-      <div className="min-w-0 flex-1 space-y-2">
-        <div className="flex flex-wrap gap-2">
-          <Select
-            value={item.type}
-            onChange={(e) => onChange({ type: e.target.value as LiturgyItemType })}
-            aria-label="Tipo do momento"
-            className="w-auto h-9 py-0 text-sm"
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={expanded}
+          className="flex-1 min-w-0 flex items-center gap-3 text-left py-1 rounded-lg"
+        >
+          <span className="w-6 shrink-0 text-center text-[11px] font-bold text-fg-subtle tabular-nums">
+            {index + 1}
+          </span>
+          <span
+            className="w-9 h-9 shrink-0 rounded-xl bg-brand-soft flex items-center justify-center text-base"
+            aria-hidden
           >
-            {ITEM_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </Select>
-          <Input
-            value={item.title}
-            onChange={(e) => onChange({ title: e.target.value })}
-            placeholder="Título do momento"
-            aria-label="Título do momento"
-            className="w-auto flex-1 min-w-[12rem] h-9 py-0 text-sm font-semibold"
-          />
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <Input
-            value={item.responsible || ''}
-            onChange={(e) => onChange({ responsible: e.target.value || undefined })}
-            placeholder="Responsável"
-            aria-label="Responsável"
-            className="h-9 py-0 text-sm"
-          />
-          {item.type === 'hymn' ? (
-            <div className="flex gap-2 min-w-0">
-              <SongSearchSelect
+            {info.emoji}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className={cn('block text-sm font-semibold truncate', title ? 'text-fg' : 'text-fg-subtle italic')}>
+              {title || info.label}
+            </span>
+            {secondary.length > 0 && (
+              <span className="block text-xs text-fg-muted truncate">
+                {secondary.map((part, i) => (
+                  <React.Fragment key={i}>
+                    {i > 0 && ' · '}
+                    {part}
+                  </React.Fragment>
+                ))}
+              </span>
+            )}
+          </span>
+          {item.duration && (
+            <span className="hidden sm:inline shrink-0 text-[11px] font-semibold text-fg-subtle tabular-nums">
+              {item.duration}
+            </span>
+          )}
+        </button>
+        {linkedSong && onSelectSong && !expanded && (
+          <button
+            type="button"
+            onClick={() => onSelectSong(linkedSong)}
+            className="w-9 h-9 shrink-0 rounded-lg flex items-center justify-center text-fg-subtle hover:text-brand-text hover:bg-surface-2"
+            aria-label={`Abrir ${linkedSong.title}`}
+            title="Abrir música"
+          >
+            <Music className="w-4 h-4" />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onToggle}
+          className="w-8 h-9 shrink-0 rounded-lg flex items-center justify-center text-fg-subtle hover:text-fg hover:bg-surface-2"
+          aria-label={expanded ? 'Fechar edição' : `Editar momento ${index + 1}`}
+          title={expanded ? 'Fechar edição' : 'Editar'}
+        >
+          <ChevronDown className={cn('w-4 h-4 transition-transform', expanded && 'rotate-180')} />
+        </button>
+      </div>
+
+      {expanded && (
+        <div className="px-4 pb-4 pt-1 sm:pl-[5.75rem] space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
+          <div className="flex flex-wrap gap-2">
+            <Select
+              value={item.type}
+              onChange={(e) => {
+                const type = e.target.value as LiturgyItemType;
+                onChange(type === 'hymn' ? { type } : { type, songId: undefined });
+              }}
+              aria-label="Tipo do momento"
+              className="w-auto h-9 py-0 text-sm"
+            >
+              {ITEM_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.emoji} {t.label}
+                </option>
+              ))}
+            </Select>
+            {isHymn ? (
+              <LiturgySongField
                 songs={songs}
-                value={item.songId || ''}
-                onChange={(songId) => onChange({ songId: songId.trim() || undefined })}
-                placeholder="Buscar música…"
-                className="flex-1 min-w-0"
+                title={item.title}
+                songId={item.songId}
+                onChange={onChange}
+                autoFocus={!item.title && !item.songId}
+                className="flex-1 min-w-[12rem]"
               />
-              {linkedSong && onSelectSong && (
-                <ActionButton
-                  variant="light"
-                  icon={Music}
-                  onClick={() => onSelectSong(linkedSong)}
-                  aria-label="Abrir música"
-                  title="Abrir música"
-                />
-              )}
-            </div>
-          ) : (
+            ) : (
+              <Input
+                value={item.title}
+                onChange={(e) => onChange({ title: e.target.value })}
+                placeholder="Título do momento"
+                aria-label="Título do momento"
+                autoFocus={!item.title}
+                className="w-auto flex-1 min-w-[12rem] h-9 py-0 text-sm font-semibold"
+              />
+            )}
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Input
+              value={item.responsible || ''}
+              onChange={(e) => onChange({ responsible: e.target.value || undefined })}
+              placeholder="Responsável"
+              aria-label="Responsável"
+              className="h-9 py-0 text-sm"
+            />
             <Input
               value={item.details || ''}
               onChange={(e) => onChange({ details: e.target.value || undefined })}
-              placeholder="Detalhes (ex.: Salmo 23)"
+              placeholder={isHymn ? 'Observação (ex.: estrofes 1 e 3)' : 'Detalhes (ex.: Salmo 23)'}
               aria-label="Detalhes"
               className="h-9 py-0 text-sm"
             />
-          )}
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            {linkedSong && onSelectSong && (
+              <ActionButton variant="light" icon={Music} onClick={() => onSelectSong(linkedSong)}>
+                Abrir música
+              </ActionButton>
+            )}
+            <div className="flex-1" />
+            <ActionButton variant="danger" icon={Trash2} collapseLabel onClick={onRemove} title="Remover momento">
+              Remover
+            </ActionButton>
+            <ActionButton variant="secondary" icon={Check} onClick={onToggle}>
+              Concluir
+            </ActionButton>
+          </div>
         </div>
-      </div>
-      <ActionButton
-        variant="light"
-        icon={X}
-        onClick={onRemove}
-        aria-label="Remover momento"
-        title="Remover momento"
-        className="shrink-0"
-      />
+      )}
     </Reorder.Item>
   );
 };
@@ -187,16 +266,20 @@ interface EventLiturgyPanelProps {
   liturgy: Liturgy;
   songs: Song[];
   churchName?: string;
-  onSave: (liturgy: Liturgy) => void | Promise<void>;
+  /** Dados do culto (pertencem ao evento), usados no boletim. */
+  serviceInfo?: LiturgyServiceInfo;
+  /** `silent`: salvamento automático, sem overlay de carregamento nem toast de sucesso. */
+  onSave: (liturgy: Liturgy, opts?: { silent?: boolean }) => void | Promise<void>;
   onDelete: (id: string) => void | Promise<void>;
   onSelectSong?: (song: Song) => void;
 }
 
-/** Liturgia do evento editada no lugar: dados do culto e ordem dos momentos, com salvar/descartar. */
+/** Liturgia do evento editada no lugar: cada alteração concluída é salva automaticamente. */
 export const EventLiturgyPanel: React.FC<EventLiturgyPanelProps> = ({
   liturgy,
   songs,
   churchName,
+  serviceInfo,
   onSave,
   onDelete,
   onSelectSong,
@@ -205,6 +288,10 @@ export const EventLiturgyPanel: React.FC<EventLiturgyPanelProps> = ({
   const [draft, setDraft] = useState<Draft>(() => toDraft(liturgy));
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const draftRef = useRef(draft);
+  const dirtyRef = useRef(false);
+  const saveChain = useRef<Promise<void>>(Promise.resolve());
 
   const [importOpen, setImportOpen] = useState(false);
   const [importHelp, setImportHelp] = useState(false);
@@ -214,38 +301,108 @@ export const EventLiturgyPanel: React.FC<EventLiturgyPanelProps> = ({
   const [presenting, setPresenting] = useState(false);
   const [slide, setSlide] = useState(0);
   const [printing, setPrinting] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  // Salvar recria os itens no banco (novos ids): ao recarregar, o momento aberto é mantido pela posição.
   useEffect(() => {
-    if (!dirty) setDraft(toDraft(liturgy));
+    if (dirty) return;
+    const next = toDraft(liturgy);
+    const prevIds = draftRef.current.items.map((i) => i.id);
+    setExpandedId((cur) => {
+      if (!cur) return cur;
+      const index = prevIds.indexOf(cur);
+      return index >= 0 ? (next.items[index]?.id ?? null) : null;
+    });
+    draftRef.current = next;
+    setDraft(next);
   }, [liturgy, dirty]);
 
-  const patch = (p: Partial<Draft>) => {
-    setDraft((d) => ({ ...d, ...p }));
+  const updateDraft = (fn: (d: Draft) => Draft) => {
+    const next = fn(draftRef.current);
+    draftRef.current = next;
+    dirtyRef.current = true;
+    setDraft(next);
     setDirty(true);
   };
 
-  const setItems = (fn: (items: LiturgyItem[]) => LiturgyItem[]) => {
-    setDraft((d) => ({ ...d, items: renumber(fn(d.items)) }));
-    setDirty(true);
+  const toLiturgy = (d: Draft): Liturgy => ({
+    ...liturgy,
+    ...d,
+    items: d.items.map((i) => {
+      const song = i.type === 'hymn' && i.songId ? songs.find((s) => s.id === i.songId) : undefined;
+      return { ...i, title: song?.title || i.title.trim() || typeInfo(i.type).label };
+    }),
+  });
+
+  /** Salva o rascunho atual, se houver alterações; chamadas seguidas são enfileiradas. */
+  const commit = () => {
+    saveChain.current = saveChain.current.then(async () => {
+      if (!dirtyRef.current) return;
+      dirtyRef.current = false;
+      setSaving(true);
+      setSaveFailed(false);
+      try {
+        await onSave(toLiturgy(draftRef.current), { silent: true });
+        if (!dirtyRef.current) setDirty(false);
+      } catch {
+        dirtyRef.current = true;
+        setSaveFailed(true);
+      } finally {
+        setSaving(false);
+      }
+    });
+    return saveChain.current;
   };
+
+  const commitRef = useRef(commit);
+  commitRef.current = commit;
+  useEffect(() => () => void commitRef.current(), []);
+
+  const setItems = (fn: (items: LiturgyItem[]) => LiturgyItem[]) =>
+    updateDraft((d) => ({ ...d, items: renumber(fn(d.items)) }));
 
   const updateItem = (id: string, p: Partial<LiturgyItem>) =>
     setItems((items) => items.map((i) => (i.id === id ? { ...i, ...p } : i)));
 
-  const moveItem = (index: number, delta: -1 | 1) =>
+  const moveItem = (index: number, delta: -1 | 1) => {
+    const target = index + delta;
+    if (target < 0 || target >= draftRef.current.items.length) return;
     setItems((items) => {
-      const target = index + delta;
-      if (target < 0 || target >= items.length) return items;
       const next = [...items];
       [next[index], next[target]] = [next[target], next[index]];
       return next;
     });
+    void commit();
+  };
 
-  const addItem = () =>
-    setItems((items) => [...items, { id: newItemId(), order: 0, type: 'custom', title: '' }]);
+  const toggleItem = (id: string) => {
+    const wasOpen = expandedId;
+    setExpandedId((cur) => (cur === id ? null : id));
+    if (wasOpen) void commit();
+  };
 
-  const useTemplate = () =>
+  const addItem = () => {
+    const id = newItemId();
+    setItems((items) => [...items, { id, order: 0, type: 'custom', title: '' }]);
+    setExpandedId(id);
+  };
+
+  const removeItem = async (item: LiturgyItem) => {
+    const ok = await confirm({
+      title: 'Remover momento',
+      message: `"${item.title.trim() || typeInfo(item.type).label}" será removido da liturgia.`,
+      confirmLabel: 'Remover',
+    });
+    if (!ok) return;
+    setItems((all) => all.filter((i) => i.id !== item.id));
+    setExpandedId((cur) => (cur === item.id ? null : cur));
+    void commit();
+  };
+
+  const useTemplate = () => {
     setItems(() => DEFAULT_ITEMS.map((i) => ({ ...i, id: newItemId(), order: 0 })));
+    void commit();
+  };
 
   const applyImport = () => {
     const parsed = parseLiturgyMarkdown(importText, songs);
@@ -254,28 +411,14 @@ export const EventLiturgyPanel: React.FC<EventLiturgyPanelProps> = ({
       return;
     }
     setItems(() => parsed);
+    setExpandedId(null);
     setImportOpen(false);
     setImportError('');
+    void commit();
   };
 
   const current: Liturgy = { ...liturgy, ...draft };
-
-  const save = async () => {
-    setSaving(true);
-    try {
-      await onSave({
-        ...current,
-        items: draft.items.map((i) => ({ ...i, title: i.title.trim() || 'Momento' })),
-      });
-      setDirty(false);
-    } catch {
-      // erro já exibido pelo caller
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const discard = () => setDirty(false);
+  const service = serviceInfo ?? {};
 
   const deleteLiturgy = async () => {
     const ok = await confirm({
@@ -298,6 +441,20 @@ export const EventLiturgyPanel: React.FC<EventLiturgyPanelProps> = ({
           <span className="text-fg-subtle font-semibold">
             {items.length} momento{items.length === 1 ? '' : 's'}
           </span>
+          {saving ? (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-fg-subtle">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Salvando…
+            </span>
+          ) : saveFailed ? (
+            <button
+              type="button"
+              onClick={() => void commit()}
+              className="text-xs font-semibold text-danger-text hover:underline"
+            >
+              Não salvo · tentar de novo
+            </button>
+          ) : null}
         </p>
         <ActionButton
           variant="primary"
@@ -322,49 +479,6 @@ export const EventLiturgyPanel: React.FC<EventLiturgyPanelProps> = ({
           aria-label="Excluir liturgia"
           title="Excluir liturgia"
         />
-      </section>
-
-      <section className={cn(sectionClass, 'p-4 grid gap-3 sm:grid-cols-2')}>
-        <Field label="Pregador">
-          {(id) => (
-            <Input
-              id={id}
-              value={draft.preacher}
-              onChange={(e) => patch({ preacher: e.target.value })}
-              placeholder="Ex.: Rev. Marcos Silva"
-            />
-          )}
-        </Field>
-        <Field label="Dirigente">
-          {(id) => (
-            <Input
-              id={id}
-              value={draft.leader}
-              onChange={(e) => patch({ leader: e.target.value })}
-              placeholder="Ex.: Presb. João"
-            />
-          )}
-        </Field>
-        <Field label="Tema">
-          {(id) => (
-            <Input
-              id={id}
-              value={draft.theme}
-              onChange={(e) => patch({ theme: e.target.value })}
-              placeholder="Ex.: A soberania de Deus"
-            />
-          )}
-        </Field>
-        <Field label="Texto bíblico">
-          {(id) => (
-            <Input
-              id={id}
-              value={draft.bibleVerse}
-              onChange={(e) => patch({ bibleVerse: e.target.value })}
-              placeholder="Ex.: Salmo 95:1-7"
-            />
-          )}
-        </Field>
       </section>
 
       <section className={sectionClass}>
@@ -461,9 +575,12 @@ export const EventLiturgyPanel: React.FC<EventLiturgyPanelProps> = ({
                 item={item}
                 index={idx}
                 songs={songs}
+                expanded={expandedId === item.id}
+                onToggle={() => toggleItem(item.id)}
                 onChange={(p) => updateItem(item.id, p)}
                 onMove={(delta) => moveItem(idx, delta)}
-                onRemove={() => setItems((all) => all.filter((i) => i.id !== item.id))}
+                onDragEnd={() => void commit()}
+                onRemove={() => void removeItem(item)}
                 onSelectSong={onSelectSong}
               />
             ))}
@@ -476,18 +593,6 @@ export const EventLiturgyPanel: React.FC<EventLiturgyPanelProps> = ({
           </ActionButton>
         </div>
       </section>
-
-      {dirty && (
-        <div className="sticky z-20 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] lg:bottom-4 flex items-center gap-2 rounded-2xl border border-line bg-surface/95 backdrop-blur-md shadow-card-lg px-4 py-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <p className="text-sm font-semibold text-fg flex-1 min-w-0">Alterações não salvas</p>
-          <ActionButton variant="light" onClick={discard} disabled={saving}>
-            Descartar
-          </ActionButton>
-          <ActionButton variant="primary" icon={Check} onClick={() => void save()} loading={saving}>
-            Salvar
-          </ActionButton>
-        </div>
-      )}
 
       {presenting && current.items[slide] && (
         <div className="fixed inset-0 z-50 bg-stone-950 text-stone-100 flex flex-col justify-between p-6 sm:p-12">
@@ -589,18 +694,18 @@ export const EventLiturgyPanel: React.FC<EventLiturgyPanelProps> = ({
                 </p>
               </div>
 
-              {(current.theme || current.bibleVerse) && (
+              {(service.theme || service.bibleVerse) && (
                 <div className="text-center text-stone-700 bg-stone-50 p-3 rounded-lg border border-stone-200 space-y-2">
-                  {current.theme && (
+                  {service.theme && (
                     <div>
                       <p className="text-xs font-sans font-bold uppercase text-stone-500 mb-0.5">Tema</p>
-                      <p className="font-semibold text-stone-800">{current.theme}</p>
+                      <p className="font-semibold text-stone-800">{service.theme}</p>
                     </div>
                   )}
-                  {current.bibleVerse && (
+                  {service.bibleVerse && (
                     <div>
                       <p className="text-xs font-sans font-bold uppercase text-stone-500 mb-0.5">Texto bíblico</p>
-                      <p className="italic">"{current.bibleVerse}"</p>
+                      <p className="italic">"{service.bibleVerse}"</p>
                     </div>
                   )}
                 </div>
@@ -625,16 +730,16 @@ export const EventLiturgyPanel: React.FC<EventLiturgyPanelProps> = ({
                 </div>
               </div>
 
-              {(current.preacher || current.leader) && (
+              {(service.preacher || service.leader) && (
                 <div className="pt-4 border-t border-stone-300 text-xs font-sans flex justify-between text-stone-600">
-                  {current.preacher && (
+                  {service.preacher && (
                     <span>
-                      Pregador: <strong>{current.preacher}</strong>
+                      Pregador: <strong>{service.preacher}</strong>
                     </span>
                   )}
-                  {current.leader && (
+                  {service.leader && (
                     <span>
-                      Dirigente: <strong>{current.leader}</strong>
+                      Dirigente: <strong>{service.leader}</strong>
                     </span>
                   )}
                 </div>

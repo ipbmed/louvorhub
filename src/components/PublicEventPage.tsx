@@ -91,6 +91,9 @@ export const PublicEventPage: React.FC<PublicEventPageProps> = ({ shareCode: sha
     if (data.event.time) text += ` · ${data.event.time.slice(0, 5)}`;
     text += `\n`;
     if (data.event.theme) text += `Tema: ${data.event.theme}\n`;
+    if (data.event.bibleVerse) text += `Texto bíblico: ${data.event.bibleVerse}\n`;
+    if (data.event.preacher) text += `Pregador: ${data.event.preacher}\n`;
+    if (data.event.leader) text += `Dirigente: ${data.event.leader}\n`;
     text += `\n`;
 
     if (data.liturgy) {
@@ -164,8 +167,13 @@ export const PublicEventPage: React.FC<PublicEventPageProps> = ({ shareCode: sha
                 {data.event.time ? ` · ${data.event.time.slice(0, 5)}` : ''}
               </div>
               <h1 className="text-2xl font-display font-bold text-stone-50">{data.event.title}</h1>
-              {data.event.theme && (
-                <p className="text-sm text-stone-400">Tema: {data.event.theme}</p>
+              {(data.event.theme || data.event.bibleVerse || data.event.preacher || data.event.leader) && (
+                <div className="text-sm text-stone-400 space-y-0.5">
+                  {data.event.theme && <p>Tema: {data.event.theme}</p>}
+                  {data.event.bibleVerse && <p>Texto bíblico: {data.event.bibleVerse}</p>}
+                  {data.event.preacher && <p>Pregador: {data.event.preacher}</p>}
+                  {data.event.leader && <p>Dirigente: {data.event.leader}</p>}
+                </div>
               )}
             </header>
 
@@ -204,14 +212,6 @@ export const PublicEventPage: React.FC<PublicEventPageProps> = ({ shareCode: sha
                   <FileText className="w-4 h-4 text-emerald-400" />
                   Liturgia
                 </h2>
-                {(data.liturgy.preacher || data.liturgy.leader || data.liturgy.bibleVerse || data.liturgy.theme) && (
-                  <div className="text-xs text-stone-400 space-y-0.5 bg-stone-900/60 border border-stone-800 rounded-xl px-3 py-2">
-                    {data.liturgy.theme && <p>Tema: {data.liturgy.theme}</p>}
-                    {data.liturgy.bibleVerse && <p>Texto: {data.liturgy.bibleVerse}</p>}
-                    {data.liturgy.preacher && <p>Pregador: {data.liturgy.preacher}</p>}
-                    {data.liturgy.leader && <p>Liturgo: {data.liturgy.leader}</p>}
-                  </div>
-                )}
                 {data.liturgy.items.length === 0 ? (
                   <p className="text-xs text-stone-500 italic">Liturgia sem itens.</p>
                 ) : (

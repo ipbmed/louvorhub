@@ -17,6 +17,7 @@ import {
 import { useAuth } from '@/contexts/AuthProvider';
 import { useToast } from '@/contexts/ToastProvider';
 import { useApiBusy } from '@/contexts/ApiBusyProvider';
+import { type AssistantScreen, useAssistantScreen } from '@/contexts/AssistantProvider';
 import { useOrg } from '@/hooks/useOrg';
 import { usePermissions } from '@/hooks/usePermissions';
 import * as songsService from '@/services/songs';
@@ -74,6 +75,7 @@ import { HomeDashboard } from './components/HomeDashboard';
 import { ChurchesPage } from './components/ChurchesPage';
 import { MorePage } from './components/MorePage';
 import { PageHeader } from './components/PageHeader';
+import { AssistantHeaderButton } from './components/assistant/AssistantHeaderButton';
 import {
   Music,
   Music2,
@@ -532,6 +534,24 @@ export default function App() {
     !songsQuery.isError &&
     (songsQuery.isLoading ||
       (!songsQuery.data && (songsQuery.isPending || songsQuery.isFetching)));
+
+  const openSongRef = useRef(openSong);
+  openSongRef.current = openSong;
+  const catalogAssistant = useMemo<AssistantScreen | null>(
+    () =>
+      user && !isEventDetail && currentView === 'public' && songs.length > 0
+        ? {
+            mode: 'catalog',
+            key: 'catalog',
+            label: `${songs.length} hinos e cânticos`,
+            songs,
+            onOpenSong: (song) => openSongRef.current(song),
+          }
+        : null,
+    [user, isEventDetail, currentView, songs],
+  );
+  useAssistantScreen(catalogAssistant);
+
   const categories = categoriesQuery.data || [];
   const favorites = favoritesQuery.data || [];
   const churches = churchesQuery.data || [];
@@ -865,8 +885,9 @@ export default function App() {
     });
   };
 
-  const handleSaveLiturgy = async (liturgy: Liturgy) => {
-    return withBusy(async () => {
+  const handleSaveLiturgy = async (liturgy: Liturgy, opts?: { silent?: boolean }) => {
+    const run = opts?.silent ? <T,>(fn: () => Promise<T>) => fn() : withBusy;
+    return run(async () => {
       try {
         const eventId = liturgy.eventId || selectedEventId || undefined;
         const eventTitle =
@@ -884,7 +905,7 @@ export default function App() {
           date: eventDate || liturgy.date,
         });
         await invalidateEvents();
-        showToast('Liturgia salva!');
+        if (!opts?.silent) showToast('Liturgia salva!');
       } catch (err) {
         showToast((err as Error).message);
         throw err;
@@ -1757,11 +1778,14 @@ export default function App() {
                   <h1 className="text-xl font-extrabold tracking-tight text-fg">Músicas</h1>
                   <p className="text-xs text-fg-muted tabular-nums">{songs.length} hinos e cânticos</p>
                 </div>
-                {user && canAccessAdminPanel && (
-                  <Button variant="ghost" size="sm" icon={Settings2} onClick={() => handleViewChange('admin')}>
-                    Gerenciar
-                  </Button>
-                )}
+                <div className="flex items-center gap-2 shrink-0">
+                  {user && canAccessAdminPanel && (
+                    <Button variant="ghost" size="sm" icon={Settings2} onClick={() => handleViewChange('admin')}>
+                      Gerenciar
+                    </Button>
+                  )}
+                  <AssistantHeaderButton />
+                </div>
               </div>
             )}
             {user && !splitActive && (

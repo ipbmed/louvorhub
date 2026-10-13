@@ -30,7 +30,7 @@ import {
   Pencil,
 } from 'lucide-react';
 import { PageShell, PageHeaderButton } from './PageHeader';
-import { ActionButton } from './ui';
+import { ActionButton, Field, Input, Select } from './ui';
 import { isGroupSetlist, setlistShareUrl } from '@/services/playlists';
 import { ShareQrCode } from './ShareQrCode';
 
@@ -436,19 +436,18 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
           >
             {editingDetails ? (
               <form onSubmit={saveEditingDetails} className="w-full space-y-3">
-                <div>
-                  <label className="block text-[11px] text-stone-500 font-semibold mb-1">
-                    Nome
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2.5 text-stone-100 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                    autoFocus
-                  />
-                </div>
+                <Field label="Nome" required>
+                  {(id) => (
+                    <Input
+                      id={id}
+                      type="text"
+                      required
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      autoFocus
+                    />
+                  )}
+                </Field>
                 <div className="flex flex-row gap-2">
                   <button
                     type="submit"
@@ -695,19 +694,20 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
               </p>
             )}
             <form onSubmit={handleCreateSetlist} className="space-y-4 text-sm">
+              <Field label="Nome" required>
+                {(id) => (
+                  <Input
+                    id={id}
+                    type="text"
+                    required
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="Ex: Ensaio de sábado"
+                  />
+                )}
+              </Field>
               <div>
-                <label className="block text-stone-400 font-semibold mb-1">Nome</label>
-                <input
-                  type="text"
-                  required
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="Ex: Ensaio de sábado"
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
-              <div>
-                <label className="block text-stone-400 font-semibold mb-2">Visibilidade</label>
+                <span className="ui-label">Visibilidade</span>
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -890,11 +890,11 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
             </p>
 
             <div className="flex flex-col sm:flex-row gap-2">
-              <select
+              <Select
                 value={pickUserId}
                 onChange={(e) => setPickUserId(e.target.value)}
                 aria-label="Usuário"
-                className="flex-1 min-w-0 h-9 bg-surface border border-line text-fg rounded-lg px-3 text-xs"
+                className="flex-1 min-w-0"
               >
                 <option value="">Selecionar usuário…</option>
                 {availableUsers.map((u) => (
@@ -902,16 +902,16 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                     {u.name}
                   </option>
                 ))}
-              </select>
-              <select
+              </Select>
+              <Select
                 value={pickPermission}
                 onChange={(e) => setPickPermission(e.target.value as 'view' | 'edit')}
                 aria-label="Permissão"
-                className="h-9 bg-surface border border-line text-fg rounded-lg px-3 text-xs"
+                className="sm:w-auto"
               >
                 <option value="view">Visualizar</option>
                 <option value="edit">Editar</option>
-              </select>
+              </Select>
               <ActionButton variant="secondary" icon={Plus} onClick={addPersonShare} disabled={!pickUserId}>
                 Adicionar
               </ActionButton>
@@ -930,7 +930,7 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                       {s.userName || systemUsers.find((u) => u.id === s.userId)?.name || s.userId}
                     </span>
                     <div className="flex items-center gap-2">
-                      <select
+                      <Select
                         value={s.permission}
                         onChange={(e) =>
                           setShareDraft((prev) =>
@@ -942,11 +942,11 @@ export const SetlistManager: React.FC<SetlistManagerProps> = ({
                           )
                         }
                         aria-label="Permissão"
-                        className="h-9 bg-surface border border-line text-fg rounded-lg px-2"
+                        className="w-auto h-9 py-0"
                       >
                         <option value="view">Ver</option>
                         <option value="edit">Editar</option>
-                      </select>
+                      </Select>
                       <ActionButton
                         variant="danger"
                         icon={Trash2}

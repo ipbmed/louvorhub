@@ -22,7 +22,19 @@ import type { ChurchEvent, MusicGroup } from '../types';
 import { EVENT_TITLE_SUGGESTIONS } from '../constants/eventTitles';
 import { PageHeaderButton, PageShell } from './PageHeader';
 import { EventCard } from './EventCard';
-import { ActionButton, Button, EmptyState, IconButton, Modal, Tabs, cn } from './ui';
+import {
+  ActionButton,
+  Button,
+  EmptyState,
+  Field,
+  IconButton,
+  Input,
+  Modal,
+  Select,
+  Tabs,
+  Textarea,
+  cn,
+} from './ui';
 import { formatDateLong, relativeDay } from '@/utils/dateLabels';
 import { useConfirm } from '@/contexts/ConfirmProvider';
 
@@ -261,6 +273,9 @@ export const EventManager: React.FC<EventManagerProps> = ({
   const [formDate, setFormDate] = useState(todayStr);
   const [formTime, setFormTime] = useState('19:00');
   const [formTheme, setFormTheme] = useState('');
+  const [formBibleVerse, setFormBibleVerse] = useState('');
+  const [formPreacher, setFormPreacher] = useState('');
+  const [formLeader, setFormLeader] = useState('');
   const [formNotes, setFormNotes] = useState('');
   const [formGroupId, setFormGroupId] = useState('');
   const [formRepeatEnabled, setFormRepeatEnabled] = useState(false);
@@ -371,6 +386,9 @@ export const EventManager: React.FC<EventManagerProps> = ({
     setFormDate(prefillDate || selectedDay || todayStr);
     setFormTime('19:00');
     setFormTheme('');
+    setFormBibleVerse('');
+    setFormPreacher('');
+    setFormLeader('');
     setFormNotes('');
     setFormGroupId(groupsOf(churchId)[0]?.id || '');
     setFormRepeatEnabled(repeat);
@@ -386,6 +404,9 @@ export const EventManager: React.FC<EventManagerProps> = ({
     setFormDate(ev.date);
     setFormTime(ev.time || '19:00');
     setFormTheme(ev.theme || '');
+    setFormBibleVerse(ev.bibleVerse || '');
+    setFormPreacher(ev.preacher || '');
+    setFormLeader(ev.leader || '');
     setFormNotes(ev.notes || '');
     setFormGroupId(ev.musicGroupId || '');
     setFormRepeatEnabled(false);
@@ -411,7 +432,10 @@ export const EventManager: React.FC<EventManagerProps> = ({
       date: formDate,
       time: formTime,
       serviceType: title,
-      theme: formTheme || undefined,
+      theme: formTheme.trim() || undefined,
+      bibleVerse: formBibleVerse.trim() || undefined,
+      preacher: formPreacher.trim() || undefined,
+      leader: formLeader.trim() || undefined,
       notes: formNotes || undefined,
       musicGroupId: formGroupId || undefined,
       createdAt: editing?.createdAt || new Date().toISOString(),
@@ -968,7 +992,7 @@ export const EventManager: React.FC<EventManagerProps> = ({
               <label className="sr-only" htmlFor="upcoming-events-combo">
                 Próximos eventos
               </label>
-              <select
+              <Select
                 id="upcoming-events-combo"
                 value=""
                 onChange={(e) => {
@@ -982,7 +1006,7 @@ export const EventManager: React.FC<EventManagerProps> = ({
                   );
                   onOpenEvent(ev.id);
                 }}
-                className="w-full sm:max-w-xs bg-stone-950 border border-stone-700 text-stone-100 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-600 truncate"
+                className="sm:max-w-xs truncate"
               >
                 <option value="">
                   {upcomingEvents.length === 0
@@ -1001,7 +1025,7 @@ export const EventManager: React.FC<EventManagerProps> = ({
                     </option>
                   );
                 })}
-              </select>
+              </Select>
               {selectedDay && (
                 <button
                   type="button"
@@ -1088,6 +1112,7 @@ export const EventManager: React.FC<EventManagerProps> = ({
         locked={isSaving}
         icon={Calendar}
         title={editing ? 'Editar evento' : 'Novo evento'}
+        className="lg:max-w-3xl"
         footer={
           <>
             <ActionButton variant="light" disabled={isSaving} onClick={() => setIsModalOpen(false)}>
@@ -1107,108 +1132,145 @@ export const EventManager: React.FC<EventManagerProps> = ({
           </>
         }
       >
-            <form id="event-form" onSubmit={handleSave} className="space-y-4">
-              {multiChurch && (
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">Igreja</label>
-                  <div className="relative">
-                    <span
-                      aria-hidden
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full pointer-events-none"
-                      style={{ backgroundColor: colorOf(formChurchId) }}
+            <form
+              id="event-form"
+              onSubmit={handleSave}
+              className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4"
+            >
+              <Field label="Título" required className="col-span-2">
+                {(id) => (
+                  <>
+                    <Input
+                      id={id}
+                      required
+                      list="event-title-suggestions"
+                      value={formTitle}
+                      onChange={(e) => setFormTitle(e.target.value)}
+                      placeholder="Ex.: Culto, Escola Bíblica…"
                     />
-                    <select
-                      value={formChurchId}
-                      disabled={Boolean(editing)}
-                      onChange={(e) => {
-                        setFormChurchId(e.target.value);
-                        setFormGroupId(groupsOf(e.target.value)[0]?.id || '');
-                      }}
-                      className="w-full bg-stone-800 border border-stone-700 rounded-xl pl-8 pr-3 py-2 text-xs text-stone-100 disabled:opacity-70"
-                    >
-                      {churches.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
+                    <datalist id="event-title-suggestions">
+                      {EVENT_TITLE_SUGGESTIONS.map((option) => (
+                        <option key={option} value={option} />
                       ))}
-                    </select>
-                  </div>
-                </div>
-              )}
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">Título</label>
-                <input
-                  required
-                  list="event-title-suggestions"
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder="Ex.: Culto, Escola Bíblica…"
-                  className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100"
-                />
-                <datalist id="event-title-suggestions">
-                  {EVENT_TITLE_SUGGESTIONS.map((option) => (
-                    <option key={option} value={option} />
-                  ))}
-                </datalist>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">Data</label>
-                  <input
+                    </datalist>
+                  </>
+                )}
+              </Field>
+              <Field label="Data" required>
+                {(id) => (
+                  <Input
+                    id={id}
                     type="date"
                     required
                     value={formDate}
                     onChange={(e) => setFormDate(e.target.value)}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100"
                   />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">Horário</label>
-                  <input
+                )}
+              </Field>
+              <Field label="Horário">
+                {(id) => (
+                  <Input
+                    id={id}
                     type="time"
                     value={formTime}
                     onChange={(e) => setFormTime(e.target.value)}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100"
                   />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">Tema</label>
-                <input
-                  value={formTheme}
-                  onChange={(e) => setFormTheme(e.target.value)}
-                  className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  Banda / Grupo
-                </label>
-                <select
-                  value={formGroupId}
-                  onChange={(e) => setFormGroupId(e.target.value)}
-                  className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100"
-                >
-                  <option value="">Sem grupo</option>
-                  {groupsOf(formChurchId).map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">Notas</label>
-                <textarea
-                  rows={2}
-                  value={formNotes}
-                  onChange={(e) => setFormNotes(e.target.value)}
-                  className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100"
-                />
-              </div>
+                )}
+              </Field>
+              {multiChurch && (
+                <Field label="Igreja" className="col-span-2">
+                  {(id) => (
+                    <div className="relative">
+                      <span
+                        aria-hidden
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full pointer-events-none"
+                        style={{ backgroundColor: colorOf(formChurchId) }}
+                      />
+                      <Select
+                        id={id}
+                        value={formChurchId}
+                        disabled={Boolean(editing)}
+                        onChange={(e) => {
+                          setFormChurchId(e.target.value);
+                          setFormGroupId(groupsOf(e.target.value)[0]?.id || '');
+                        }}
+                        className="pl-9"
+                      >
+                        {churches.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </div>
+                  )}
+                </Field>
+              )}
+              <Field label="Banda / Grupo" className={cn('col-span-2', !multiChurch && 'lg:col-span-4')}>
+                {(id) => (
+                  <Select id={id} value={formGroupId} onChange={(e) => setFormGroupId(e.target.value)}>
+                    <option value="">Sem grupo</option>
+                    {groupsOf(formChurchId).map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+              <Field label="Tema" className="col-span-2">
+                {(id) => (
+                  <Input
+                    id={id}
+                    value={formTheme}
+                    onChange={(e) => setFormTheme(e.target.value)}
+                    placeholder="Ex.: A soberania de Deus"
+                  />
+                )}
+              </Field>
+              <Field label="Texto bíblico" className="col-span-2">
+                {(id) => (
+                  <Input
+                    id={id}
+                    value={formBibleVerse}
+                    onChange={(e) => setFormBibleVerse(e.target.value)}
+                    placeholder="Ex.: Salmo 95:1-7"
+                  />
+                )}
+              </Field>
+              <Field label="Pregador" className="col-span-2">
+                {(id) => (
+                  <Input
+                    id={id}
+                    value={formPreacher}
+                    onChange={(e) => setFormPreacher(e.target.value)}
+                    placeholder="Ex.: Rev. Marcos Silva"
+                  />
+                )}
+              </Field>
+              <Field label="Dirigente" className="col-span-2">
+                {(id) => (
+                  <Input
+                    id={id}
+                    value={formLeader}
+                    onChange={(e) => setFormLeader(e.target.value)}
+                    placeholder="Ex.: Presb. João"
+                  />
+                )}
+              </Field>
+              <Field label="Notas" className="col-span-2 lg:col-span-4">
+                {(id) => (
+                  <Textarea
+                    id={id}
+                    rows={2}
+                    value={formNotes}
+                    onChange={(e) => setFormNotes(e.target.value)}
+                  />
+                )}
+              </Field>
 
               {!editing && onSaveEventBatch && (
-                <div className="rounded-xl border border-stone-800 bg-stone-950/50 p-3 space-y-3">
+                <div className="col-span-2 lg:col-span-4 rounded-xl border border-stone-800 bg-stone-950/50 p-3 space-y-3">
                   <label className="flex items-start gap-2.5 cursor-pointer">
                     <input
                       type="checkbox"
@@ -1229,40 +1291,38 @@ export const EventManager: React.FC<EventManagerProps> = ({
                   {formRepeatEnabled && (
                     <>
                       <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[11px] font-semibold text-stone-300 mb-1">
-                            Quantas vezes
-                          </label>
-                          <input
-                            type="number"
-                            min={2}
-                            max={52}
-                            value={formRepeatCount}
-                            onChange={(e) =>
-                              setFormRepeatCount(
-                                Math.min(52, Math.max(2, Number(e.target.value) || 2)),
-                              )
-                            }
-                            className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-semibold text-stone-300 mb-1">
-                            A cada (dias)
-                          </label>
-                          <input
-                            type="number"
-                            min={1}
-                            max={365}
-                            value={formRepeatIntervalDays}
-                            onChange={(e) =>
-                              setFormRepeatIntervalDays(
-                                Math.min(365, Math.max(1, Number(e.target.value) || 1)),
-                              )
-                            }
-                            className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs"
-                          />
-                        </div>
+                        <Field label="Quantas vezes">
+                          {(id) => (
+                            <Input
+                              id={id}
+                              type="number"
+                              min={2}
+                              max={52}
+                              value={formRepeatCount}
+                              onChange={(e) =>
+                                setFormRepeatCount(
+                                  Math.min(52, Math.max(2, Number(e.target.value) || 2)),
+                                )
+                              }
+                            />
+                          )}
+                        </Field>
+                        <Field label="A cada (dias)">
+                          {(id) => (
+                            <Input
+                              id={id}
+                              type="number"
+                              min={1}
+                              max={365}
+                              value={formRepeatIntervalDays}
+                              onChange={(e) =>
+                                setFormRepeatIntervalDays(
+                                  Math.min(365, Math.max(1, Number(e.target.value) || 1)),
+                                )
+                              }
+                            />
+                          )}
+                        </Field>
                       </div>
                       {recurrencePreview.length > 0 && (
                         <p className="text-[11px] text-stone-400">

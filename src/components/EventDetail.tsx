@@ -1,7 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Reorder, useDragControls } from 'motion/react';
 import {
+  BookOpen,
   Calendar,
   Check,
+  Mic,
+  UserRound,
   ChevronRight,
   Church,
   Clock,
@@ -23,14 +27,15 @@ import {
   Trash2,
   Users,
   X,
-  ArrowUp,
-  ArrowDown,
   AlertTriangle,
+  GripVertical,
 } from 'lucide-react';
 import type {
   ChurchEvent,
   Liturgy,
+  LiturgyItem,
   MusicGroup,
+  ScheduleMemberAssignment,
   ScheduleSongCustomization,
   Setlist,
   Song,
@@ -39,6 +44,9 @@ import type {
 } from '../types';
 import { useToast } from '@/contexts/ToastProvider';
 import { useApiBusy } from '@/contexts/ApiBusyProvider';
+import { type AssistantScreen, useAssistantScreen } from '@/contexts/AssistantProvider';
+import type { AssistantAssignment, AssistantTeamMember } from '@/services/assistant';
+import { SCHEDULE_ROLE_OPTIONS, getProfileSkills } from '@/constants/skills';
 import { normalizeShareSlug, validateShareSlug } from '@/lib/shareSlug';
 import {
   eventShareUrl,
@@ -50,13 +58,13 @@ import { EventLiturgySetlistSync, getLiturgySetlistDiff } from './EventLiturgySe
 import { AddSongsToEventSetlistModal } from './AddSongsToEventSetlistModal';
 import { ScheduleSongEditorModal } from './ScheduleSongEditorModal';
 import { EVENT_TITLE_SUGGESTIONS } from '../constants/eventTitles';
-import { ActionButton, Badge, EmptyState, cn } from './ui';
+import { ActionButton, Badge, EmptyState, Field, Input, Modal, Select, Textarea, cn } from './ui';
 import { PageHeaderButton, PageShell } from './PageHeader';
 
-type EventTab = 'team' | 'liturgy' | 'setlist';
+type EventTab = 'team' | 'liturgy' | 'setlist' | 'share';
 
 const EVENT_TAB_KEY = 'louvorhub_event_tab';
-const EVENT_TABS: EventTab[] = ['team', 'liturgy', 'setlist'];
+const EVENT_TABS: EventTab[] = ['team', 'liturgy', 'setlist', 'share'];
 
 function readStoredTab(): EventTab {
   try {
@@ -101,6 +109,142 @@ function suggestedShareExpiryLocal(eventDate: string, eventTime?: string): strin
   return toDatetimeLocalValue(base.toISOString());
 }
 
+interface SortableSetlistItemProps {
+  id: string;
+  index: number;
+  draggable: boolean;
+  className: string;
+  onDragEnd: () => void;
+  onMove: (direction: 'up' | 'down') => void;
+  children: React.ReactNode;
+}
+
+/** Item do repertório reordenável pela alça (mouse/toque) ou pelas setas do teclado na alça. */
+const SortableSetlistItem: React.FC<SortableSetlistItemProps> = ({
+  id,
+  index,
+  draggable,
+  className,
+  onDragEnd,
+  onMove,
+  children,
+}) => {
+  const dragControls = useDragControls();
+  return (
+    <Reorder.Item
+      as="li"
+      value={id}
+      dragListener={false}
+      dragControls={dragControls}
+      onDragEnd={onDragEnd}
+      whileDrag={{ scale: 1.01, boxShadow: '0 12px 32px -12px rgba(0,0,0,0.35)', zIndex: 10 }}
+      className={cn('relative', className)}
+    >
+      {draggable && (
+        <button
+          type="button"
+          onPointerDown={(e) => dragControls.start(e)}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+              e.preventDefault();
+              onMove(e.key === 'ArrowUp' ? 'up' : 'down');
+            }
+          }}
+          style={{ touchAction: 'none' }}
+          className="-ml-1 w-7 h-9 shrink-0 rounded-lg flex items-center justify-center text-fg-subtle hover:text-fg hover:bg-surface-2 cursor-grab active:cursor-grabbing"
+          aria-label={`Arrastar música ${index + 1} (setas para mover)`}
+          title="Arraste para reordenar"
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
+      )}
+      {children}
+    </Reorder.Item>
+  );
+};
+
+interface SetlistItemMenuProps {
+  songTitle: string;
+  versionLabel?: string;
+  versionIcon: React.ElementType;
+  onVersion?: () => void;
+  onRemove: () => void;
+}
+
+/** Menu de ações de uma música do repertório (telas pequenas). */
+const SetlistItemMenu: React.FC<SetlistItemMenuProps> = ({
+  songTitle,
+  versionLabel,
+  versionIcon: VersionIcon,
+  onVersion,
+  onRemove,
+}) => {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  const run = (action: () => void) => {
+    setOpen(false);
+    action();
+  };
+
+  return (
+    <div className="relative">
+      <ActionButton
+        variant="light"
+        icon={MoreVertical}
+        onClick={() => setOpen((v) => !v)}
+        aria-label={`Opções de ${songTitle}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+      />
+      {open && (
+        <>
+          <button
+            type="button"
+            aria-hidden
+            tabIndex={-1}
+            className="fixed inset-0 z-30 cursor-default"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            role="menu"
+            className="absolute right-0 top-full mt-1.5 z-40 w-52 rounded-xl border border-line bg-surface shadow-card-lg p-1"
+          >
+            {onVersion && versionLabel && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => run(onVersion)}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-fg hover:bg-surface-2"
+              >
+                <VersionIcon className="w-4 h-4 text-fg-muted" />
+                {versionLabel}
+              </button>
+            )}
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => run(onRemove)}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-danger-text hover:bg-danger-soft"
+            >
+              <Trash2 className="w-4 h-4" />
+              Excluir
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 interface EventDetailProps {
   event: ChurchEvent;
   schedule: WorshipSchedule | null;
@@ -116,7 +260,7 @@ interface EventDetailProps {
   canManageSetlist: boolean;
   onSaveSchedule: (schedule: WorshipSchedule | WorshipSchedule[]) => void | Promise<void>;
   onDeleteSchedule: (id: string) => void | Promise<void>;
-  onSaveLiturgy: (liturgy: Liturgy) => void | Promise<void>;
+  onSaveLiturgy: (liturgy: Liturgy, opts?: { silent?: boolean }) => void | Promise<void>;
   onDeleteLiturgy: (id: string) => void | Promise<void>;
   onEnsureLiturgy: () => void | Promise<void>;
   onSaveSetlist: (setlist: Setlist) => void | Promise<void>;
@@ -173,6 +317,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const [formDate, setFormDate] = useState(event.date);
   const [formTime, setFormTime] = useState(event.time || '19:00');
   const [formTheme, setFormTheme] = useState(event.theme || '');
+  const [formBibleVerse, setFormBibleVerse] = useState(event.bibleVerse || '');
+  const [formPreacher, setFormPreacher] = useState(event.preacher || '');
+  const [formLeader, setFormLeader] = useState(event.leader || '');
   const [formNotes, setFormNotes] = useState(event.notes || '');
   const [formGroupId, setFormGroupId] = useState(event.musicGroupId || '');
   const [versionConfirmSong, setVersionConfirmSong] = useState<Song | null>(null);
@@ -196,8 +343,6 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   );
   const [shareSaving, setShareSaving] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
-  const [sharePanelOpen, setSharePanelOpen] = useState(false);
-
   useEffect(() => {
     setShareEnabled(Boolean(event.shareEnabled));
     setShareIncludeSongs(event.shareIncludeSongs !== false);
@@ -308,22 +453,23 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     }
   }, [tab, canManageTeam, canManageLiturgy]);
 
-  useEffect(() => {
+  const resetEventForm = () => {
     setFormTitle(event.title);
     setFormDate(event.date);
     setFormTime(event.time || '19:00');
     setFormTheme(event.theme || '');
+    setFormBibleVerse(event.bibleVerse || '');
+    setFormPreacher(event.preacher || '');
+    setFormLeader(event.leader || '');
     setFormNotes(event.notes || '');
     setFormGroupId(event.musicGroupId || '');
-  }, [event]);
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(resetEventForm, [event]);
 
   const openEditEvent = () => {
-    setFormTitle(event.title);
-    setFormDate(event.date);
-    setFormTime(event.time || '19:00');
-    setFormTheme(event.theme || '');
-    setFormNotes(event.notes || '');
-    setFormGroupId(event.musicGroupId || '');
+    resetEventForm();
     setIsEditEventOpen(true);
   };
 
@@ -339,7 +485,10 @@ export const EventDetail: React.FC<EventDetailProps> = ({
         date: formDate,
         time: formTime,
         serviceType: title,
-        theme: formTheme || undefined,
+        theme: formTheme.trim() || undefined,
+        bibleVerse: formBibleVerse.trim() || undefined,
+        preacher: formPreacher.trim() || undefined,
+        leader: formLeader.trim() || undefined,
         notes: formNotes || undefined,
         musicGroupId: formGroupId || undefined,
       });
@@ -435,7 +584,179 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     }
   };
 
+  /** Ordem local enquanto arrasta; só é gravada ao soltar. */
+  const [dragOrder, setDragOrder] = useState<string[] | null>(null);
+  const dragOrderRef = useRef<string[] | null>(null);
+  const orderedSetlistItems = dragOrder
+    ? dragOrder
+        .map((id) => setlistItems.find((i) => i.id === id))
+        .filter((i): i is (typeof setlistItems)[number] => Boolean(i))
+    : setlistItems;
+
+  const handleReorder = (ids: string[]) => {
+    dragOrderRef.current = ids;
+    setDragOrder(ids);
+  };
+
+  const commitDragOrder = async () => {
+    const ids = dragOrderRef.current;
+    dragOrderRef.current = null;
+    if (!ids || !setlist || !canManageSetlist) {
+      setDragOrder(null);
+      return;
+    }
+    const unchanged = ids.length === setlistItems.length && ids.every((id, i) => setlistItems[i]?.id === id);
+    if (unchanged) {
+      setDragOrder(null);
+      return;
+    }
+    const items = ids
+      .map((id) => setlistItems.find((i) => i.id === id))
+      .filter((i): i is (typeof setlistItems)[number] => Boolean(i));
+    try {
+      setSavingSetlist(true);
+      await onSaveSetlist({ ...setlist, eventId: event.id, kind: 'group_schedule', items });
+    } finally {
+      setSavingSetlist(false);
+      setDragOrder(null);
+    }
+  };
+
   const repertoireSongIds = setlistItems.map((i) => i.songId);
+
+  const teamMembers = useMemo<AssistantTeamMember[]>(() => {
+    const groupId = scheduleForEvent?.musicGroupId || event.musicGroupId;
+    const group = musicGroups.find((g) => g.id === groupId);
+    const seen = new Set<string>();
+    const members: AssistantTeamMember[] = [];
+    for (const g of group ? [group] : musicGroups) {
+      for (const m of g.members) {
+        const memberKey = m.userId || m.id;
+        if (seen.has(memberKey)) continue;
+        seen.add(memberKey);
+        members.push({
+          id: m.id,
+          userId: m.userId,
+          name: m.name,
+          skills: getProfileSkills(systemUsers.find((u) => u.id === m.userId)),
+        });
+      }
+    }
+    return members;
+  }, [scheduleForEvent?.musicGroupId, event.musicGroupId, musicGroups, systemUsers]);
+
+  const applyLiturgyProposal = async (
+    items: LiturgyItem[],
+    meta: { theme?: string; bibleVerse?: string },
+  ) => {
+    const base: Liturgy = liturgy ?? {
+      id: '',
+      churchId: event.churchId,
+      date: event.date,
+      serviceTitle: event.title,
+      items: [],
+      createdAt: new Date().toISOString(),
+    };
+    await onSaveLiturgy({
+      ...base,
+      eventId: event.id,
+      churchId: event.churchId,
+      date: event.date,
+      serviceTitle: event.title || base.serviceTitle,
+      items,
+    });
+    const theme = event.theme || meta.theme?.trim() || undefined;
+    const bibleVerse = event.bibleVerse || meta.bibleVerse?.trim() || undefined;
+    if (onSaveEvent && (theme !== event.theme || bibleVerse !== event.bibleVerse)) {
+      await onSaveEvent({ ...event, theme, bibleVerse });
+    }
+    const songIds = items.filter((i) => i.type === 'hymn' && i.songId).map((i) => i.songId!);
+    if (songIds.length && canManageSetlist) await addSongsToSetlist(songIds);
+  };
+
+  const applyTeamProposal = async (proposed: AssistantAssignment[]) => {
+    const previous = scheduleForEvent?.assignments ?? [];
+    const assignments: ScheduleMemberAssignment[] = proposed.map((a) => {
+      const kept = previous.find(
+        (p) =>
+          p.role.trim().toLowerCase() === a.role.trim().toLowerCase() &&
+          ((a.userId && p.userId === a.userId) || p.memberId === a.memberId),
+      );
+      return (
+        kept ?? {
+          role: a.role,
+          memberId: a.memberId,
+          userId: a.userId ?? undefined,
+          memberName: a.memberName,
+          status: 'pending',
+        }
+      );
+    });
+    await onSaveSchedule(
+      scheduleForEvent
+        ? { ...scheduleForEvent, assignments }
+        : {
+            id: '',
+            churchId: event.churchId,
+            eventId: event.id,
+            musicGroupId: event.musicGroupId,
+            date: event.date,
+            time: event.time,
+            serviceType: event.serviceType || event.title,
+            theme: event.theme,
+            assignments,
+            songIds: [],
+            createdAt: new Date().toISOString(),
+          },
+    );
+  };
+
+  const assistantBase = {
+    label: `${event.title} · ${new Date(`${event.date}T00:00:00`).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+    })}`,
+    eventId: event.id,
+    theme: event.theme,
+  };
+  let assistantScreen: AssistantScreen | null = null;
+  if (tab === 'setlist') {
+    assistantScreen = {
+      ...assistantBase,
+      mode: 'setlist',
+      key: `setlist:${event.id}`,
+      bibleVerse: event.bibleVerse,
+      songs,
+      existingSongIds: repertoireSongIds,
+      canApply: canManageSetlist && Boolean(setlist),
+      onAddSongs: addSongsToSetlist,
+    };
+  } else if (tab === 'liturgy' && canManageLiturgy) {
+    assistantScreen = {
+      ...assistantBase,
+      mode: 'liturgy',
+      key: `liturgy:${event.id}`,
+      bibleVerse: event.bibleVerse,
+      preacher: event.preacher,
+      leader: event.leader,
+      songs,
+      items: liturgy?.items ?? [],
+      canApply: true,
+      onApplyLiturgy: applyLiturgyProposal,
+    };
+  } else if (tab === 'team' && canManageTeam) {
+    assistantScreen = {
+      ...assistantBase,
+      mode: 'schedule',
+      key: `schedule:${event.id}`,
+      members: teamMembers,
+      roles: [...SCHEDULE_ROLE_OPTIONS],
+      assignments: scheduleForEvent?.assignments ?? [],
+      canApply: !scheduleForEvent?.isFinalized,
+      onApplyTeam: applyTeamProposal,
+    };
+  }
+  useAssistantScreen(assistantScreen);
 
   const openVersionEditor = (song: Song) => {
     if (!canManageSetlist) return;
@@ -502,6 +823,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       show: true,
       alert: setlistTabAlert,
     },
+    { id: 'share', label: 'Compartilhamento', icon: Share2, show: true },
   ];
 
   const copyShareLink = () => {
@@ -597,7 +919,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       id: 'share',
       label: 'Link público',
       icon: Link2,
-      onClick: () => setSharePanelOpen(true),
+      onClick: () => setTab('share'),
       detail: shareEnabled ? 'Ativo' : 'Desativado',
       status: (shareEnabled ? 'done' : 'pending') as ChecklistStatus,
     },
@@ -614,7 +936,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const metaIconClass = 'w-4 h-4 text-fg-subtle shrink-0';
 
   const headerDescription = (
-    <div className="space-y-2">
+    <div className="space-y-2 lg:hidden">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] sm:text-sm text-fg-muted">
         <span className={cn(metaItemClass, 'font-semibold text-brand-text')}>
           <Calendar className="w-4 h-4 shrink-0" />
@@ -657,6 +979,24 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             <span className="truncate">{event.theme}</span>
           </span>
         )}
+        {event.bibleVerse && (
+          <span className={metaItemClass}>
+            <BookOpen className={metaIconClass} />
+            <span className="truncate">{event.bibleVerse}</span>
+          </span>
+        )}
+        {event.preacher && (
+          <span className={metaItemClass}>
+            <Mic className={metaIconClass} />
+            <span className="truncate">{event.preacher}</span>
+          </span>
+        )}
+        {event.leader && (
+          <span className={metaItemClass}>
+            <UserRound className={metaIconClass} />
+            <span className="truncate">{event.leader}</span>
+          </span>
+        )}
       </div>
       {event.notes && (
         <p className="flex gap-1.5 text-[13px] text-fg-muted leading-snug">
@@ -677,8 +1017,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           )}
           <PageHeaderButton
             icon={Share2}
-            onClick={() => setSharePanelOpen((v) => !v)}
-            aria-pressed={sharePanelOpen}
+            onClick={() => setTab('share')}
+            aria-pressed={tab === 'share'}
             title={shareEnabled ? 'Compartilhamento ativo' : 'Compartilhar evento'}
           >
             Compartilhar
@@ -725,7 +1065,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   role="menuitem"
                   onClick={() => {
                     setActionsMenuOpen(false);
-                    setSharePanelOpen(true);
+                    setTab('share');
                   }}
                   className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-fg hover:bg-surface-2"
                 >
@@ -765,12 +1105,47 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       onBack={onBack}
       actions={headerActions}
       contentClassName="sm:space-y-5"
+      width="full"
     >
       {headerDescription}
-      <div className="space-y-4 sm:space-y-5 lg:space-y-0 lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem] lg:gap-6 lg:items-start">
-      <div className="min-w-0 space-y-4 sm:space-y-5">
+      <div className="space-y-4 sm:space-y-5 lg:space-y-0 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] xl:grid-cols-[18rem_minmax(0,1fr)] lg:items-start lg:-mt-3 lg:-ml-4 lg:-mb-8">
+      <div className="min-w-0 space-y-4 sm:space-y-5 lg:col-start-2 lg:row-start-1 lg:pl-6 lg:pt-4 lg:pb-8">
 
-      {sharePanelOpen && (
+      <div className="sticky top-[calc(60px+env(safe-area-inset-top,0px))] lg:top-16 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 pt-2 pb-1 -mt-2 bg-app/90 backdrop-blur-md">
+      <div className="flex flex-row gap-1 bg-stone-950 border border-stone-800 p-1 rounded-xl w-full">
+        {tabs
+          .filter((t) => t.show)
+          .map((t) => {
+            const Icon = t.icon;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                title={t.alert ? `${t.label} — há pendências de sincronização` : t.label}
+                className={`relative flex-1 min-w-0 px-2 sm:px-4 py-2.5 sm:py-2 rounded-button text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all ${
+                  tab === t.id
+                    ? 'bg-emerald-500 text-stone-950'
+                    : 'text-stone-400 hover:text-stone-200'
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="truncate">{t.label}</span>
+                {t.alert && (
+                  <AlertTriangle
+                    className={`w-3.5 h-3.5 shrink-0 ${
+                      tab === t.id ? 'text-amber-900' : 'text-amber-400'
+                    }`}
+                    aria-label="Pendências"
+                  />
+                )}
+              </button>
+            );
+          })}
+      </div>
+      </div>
+
+      {tab === 'share' && (
         <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -883,38 +1258,37 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] font-semibold text-stone-300 mb-1">
-                Nome do link
-              </label>
-              <div className="flex items-center gap-1.5 bg-stone-950 border border-stone-800 rounded-xl px-2.5 py-1.5">
-                <span className="text-[10px] text-stone-500 shrink-0">/evento/</span>
-                <input
-                  value={shareCodeDraft}
-                  onChange={(e) => setShareCodeDraft(e.target.value)}
-                  onBlur={() => setShareCodeDraft((v) => normalizeShareSlug(v) || v)}
-                  placeholder="culto-domingo"
+            <Field label="Nome do link">
+              {(id) => (
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-fg-subtle pointer-events-none">
+                    /evento/
+                  </span>
+                  <Input
+                    id={id}
+                    value={shareCodeDraft}
+                    onChange={(e) => setShareCodeDraft(e.target.value)}
+                    onBlur={() => setShareCodeDraft((v) => normalizeShareSlug(v) || v)}
+                    placeholder="culto-domingo"
+                    disabled={shareSaving}
+                    className="pl-[4.25rem] font-mono"
+                  />
+                </div>
+              )}
+            </Field>
+            <Field label="Validade do link" required hint="Obrigatória. Sugestão: 1 dia após o evento.">
+              {(id, describedBy) => (
+                <Input
+                  id={id}
+                  type="datetime-local"
+                  required
+                  aria-describedby={describedBy}
+                  value={shareExpiresLocal}
+                  onChange={(e) => setShareExpiresLocal(e.target.value)}
                   disabled={shareSaving}
-                  className="min-w-0 flex-1 bg-transparent text-xs text-emerald-200 font-mono focus:outline-none"
                 />
-              </div>
-            </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-stone-300 mb-1">
-                Validade do link <span className="text-rose-400">*</span>
-              </label>
-              <input
-                type="datetime-local"
-                required
-                value={shareExpiresLocal}
-                onChange={(e) => setShareExpiresLocal(e.target.value)}
-                disabled={shareSaving}
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl px-3 py-2 text-xs text-stone-100"
-              />
-              <p className="text-[10px] text-stone-500 mt-1">
-                Obrigatória. Sugestão: 1 dia após o evento.
-              </p>
-            </div>
+              )}
+            </Field>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -972,40 +1346,6 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           )}
         </div>
       )}
-
-      <div className="sticky top-[calc(60px+env(safe-area-inset-top,0px))] lg:top-16 z-10 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 pt-2 pb-1 -mt-2 bg-app/90 backdrop-blur-md">
-      <div className="flex flex-row gap-1 bg-stone-950 border border-stone-800 p-1 rounded-xl w-full">
-        {tabs
-          .filter((t) => t.show)
-          .map((t) => {
-            const Icon = t.icon;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTab(t.id)}
-                title={t.alert ? `${t.label} — há pendências de sincronização` : t.label}
-                className={`relative flex-1 min-w-0 px-2 sm:px-4 py-2.5 sm:py-2 rounded-button text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all ${
-                  tab === t.id
-                    ? 'bg-emerald-500 text-stone-950'
-                    : 'text-stone-400 hover:text-stone-200'
-                }`}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                <span className="truncate">{t.label}</span>
-                {t.alert && (
-                  <AlertTriangle
-                    className={`w-3.5 h-3.5 shrink-0 ${
-                      tab === t.id ? 'text-amber-900' : 'text-amber-400'
-                    }`}
-                    aria-label="Pendências"
-                  />
-                )}
-              </button>
-            );
-          })}
-      </div>
-      </div>
 
       {tab === 'team' && canManageTeam && (
         <div className="w-full space-y-4">
@@ -1072,6 +1412,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               }}
               songs={songs}
               churchName={churchName}
+              serviceInfo={event}
               onSave={onSaveLiturgy}
               onDelete={onDeleteLiturgy}
               onSelectSong={onSelectSong}
@@ -1121,8 +1462,14 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               )}
             </div>
           ) : (
-            <ul className="space-y-2">
-              {setlistItems.map((item, index) => {
+            <Reorder.Group
+              as="ul"
+              axis="y"
+              values={orderedSetlistItems.map((i) => i.id)}
+              onReorder={handleReorder}
+              className="space-y-2"
+            >
+              {orderedSetlistItems.map((item, index) => {
                 const song = songs.find((s) => s.id === item.songId);
                 const custom = schedule?.customSongs?.find((c) => c.songId === item.songId);
                 const isCustomized = Boolean(custom?.isCustomized || custom?.eventSongId);
@@ -1138,8 +1485,13 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                 const versionId = custom?.eventSongId || (isCustomized ? item.id : undefined);
 
                 return (
-                  <li
+                  <SortableSetlistItem
                     key={item.id}
+                    id={item.id}
+                    index={index}
+                    draggable={canManageSetlist && !savingSetlist && orderedSetlistItems.length > 1}
+                    onDragEnd={() => void commitDragOrder()}
+                    onMove={(direction) => void moveItem(index, direction)}
                     className={`flex items-center justify-between gap-2 border rounded-xl px-3 py-2 ${
                       isCustomized
                         ? 'bg-emerald-950/30 light:bg-emerald-50 border-emerald-800/50 light:border-emerald-200'
@@ -1174,27 +1526,18 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                         </span>
                       )}
                     </button>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {canManageSetlist && (
-                        <>
-                          <ActionButton
-                            variant="light"
-                            icon={ArrowUp}
-                            onClick={() => void moveItem(index, 'up')}
-                            disabled={index === 0 || savingSetlist}
-                            title="Mover para cima"
-                            aria-label="Mover para cima"
-                          />
-                          <ActionButton
-                            variant="light"
-                            icon={ArrowDown}
-                            onClick={() => void moveItem(index, 'down')}
-                            disabled={index === setlistItems.length - 1 || savingSetlist}
-                            title="Mover para baixo"
-                            aria-label="Mover para baixo"
-                          />
-                        </>
-                      )}
+                    {canManageSetlist && (
+                      <div className="sm:hidden shrink-0">
+                        <SetlistItemMenu
+                          songTitle={song?.title ?? 'música removida'}
+                          versionLabel={isCustomized ? 'Editar versão' : 'Criar versão'}
+                          versionIcon={isCustomized ? Edit3 : CopyPlus}
+                          onVersion={song ? () => requestVersionForEvent(song, isCustomized) : undefined}
+                          onRemove={() => void removeItem(item.id)}
+                        />
+                      </div>
+                    )}
+                    <div className="hidden sm:flex items-center gap-1.5 shrink-0">
                       {canManageSetlist && song && (
                         <ActionButton
                           variant={isCustomized ? 'light' : 'secondary'}
@@ -1220,18 +1563,18 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                         />
                       )}
                     </div>
-                  </li>
+                  </SortableSetlistItem>
                 );
               })}
-            </ul>
+            </Reorder.Group>
           )}
           </div>
         </div>
       )}
       </div>
 
-      <aside className="hidden lg:block lg:sticky lg:top-20 space-y-4">
-        <section className="bg-surface border border-line rounded-2xl shadow-card p-4">
+      <aside className="hidden lg:flex lg:flex-col lg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)] lg:overflow-y-auto lg:col-start-1 lg:row-start-1 bg-surface border-r border-line divide-y divide-line [scrollbar-width:thin]">
+        <section className="px-4 py-4">
           <div className="flex items-center justify-between gap-2 mb-1">
             <h2 className="text-sm font-bold text-fg">Preparação</h2>
             <span className="text-[11px] font-semibold text-fg-muted">
@@ -1247,7 +1590,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           <ul className="-mx-2 space-y-0.5">
             {checklist.map((item) => {
               const Icon = item.status === 'done' ? Check : item.status === 'alert' ? AlertTriangle : item.icon;
-              const isActive = item.id === tab || (item.id === 'share' && sharePanelOpen);
+              const isActive = item.id === tab;
               return (
                 <li key={item.id}>
                   <button
@@ -1294,106 +1637,195 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             </div>
           )}
         </section>
+
+        <section className="px-4 py-4">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="text-sm font-bold text-fg">Evento</h2>
+            {onSaveEvent && (
+              <button
+                type="button"
+                onClick={openEditEvent}
+                className="text-[11px] font-semibold text-brand-text hover:underline"
+              >
+                Editar
+              </button>
+            )}
+          </div>
+          <dl className="space-y-3">
+            {[
+              {
+                icon: Calendar,
+                label: 'Data',
+                value: (
+                  <span className="inline-block first-letter:uppercase">
+                    {eventDay.toLocaleDateString('pt-BR', {
+                      weekday: 'long',
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </span>
+                ),
+              },
+              event.time || countdown
+                ? {
+                    icon: Clock,
+                    label: 'Horário',
+                    value: (
+                      <span className="inline-flex items-center gap-2">
+                        {event.time || '—'}
+                        {countdown && <Badge tone={countdown.tone}>{countdown.label}</Badge>}
+                      </span>
+                    ),
+                  }
+                : null,
+              churchName ? { icon: Church, label: 'Igreja', value: churchName } : null,
+              groupName ? { icon: Music2, label: 'Banda / Grupo', value: groupName } : null,
+              event.theme ? { icon: Sparkles, label: 'Tema', value: event.theme } : null,
+              event.bibleVerse ? { icon: BookOpen, label: 'Texto bíblico', value: event.bibleVerse } : null,
+              event.preacher ? { icon: Mic, label: 'Pregador', value: event.preacher } : null,
+              event.leader ? { icon: UserRound, label: 'Dirigente', value: event.leader } : null,
+              event.notes
+                ? {
+                    icon: Info,
+                    label: 'Notas',
+                    value: <span className="whitespace-pre-line">{event.notes}</span>,
+                  }
+                : null,
+            ]
+              .filter((row): row is { icon: typeof Calendar; label: string; value: React.ReactNode } => Boolean(row))
+              .map((row) => (
+                <div key={row.label} className="flex gap-3">
+                  <span className="w-8 h-8 rounded-lg bg-surface-2 text-fg-muted flex items-center justify-center shrink-0">
+                    <row.icon className="w-4 h-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <dt className="text-[11px] text-fg-muted">{row.label}</dt>
+                    <dd className="text-[13px] font-semibold text-fg break-words">{row.value}</dd>
+                  </div>
+                </div>
+              ))}
+          </dl>
+        </section>
       </aside>
       </div>
 
-      {isEditEventOpen && (
-        <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-stone-900 border border-stone-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl max-h-[92vh] flex flex-col">
-            <div className="p-5 border-b border-stone-800 flex items-center justify-between shrink-0">
-              <h3 className="text-lg font-display font-bold text-stone-100">Editar Evento</h3>
-              <ActionButton
-                variant="light"
-                icon={X}
-                onClick={() => setIsEditEventOpen(false)}
-                aria-label="Fechar"
-                title="Fechar"
-              />
-            </div>
-            <form onSubmit={handleSaveEventForm} className="p-5 space-y-4 overflow-y-auto flex-1">
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">Título</label>
-                <input
+      <Modal
+        open={isEditEventOpen}
+        onClose={() => setIsEditEventOpen(false)}
+        title="Editar evento"
+        icon={Calendar}
+        size="md"
+        className="lg:max-w-3xl"
+        locked={isSavingEvent}
+        footer={
+          <>
+            <ActionButton variant="light" disabled={isSavingEvent} onClick={() => setIsEditEventOpen(false)}>
+              Cancelar
+            </ActionButton>
+            <ActionButton type="submit" form="event-detail-edit-form" variant="primary" icon={Check} loading={isSavingEvent}>
+              {isSavingEvent ? 'Salvando...' : 'Salvar'}
+            </ActionButton>
+          </>
+        }
+      >
+        <form
+          id="event-detail-edit-form"
+          onSubmit={handleSaveEventForm}
+          className="grid grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4"
+        >
+          <Field label="Título" required className="col-span-2">
+            {(id) => (
+              <>
+                <Input
+                  id={id}
                   required
                   list="event-detail-title-suggestions"
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   placeholder="Ex.: Culto, Escola Bíblica…"
-                  className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100"
                 />
                 <datalist id="event-detail-title-suggestions">
                   {EVENT_TITLE_SUGGESTIONS.map((option) => (
                     <option key={option} value={option} />
                   ))}
                 </datalist>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">Data</label>
-                  <input
-                    type="date"
-                    required
-                    value={formDate}
-                    onChange={(e) => setFormDate(e.target.value)}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">Horário</label>
-                  <input
-                    type="time"
-                    value={formTime}
-                    onChange={(e) => setFormTime(e.target.value)}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">Tema</label>
-                <input
-                  value={formTheme}
-                  onChange={(e) => setFormTheme(e.target.value)}
-                  className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">
-                  Banda / Grupo
-                </label>
-                <select
-                  value={formGroupId}
-                  onChange={(e) => setFormGroupId(e.target.value)}
-                  className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100"
-                >
-                  <option value="">Sem grupo</option>
-                  {musicGroups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-stone-300 mb-1">Notas</label>
-                <textarea
-                  rows={2}
-                  value={formNotes}
-                  onChange={(e) => setFormNotes(e.target.value)}
-                  className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-xs text-stone-100"
-                />
-              </div>
-              <div className="pt-2 flex justify-end gap-2 border-t border-stone-800">
-                <ActionButton variant="light" disabled={isSavingEvent} onClick={() => setIsEditEventOpen(false)}>
-                  Cancelar
-                </ActionButton>
-                <ActionButton type="submit" variant="primary" icon={Check} loading={isSavingEvent}>
-                  {isSavingEvent ? 'Salvando...' : 'Salvar'}
-                </ActionButton>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+              </>
+            )}
+          </Field>
+          <Field label="Data" required>
+            {(id) => (
+              <Input id={id} type="date" required value={formDate} onChange={(e) => setFormDate(e.target.value)} />
+            )}
+          </Field>
+          <Field label="Horário">
+            {(id) => <Input id={id} type="time" value={formTime} onChange={(e) => setFormTime(e.target.value)} />}
+          </Field>
+          <Field label="Tema" className="col-span-2">
+            {(id) => (
+              <Input
+                id={id}
+                value={formTheme}
+                onChange={(e) => setFormTheme(e.target.value)}
+                placeholder="Ex.: A soberania de Deus"
+              />
+            )}
+          </Field>
+          <Field label="Texto bíblico" className="col-span-2">
+            {(id) => (
+              <Input
+                id={id}
+                value={formBibleVerse}
+                onChange={(e) => setFormBibleVerse(e.target.value)}
+                placeholder="Ex.: Salmo 95:1-7"
+              />
+            )}
+          </Field>
+          <Field label="Pregador" className="col-span-2">
+            {(id) => (
+              <Input
+                id={id}
+                value={formPreacher}
+                onChange={(e) => setFormPreacher(e.target.value)}
+                placeholder="Ex.: Rev. Marcos Silva"
+              />
+            )}
+          </Field>
+          <Field label="Dirigente" className="col-span-2">
+            {(id) => (
+              <Input
+                id={id}
+                value={formLeader}
+                onChange={(e) => setFormLeader(e.target.value)}
+                placeholder="Ex.: Presb. João"
+              />
+            )}
+          </Field>
+          <Field label="Banda / Grupo" className="col-span-2 lg:col-span-4">
+            {(id) => (
+              <Select id={id} value={formGroupId} onChange={(e) => setFormGroupId(e.target.value)}>
+                <option value="">Sem grupo</option>
+                {musicGroups.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+          <Field label="Notas" className="col-span-2 lg:col-span-4">
+            {(id) => (
+              <Textarea
+                id={id}
+                rows={2}
+                value={formNotes}
+                onChange={(e) => setFormNotes(e.target.value)}
+                placeholder="Observações para a equipe"
+              />
+            )}
+          </Field>
+        </form>
+      </Modal>
 
       {addSongsOpen && setlist && (
         <AddSongsToEventSetlistModal

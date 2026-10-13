@@ -158,6 +158,9 @@ export async function upsertEvent(
     service_time: event.time ?? null,
     service_type: event.serviceType ?? event.title ?? null,
     theme: event.theme ?? null,
+    bible_verse: event.bibleVerse?.trim() || null,
+    preacher: event.preacher?.trim() || null,
+    leader: event.leader?.trim() || null,
     notes: event.notes ?? null,
     group_id: isUuid(event.musicGroupId) ? event.musicGroupId : null,
     created_by: userId ?? null,
@@ -231,7 +234,6 @@ export async function ensureEventLiturgy(
       event_id: event.id,
       title: event.title || event.serviceType || 'Culto',
       service_date: event.date,
-      theme: event.theme ?? null,
       created_by: userId ?? null,
     })
     .select('*, liturgy_items(*)')

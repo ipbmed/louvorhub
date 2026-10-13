@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { PageHeader, PageHeaderButton } from './PageHeader';
 import { SongSearchSelect } from './SongSearchSelect';
+import { Field, Input, Select, Textarea } from './ui';
 import {
   LITURGY_MARKDOWN_EXAMPLE,
   LITURGY_MARKDOWN_HELP,
@@ -88,10 +89,6 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
 
   // Form State
   const [formChurchId, setFormChurchId] = useState('');
-  const [formTheme, setFormTheme] = useState('');
-  const [formBibleVerse, setFormBibleVerse] = useState('');
-  const [formPreacher, setFormPreacher] = useState('');
-  const [formLeader, setFormLeader] = useState('');
   const [formItems, setFormItems] = useState<LiturgyItem[]>([]);
   const [mdImportOpen, setMdImportOpen] = useState(false);
   const [mdImportText, setMdImportText] = useState(LITURGY_MARKDOWN_EXAMPLE);
@@ -120,10 +117,6 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
     if (!defaultChurchId || !canManageLiturgies(defaultChurchId)) return;
     setEditingLiturgy(null);
     setFormChurchId(defaultChurchId);
-    setFormTheme('');
-    setFormBibleVerse('Salmo 95:1-7');
-    setFormPreacher('');
-    setFormLeader('');
     setFormItems([
       { id: 'item-1', order: 1, type: 'reading', title: 'Prelúdio Instrumental & Oração Silenciosa', duration: '3 min' },
       { id: 'item-2', order: 2, type: 'prayer', title: 'Oração de Invocação & Leitura Bíblica', duration: '5 min' },
@@ -142,10 +135,6 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
     if (!canManageLiturgies(liturgy.churchId)) return;
     setEditingLiturgy(liturgy);
     setFormChurchId(liturgy.churchId);
-    setFormTheme(liturgy.theme || '');
-    setFormBibleVerse(liturgy.bibleVerse || '');
-    setFormPreacher(liturgy.preacher || '');
-    setFormLeader(liturgy.leader || '');
     setFormItems([...liturgy.items]);
     setMdImportOpen(false);
     setMdHelpOpen(false);
@@ -219,10 +208,6 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
       eventId: editingLiturgy?.eventId,
       date: resolvedServiceDate(editingLiturgy?.date),
       serviceTitle: resolvedServiceTitle(editingLiturgy?.serviceTitle),
-      theme: formTheme,
-      bibleVerse: formBibleVerse,
-      preacher: formPreacher,
-      leader: formLeader,
       items: formItems,
       createdAt: editingLiturgy ? editingLiturgy.createdAt : new Date().toISOString(),
     };
@@ -296,11 +281,6 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
     let text = `📋 *LITURGIA — ${linkedEventTitle || liturgy.serviceTitle}*\n`;
     if (church) text += `⛪ *${church.name}*\n`;
     text += `📅 ${dateFormatted}\n`;
-    if (liturgy.theme) text += `💡 *Tema:* ${liturgy.theme}\n`;
-    if (liturgy.bibleVerse) text += `📖 *Texto bíblico:* ${liturgy.bibleVerse}\n`;
-    if (liturgy.preacher) text += `🎤 *Pregador:* ${liturgy.preacher}\n`;
-    if (liturgy.leader) text += `🙋 *Dirigente:* ${liturgy.leader}\n`;
-
     text += `\n*ORDEM DO CULTO*\n`;
     if (liturgy.items.length === 0) {
       text += `_Nenhum momento definido_\n`;
@@ -485,30 +465,6 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                     </div>
                   </div>
 
-                  {/* Preacher & Leader Info */}
-                  <div className="grid grid-cols-2 gap-2 my-3 text-xs bg-stone-800/40 light:bg-stone-100 p-2.5 rounded-xl border border-stone-800 light:border-stone-200">
-                    {liturgy.preacher && (
-                      <span className="text-stone-300 light:text-stone-700 truncate">
-                        <strong>Pregador:</strong> {liturgy.preacher}
-                      </span>
-                    )}
-                    {liturgy.leader && (
-                      <span className="text-stone-300 light:text-stone-700 truncate">
-                        <strong>Dirigente:</strong> {liturgy.leader}
-                      </span>
-                    )}
-                    {liturgy.theme && (
-                      <span className="col-span-2 text-stone-200 light:text-stone-800 truncate">
-                        <strong>Tema:</strong> {liturgy.theme}
-                      </span>
-                    )}
-                    {liturgy.bibleVerse && (
-                      <span className="col-span-2 text-emerald-300 light:text-emerald-800 truncate font-serif">
-                        📖 {liturgy.bibleVerse}
-                      </span>
-                    )}
-                  </div>
-
                   {/* Order Items Preview List */}
                   <div className="space-y-2 mt-4">
                     <h4 className="text-[11px] font-bold text-stone-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -587,50 +543,8 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
 
             <form onSubmit={handleSaveForm} className="p-3 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1 min-h-0">
               
-              {/* Meta */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Pregador
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Rev. Marcos Silva"
-                    value={formPreacher}
-                    onChange={e => setFormPreacher(e.target.value)}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Tema principal
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: A soberania e a graça de Deus"
-                    value={formTheme}
-                    onChange={e => setFormTheme(e.target.value)}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none"
-                  />
-                </div>
-
-                <div className="sm:col-span-2 lg:col-span-1">
-                  <label className="block text-xs font-semibold text-stone-300 mb-1">
-                    Texto Bíblico Principal
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Salmo 95:1-7"
-                    value={formBibleVerse}
-                    onChange={e => setFormBibleVerse(e.target.value)}
-                    className="w-full bg-stone-800 border border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-100 focus:outline-none"
-                  />
-                </div>
-              </div>
-
               {/* Items Reorder Manager */}
-              <div className="pt-2 border-t border-stone-800">
+              <div>
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <label className="text-sm font-bold text-stone-200 flex items-center gap-2">
                     <Layers className="w-4 h-4 text-emerald-400" />
@@ -696,20 +610,24 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                         Usar modelo
                       </button>
                     </div>
-                    <textarea
-                      value={mdImportText}
-                      onChange={(e) => {
-                        setMdImportText(e.target.value);
-                        setMdImportError('');
-                      }}
-                      rows={9}
-                      spellCheck={false}
-                      className="w-full bg-stone-900 border border-stone-700 rounded-xl px-3 py-2 text-xs font-mono text-stone-200 focus:outline-none focus:border-emerald-600/50 resize-y min-h-[140px]"
-                      placeholder={LITURGY_MARKDOWN_EXAMPLE}
-                    />
-                    {mdImportError && (
-                      <p className="text-[11px] text-rose-400">{mdImportError}</p>
-                    )}
+                    <Field error={mdImportError || undefined}>
+                      {(id, describedBy) => (
+                        <Textarea
+                          id={id}
+                          aria-describedby={describedBy}
+                          invalid={Boolean(mdImportError)}
+                          value={mdImportText}
+                          onChange={(e) => {
+                            setMdImportText(e.target.value);
+                            setMdImportError('');
+                          }}
+                          rows={9}
+                          spellCheck={false}
+                          className="font-mono min-h-[140px]"
+                          placeholder={LITURGY_MARKDOWN_EXAMPLE}
+                        />
+                      )}
+                    </Field>
                     <div className="flex justify-end gap-2">
                       <button
                         type="button"
@@ -740,10 +658,11 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                           {idx + 1}.
                         </span>
 
-                        <select
+                        <Select
                           value={item.type}
                           onChange={e => handleUpdateItemField(idx, 'type', e.target.value)}
-                          className="min-w-0 flex-1 sm:flex-none sm:w-auto max-w-[55%] sm:max-w-none bg-stone-900 border border-stone-700 rounded-lg px-2 py-1.5 text-xs text-stone-100 focus:outline-none font-semibold"
+                          aria-label="Tipo do momento"
+                          className="min-w-0 flex-1 sm:flex-none sm:w-auto max-w-[55%] sm:max-w-none h-9 py-0 text-sm font-semibold"
                         >
                           <option value="hymn">🎵 Música</option>
                           <option value="prayer">🙏 Oração</option>
@@ -753,7 +672,7 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                           <option value="supper">🍷 Ceia do Senhor</option>
                           <option value="benediction">🕊️ Bênção Final</option>
                           <option value="custom">📌 Outro Momento</option>
-                        </select>
+                        </Select>
 
                         <div className="flex items-center gap-0.5 shrink-0 ml-auto">
                           <button
@@ -788,50 +707,52 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                         </div>
                       </div>
 
-                      <input
+                      <Input
                         type="text"
                         required
                         placeholder="Título do Momento..."
                         value={item.title}
                         onChange={e => handleUpdateItemField(idx, 'title', e.target.value)}
-                        className="w-full min-w-0 bg-stone-900 border border-stone-700 rounded-lg px-2.5 py-1.5 text-xs text-stone-100 focus:outline-none"
+                        aria-label="Título do momento"
+                        className="min-w-0 h-9 py-0 text-sm"
                       />
 
                       <div className="grid grid-cols-1 gap-2 text-xs pt-1 border-t border-stone-700/50">
-                        <input
+                        <Input
                           type="text"
                           placeholder="Responsável (ex: Pr. Carlos / Presb. João)..."
                           value={item.responsible || ''}
                           onChange={e => handleUpdateItemField(idx, 'responsible', e.target.value)}
-                          className="w-full min-w-0 bg-stone-900 border border-stone-700 rounded-lg px-2 py-1.5 text-xs text-stone-200"
+                          aria-label="Responsável"
+                          className="min-w-0 h-9 py-0 text-sm"
                         />
 
                         {item.type === 'hymn' ? (
-                          <div className="min-w-0 space-y-1">
-                            <label className="block text-[10px] font-semibold text-stone-400 uppercase tracking-wider">
-                              Música
-                            </label>
-                            <SongSearchSelect
-                              songs={songs}
-                              value={item.songId || ''}
-                              onChange={(songId) =>
-                                handleUpdateItemField(
-                                  idx,
-                                  'songId',
-                                  songId.trim() ? songId : undefined,
-                                )
-                              }
-                              placeholder="Buscar hino ou cântico por título, número ou artista…"
-                              className="w-full min-w-0"
-                            />
-                          </div>
+                          <Field label="Música">
+                            {() => (
+                              <SongSearchSelect
+                                songs={songs}
+                                value={item.songId || ''}
+                                onChange={(songId) =>
+                                  handleUpdateItemField(
+                                    idx,
+                                    'songId',
+                                    songId.trim() ? songId : undefined,
+                                  )
+                                }
+                                placeholder="Buscar hino ou cântico por título, número ou artista…"
+                                className="w-full min-w-0"
+                              />
+                            )}
+                          </Field>
                         ) : (
-                          <input
+                          <Input
                             type="text"
                             placeholder="Detalhes (ex: Texto do Salmo 23)..."
                             value={item.details || ''}
                             onChange={e => handleUpdateItemField(idx, 'details', e.target.value)}
-                            className="w-full min-w-0 bg-stone-900 border border-stone-700 rounded-lg px-2 py-1.5 text-xs text-stone-200"
+                            aria-label="Detalhes"
+                            className="min-w-0 h-9 py-0 text-sm"
                           />
                         )}
                       </div>
@@ -1006,27 +927,6 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                 </p>
               </div>
 
-              {(printingLiturgy.theme || printingLiturgy.bibleVerse) && (
-                <div className="text-center italic text-stone-700 bg-stone-50 p-3 rounded-lg border border-stone-200 space-y-1">
-                  {printingLiturgy.theme && (
-                    <div>
-                      <p className="text-xs font-sans font-bold uppercase text-stone-500 mb-0.5 not-italic">
-                        Tema principal
-                      </p>
-                      <p className="not-italic font-semibold text-stone-800">{printingLiturgy.theme}</p>
-                    </div>
-                  )}
-                  {printingLiturgy.bibleVerse && (
-                    <div>
-                      <p className="text-xs font-sans font-bold uppercase text-stone-500 mb-0.5 not-italic">
-                        Texto bíblico
-                      </p>
-                      "{printingLiturgy.bibleVerse}"
-                    </div>
-                  )}
-                </div>
-              )}
-
               <div className="space-y-3">
                 <h4 className="text-xs font-sans font-bold uppercase text-stone-500 tracking-wider border-b pb-1">
                   Ordem do Culto
@@ -1046,13 +946,6 @@ export const LiturgyManager: React.FC<LiturgyManagerProps> = ({
                   ))}
                 </div>
               </div>
-
-              {printingLiturgy.preacher && (
-                <div className="pt-4 border-t border-stone-300 text-xs font-sans flex justify-between text-stone-600">
-                  <span>Pregador: <strong>{printingLiturgy.preacher}</strong></span>
-                  {printingLiturgy.leader && <span>Dirigente: <strong>{printingLiturgy.leader}</strong></span>}
-                </div>
-              )}
 
             </div>
 
