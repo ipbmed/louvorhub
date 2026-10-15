@@ -70,7 +70,7 @@ const TOPICS: HelpTopic[] = [
     points: [
       'Modo letra: mostra as partes cantadas (estrofe, refrão, ponte…).',
       'Modo cifra: inclui cifras, introduções, solos e comentários (###).',
-      'Links: YouTube, Spotify e outros ficam no painel de Links e rolam junto com a letra.',
+      'Links: YouTube, Spotify, Apple Music e outros ficam no painel de Links e rolam junto com a letra.',
       'Telão: projeta slides; use --- ou // na letra para forçar quebra de página.',
       'Metrônomo e ajuste de fonte ficam na barra da música.',
     ],

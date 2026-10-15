@@ -16,6 +16,9 @@ export function detectMediaType(url: string): MediaLinkType {
   if (cleanUrl.includes('spotify.com')) {
     return 'spotify';
   }
+  if (cleanUrl.includes('music.apple.com')) {
+    return 'applemusic';
+  }
   return 'other';
 }
 
@@ -39,6 +42,22 @@ export function getSpotifyEmbedUrl(url?: string): string | null {
     return `https://open.spotify.com/embed/${match[1]}/${match[2]}?utm_source=generator&theme=0`;
   }
   return null;
+}
+
+/**
+ * Player embutido do Apple Music (música, álbum ou playlist).
+ * `music.apple.com/br/album/nome/123?i=456` → `embed.music.apple.com/br/album/nome/123?i=456`
+ */
+export function getAppleMusicEmbedUrl(url?: string): string | null {
+  if (!url) return null;
+  const match = url.trim().match(/^https?:\/\/(?:embed\.)?music\.apple\.com\/(.+)$/i);
+  if (!match || !/(^|\/)(album|song|playlist)\//i.test(match[1])) return null;
+  return `https://embed.music.apple.com/${match[1]}`;
+}
+
+/** Faixa única (música) usa player baixo; álbum/playlist mostram a lista de faixas. */
+export function appleMusicEmbedHeight(url: string): number {
+  return /[?&]i=|\/song\//i.test(url) ? 175 : 450;
 }
 
 /**

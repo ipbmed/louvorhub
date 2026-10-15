@@ -1,6 +1,6 @@
 export type SongType = 'hino' | 'cantico';
 
-export type MediaLinkType = 'youtube' | 'ytmusic' | 'spotify' | 'other';
+export type MediaLinkType = 'youtube' | 'ytmusic' | 'spotify' | 'applemusic' | 'other';
 
 export interface MediaLink {
   id: string;

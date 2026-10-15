@@ -39,7 +39,7 @@ function transposeSongKey(key: string, semitones: number): string {
 }
 import { SongMediaPlayer } from './SongMediaPlayer';
 import { ChordLyricLine } from './ChordLyricLine';
-import { LyricSectionHeading } from './LyricSectionHeading';
+import { LyricPartDivider, LyricSectionHeading } from './LyricSectionHeading';
 import { SongMetaBadge } from './SongMetaBadge';
 import { getCombinedMediaLinks } from '../utils/mediaUtils';
 import { useLockDocumentScroll } from '../hooks/useLockDocumentScroll';
@@ -201,9 +201,9 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
         const body = showChords
           ? sec.lines.join('\n')
           : sec.lines.map((l) => stripChords(l)).join('\n');
-        return sec.type === 'comment'
-          ? `### ${body}`
-          : `${sec.label}${sec.annotation ? `: ${sec.annotation}` : ''}\n${body}`;
+        if (sec.type === 'comment') return `### ${body}`;
+        const heading = [sec.label, sec.annotation].filter(Boolean).join(': ');
+        return [heading, body].filter(Boolean).join('\n');
       })
       .join('\n\n');
     navigator.clipboard.writeText(`${song.number}. ${song.title}\n\n${textToCopy}`);
@@ -532,10 +532,31 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
           {sections.map((section, idx) => {
             const isChorus = section.type === 'chorus';
             const isComment = section.type === 'comment';
+            const isPart = section.type === 'part';
+            const hasHeading = Boolean(section.label || section.annotation);
+            const hasLines = section.lines.some((l) => l.trim());
+
+            if (isPart && !hasLines) {
+              return (
+                <LyricPartDivider
+                  key={idx}
+                  label={section.label}
+                  annotation={section.annotation}
+                  className="pt-2 text-brand-text"
+                />
+              );
+            }
 
             return (
+              <React.Fragment key={idx}>
+              {isPart && (
+                <LyricPartDivider
+                  label={section.label}
+                  annotation={section.annotation}
+                  className="pt-2 text-brand-text"
+                />
+              )}
               <div
-                key={idx}
                 className={`p-2.5 sm:p-5 rounded-xl sm:rounded-2xl transition-all ${
                   isComment
                     ? 'bg-amber-950/20 border border-amber-500/25 border-dashed'
@@ -545,19 +566,21 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
                 }`}
                 style={{ fontSize: `${fontSize}px` }}
               >
-                <div className="flex items-center justify-between mb-1.5 sm:mb-2 pb-1 border-b border-stone-800/40">
-                  <LyricSectionHeading
-                    label={section.label}
-                    annotation={section.annotation}
-                    className={`text-xs font-mono font-bold ${
-                      isComment
-                        ? 'text-amber-300/90 light:text-amber-800'
-                        : isChorus
-                          ? 'text-emerald-400 light:text-emerald-700'
-                          : 'text-stone-400 light:text-stone-600'
-                    }`}
-                  />
-                </div>
+                {hasHeading && !isPart && (
+                  <div className="flex items-center justify-between mb-1.5 sm:mb-2 pb-1 border-b border-stone-800/40">
+                    <LyricSectionHeading
+                      label={section.label}
+                      annotation={section.annotation}
+                      className={`text-xs font-mono font-bold ${
+                        isComment
+                          ? 'text-amber-300/90 light:text-amber-800'
+                          : isChorus
+                            ? 'text-emerald-400 light:text-emerald-700'
+                            : 'text-stone-400 light:text-stone-600'
+                      }`}
+                    />
+                  </div>
+                )}
 
                 <div
                   className={`space-y-1.5 sm:space-y-2.5 ${
@@ -589,6 +612,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
                   )}
                 </div>
               </div>
+              </React.Fragment>
             );
           })}
 

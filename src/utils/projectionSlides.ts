@@ -191,9 +191,12 @@ function compactSectionBase(slide: ProjectionSlide): string {
       return n ? `Solo${n}` : 'Solo';
     case 'interlude':
       return n ? `Itr${n}` : 'Itr';
+    case 'part':
+      return n ? `P${n}` : 'P';
     case 'comment':
       return '###';
     default: {
+      if (!slide.label.trim()) return '•';
       const word = slide.label.trim().split(/\s+/)[0] || '?';
       return word.length <= 4 ? word : `${word.slice(0, 3)}.`;
     }
@@ -209,7 +212,7 @@ export function slideJumpLabel(slide: ProjectionSlide): string {
 
 /** Rótulo completo para tooltip / acessibilidade. */
 export function slideJumpTitle(slide: ProjectionSlide): string {
-  const base = slide.annotation ? `${slide.label}: ${slide.annotation}` : slide.label;
+  const base = [slide.label, slide.annotation].filter(Boolean).join(': ') || 'Trecho';
   if (slide.partCount <= 1) return base;
   return `${base} · ${slide.partIndex}/${slide.partCount}`;
 }

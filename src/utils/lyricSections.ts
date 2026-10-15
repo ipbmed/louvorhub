@@ -11,6 +11,7 @@ export type LyricSectionType =
   | 'solo'
   | 'interlude'
   | 'outro'
+  | 'part'
   | 'comment'
   | 'custom';
 
@@ -98,6 +99,14 @@ export const LYRIC_SECTION_DEFS: LyricSectionDef[] = [
     description: 'Parte final da música, podendo ser cantada, instrumental ou um encerramento gradual.',
     showInLyrics: true,
   },
+  {
+    key: 'PARTE',
+    type: 'part',
+    name: 'Parte',
+    description:
+      'Separa grandes partes da música (ex.: [PARTE]:1, [PARTE]:2). Aparece como divisória antes das seções seguintes.',
+    showInLyrics: true,
+  },
 ];
 
 const DEF_BY_NORM_KEY = new Map<string, LyricSectionDef>();
@@ -128,9 +137,15 @@ const LEGACY_ALIASES: Record<string, string> = {
   PÓS_REFRÃO: 'POS_REFRAO',
 };
 
+/** `[]` ou `[OFF]`: bloco sem rótulo. */
+function isUnlabeledMarker(inner: string): boolean {
+  const norm = normalizeSectionKey(inner);
+  return norm === '' || norm === 'OFF';
+}
+
 export function isSectionMarkerContent(inner: string): boolean {
   const norm = normalizeSectionKey(inner);
-  if (DEF_BY_NORM_KEY.has(norm)) return true;
+  if (isUnlabeledMarker(inner) || DEF_BY_NORM_KEY.has(norm)) return true;
   const aliased = LEGACY_ALIASES[norm];
   return Boolean(aliased && DEF_BY_NORM_KEY.has(normalizeSectionKey(aliased)));
 }
@@ -157,6 +172,10 @@ export interface LyricSection {
 
 /** Linha só com marcador, opcionalmente com anotação: `[REFRAO]:2x` */
 const MARKER_LINE_RE = /^\s*\[([^\]]+)\](.*)$/;
+const UNLABELED_LINE_RE = /^\s*\[\s*(?:OFF)?\s*\]\s*$/i;
+
+/** Seções cujo texto após o marcador é o próprio número/nome: `[ESTROFE]:1` → "Estrofe 1". */
+const SIDE_TEXT_IS_LABEL = new Set<LyricSectionType>(['verse', 'part']);
 
 function matchMarkerLine(
   line: string,
@@ -173,31 +192,45 @@ function matchMarkerLine(
 
 /**
  * Divide a letra em seções por marcadores `[TAG]`, blocos sem tag e comentários `###`.
- * Anotações: `[REFRAO]:2x` → label "Refrão" + annotation "2x".
- * Estrofe com texto ao lado: `[ESTROFE] 1` → label "Estrofe 1" (sem numeração automática).
+ * - `[REFRAO]:2x` → label "Refrão" + annotation "2x".
+ * - Estrofe/Parte: `[ESTROFE]` → "Estrofe"; `[ESTROFE]:1` → "Estrofe 1";
+ *   `[ESTROFE]:AUTO` → próximo número; `[ESTROFE]:OFF` → sem rótulo.
+ * - `AUTO`/`OFF` valem também para as demais seções.
+ * - `[]` ou `[OFF]` → bloco sem rótulo.
  */
 export function parseLyricSections(lyrics: string): LyricSection[] {
   const lines = (lyrics || '').replace(/\r\n/g, '\n').split('\n');
   const sections: LyricSection[] = [];
 
   let current: LyricSection | null = null;
-  let verseCount = 0;
   const typeCounts = new Map<LyricSectionType, number>();
 
+  const nextNumber = (type: LyricSectionType): number => {
+    const n = (typeCounts.get(type) || 0) + 1;
+    typeCounts.set(type, n);
+    return n;
+  };
+
   const bumpLabel = (def: LyricSectionDef): string => {
-    const n = (typeCounts.get(def.type) || 0) + 1;
-    typeCounts.set(def.type, n);
-
+    const n = nextNumber(def.type);
     // Refrão nunca é numerado
-    if (def.type === 'chorus') return def.name;
-
-    if (def.type === 'verse') {
-      verseCount = Math.max(verseCount, n);
-      return `${def.name} ${n}`;
-    }
-
-    if (n === 1) return def.name;
+    if (def.type === 'chorus' || n === 1) return def.name;
     return `${def.name} ${n}`;
+  };
+
+  const resolveLabel = (def: LyricSectionDef, sideText: string): { label: string; annotation: string } => {
+    const keyword = sideText.toUpperCase();
+    if (keyword === 'OFF') return { label: '', annotation: '' };
+    if (keyword === 'AUTO') return { label: `${def.name} ${nextNumber(def.type)}`, annotation: '' };
+
+    if (!SIDE_TEXT_IS_LABEL.has(def.type)) return { label: bumpLabel(def), annotation: sideText };
+    if (!sideText) return { label: def.name, annotation: '' };
+
+    const explicit = Number.parseInt(sideText, 10);
+    if (!Number.isNaN(explicit)) {
+      typeCounts.set(def.type, Math.max(typeCounts.get(def.type) || 0, explicit));
+    }
+    return { label: `${def.name} ${sideText}`, annotation: '' };
   };
 
   const flush = () => {
@@ -213,12 +246,10 @@ export function parseLyricSections(lyrics: string): LyricSection[] {
   };
 
   const startUntaggedVerse = () => {
-    verseCount += 1;
-    typeCounts.set('verse', (typeCounts.get('verse') || 0) + 1);
     current = {
       type: 'verse',
       key: '',
-      label: `Estrofe ${verseCount}`,
+      label: `Estrofe ${nextNumber('verse')}`,
       annotation: '',
       lines: [],
       tagged: false,
@@ -242,30 +273,16 @@ export function parseLyricSections(lyrics: string): LyricSection[] {
       continue;
     }
 
+    if (UNLABELED_LINE_RE.test(trimmed)) {
+      flush();
+      current = { type: 'custom', key: '', label: '', annotation: '', lines: [], tagged: true };
+      continue;
+    }
+
     const marker = matchMarkerLine(trimmed);
     if (marker) {
       flush();
-      const sideText = marker.annotation;
-      let label: string;
-      let annotation = sideText;
-
-      // [ESTROFE] 1 → "Estrofe 1" (sem numerar de novo; o texto ao lado é o rótulo)
-      if (marker.def.type === 'verse' && sideText) {
-        label = `${marker.def.name} ${sideText}`;
-        annotation = '';
-        const explicitNum = Number.parseInt(sideText, 10);
-        if (!Number.isNaN(explicitNum)) {
-          verseCount = Math.max(verseCount, explicitNum);
-          typeCounts.set('verse', Math.max(typeCounts.get('verse') || 0, explicitNum));
-        } else {
-          const n = (typeCounts.get('verse') || 0) + 1;
-          typeCounts.set('verse', n);
-          verseCount = Math.max(verseCount, n);
-        }
-      } else {
-        label = bumpLabel(marker.def);
-      }
-
+      const { label, annotation } = resolveLabel(marker.def, marker.annotation);
       current = {
         type: marker.def.type,
         key: marker.def.key,

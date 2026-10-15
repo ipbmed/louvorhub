@@ -4,6 +4,7 @@ import {
   ExternalLink, 
   Youtube, 
   Disc, 
+  Apple,
   X, 
   Radio, 
   Music, 
@@ -20,6 +21,8 @@ import {
   getCombinedMediaLinks, 
   getYouTubeVideoId, 
   getSpotifyEmbedUrl, 
+  getAppleMusicEmbedUrl,
+  appleMusicEmbedHeight,
   isDirectAudioUrl 
 } from '../utils/mediaUtils';
 import { ActionButton } from './ui';
@@ -199,6 +202,16 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
           canEmbed: !!getSpotifyEmbedUrl(link.url),
           typeTitle: 'Spotify',
         };
+      case 'applemusic':
+        return {
+          icon: <Apple className="w-3.5 h-3.5 text-pink-400 light:text-pink-600 shrink-0" />,
+          label: link.title || 'Apple Music',
+          bgColor:
+            'bg-pink-950/40 hover:bg-pink-900/50 text-pink-300 border-pink-900/60 light:bg-pink-50 light:hover:bg-pink-100 light:text-pink-800 light:border-pink-300',
+          btnBg: 'bg-pink-600 text-white hover:bg-pink-500',
+          canEmbed: !!getAppleMusicEmbedUrl(link.url),
+          typeTitle: 'Apple Music',
+        };
       case 'other':
       default:
         return {
@@ -317,6 +330,21 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
                       height="152"
                       frameBorder="0"
                       allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                      loading="lazy"
+                      className="border-0"
+                    />
+                  </div>
+                )}
+
+                {activeLink.type === 'applemusic' && getAppleMusicEmbedUrl(activeLink.url) && (
+                  <div className="rounded-xl overflow-hidden bg-stone-900 border border-stone-800">
+                    <iframe
+                      src={getAppleMusicEmbedUrl(activeLink.url)!}
+                      title={title || 'Apple Music'}
+                      width="100%"
+                      height={appleMusicEmbedHeight(activeLink.url)}
+                      allow="autoplay *; encrypted-media *; fullscreen *; clipboard-write"
+                      sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
                       loading="lazy"
                       className="border-0"
                     />
@@ -519,6 +547,21 @@ export const SongMediaPlayer: React.FC<SongMediaPlayerProps> = ({
                 height="152"
                 frameBorder="0"
                 allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                loading="lazy"
+                className="border-0"
+              />
+            </div>
+          )}
+
+          {activeLink.type === 'applemusic' && getAppleMusicEmbedUrl(activeLink.url) && (
+            <div className="rounded-xl overflow-hidden bg-stone-900 light:bg-white border border-stone-800 light:border-stone-200 shadow-xl">
+              <iframe
+                src={getAppleMusicEmbedUrl(activeLink.url)!}
+                title={title || 'Apple Music'}
+                width="100%"
+                height={appleMusicEmbedHeight(activeLink.url)}
+                allow="autoplay *; encrypted-media *; fullscreen *; clipboard-write"
+                sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation"
                 loading="lazy"
                 className="border-0"
               />

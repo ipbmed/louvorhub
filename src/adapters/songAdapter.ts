@@ -7,6 +7,7 @@ function detectLinkType(url: string, label: string): MediaLinkType {
   if (u.includes('music.youtube') || l.includes('yt music') || l.includes('ytmusic')) return 'ytmusic';
   if (u.includes('youtube') || u.includes('youtu.be')) return 'youtube';
   if (u.includes('spotify')) return 'spotify';
+  if (u.includes('music.apple.com') || l.includes('apple music')) return 'applemusic';
   return 'other';
 }
 

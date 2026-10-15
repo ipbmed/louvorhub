@@ -15,6 +15,7 @@ import {
   Trash2,
   Youtube,
   Disc,
+  Apple,
   Radio,
   Volume2,
   ExternalLink,
@@ -28,7 +29,7 @@ import {
 } from '../utils/chordTransposer';
 import { sectionMarkerToken } from '../utils/lyricSections';
 import { ChordLyricLine } from './ChordLyricLine';
-import { LyricSectionHeading } from './LyricSectionHeading';
+import { LyricPartDivider, LyricSectionHeading } from './LyricSectionHeading';
 import { getCombinedMediaLinks, detectMediaType } from '../utils/mediaUtils';
 import { validateBpmField, validateTimeSignatureField } from '@/lib/songVersionFields';
 import { ActionButton, Field, Input, Select, Textarea } from './ui';
@@ -206,7 +207,8 @@ export const SongFormModal: React.FC<SongFormModalProps> = ({
     const defaultTitle = 
       type === 'youtube' ? 'YouTube' :
       type === 'ytmusic' ? 'YouTube Music' :
-      type === 'spotify' ? 'Spotify' : 'Outro Link';
+      type === 'spotify' ? 'Spotify' :
+      type === 'applemusic' ? 'Apple Music' : 'Outro Link';
     setMediaLinks(prev => [
       ...prev,
       { id: `ml-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`, type, title: defaultTitle, url: '' }
@@ -625,7 +627,7 @@ export const SongFormModal: React.FC<SongFormModalProps> = ({
                       Links de mídia
                     </span>
                     <span className="text-[10px] text-stone-400">
-                      YouTube, Spotify, MP3…
+                      YouTube, Spotify, Apple Music, MP3…
                     </span>
                   </div>
 
@@ -662,6 +664,16 @@ export const SongFormModal: React.FC<SongFormModalProps> = ({
 
                     <button
                       type="button"
+                      onClick={() => handleAddMediaLink('applemusic')}
+                      className="px-2 py-1 bg-pink-950/60 hover:bg-pink-900 text-pink-300 border border-pink-800/80 rounded-button text-[11px] font-semibold flex items-center gap-1 transition-all"
+                    >
+                      <Plus className="w-3 h-3 text-pink-400" />
+                      <Apple className="w-3 h-3 text-pink-400" />
+                      <span>Apple Music</span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => handleAddMediaLink('other')}
                       className="px-2 py-1 bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 rounded-button text-[11px] font-semibold flex items-center gap-1 transition-all"
                     >
@@ -693,6 +705,7 @@ export const SongFormModal: React.FC<SongFormModalProps> = ({
                             <option value="youtube">YouTube</option>
                             <option value="ytmusic">YT Music</option>
                             <option value="spotify">Spotify</option>
+                            <option value="applemusic">Apple Music</option>
                             <option value="other">Outro</option>
                           </Select>
                           <Input
@@ -727,6 +740,8 @@ export const SongFormModal: React.FC<SongFormModalProps> = ({
                                   ? 'https://music.youtube.com/...'
                                   : link.type === 'spotify'
                                   ? 'https://open.spotify.com/...'
+                                  : link.type === 'applemusic'
+                                  ? 'https://music.apple.com/...'
                                   : 'https://...'
                               }
                               value={link.url}
@@ -913,7 +928,15 @@ Então mi[C]nh'alma [F]canta a ti, Se[C]nhor:
               </div>
 
               <div className="space-y-3">
-                {parsedPreviewSections.map((sec, idx) => (
+                {parsedPreviewSections.map((sec, idx) =>
+                  sec.type === 'part' && !sec.lines.some((l) => l.trim()) ? (
+                    <LyricPartDivider
+                      key={idx}
+                      label={sec.label}
+                      annotation={sec.annotation}
+                      className="pt-2 text-emerald-400"
+                    />
+                  ) : (
                   <div
                     key={idx}
                     className={`p-4 rounded-xl border ${
@@ -947,7 +970,8 @@ Então mi[C]nh'alma [F]canta a ti, Se[C]nhor:
                       )}
                     </div>
                   </div>
-                ))}
+                  ),
+                )}
               </div>
             </div>
           )}
@@ -1058,6 +1082,21 @@ Então mi[C]nh'alma [F]canta a ti, Se[C]nhor:
                     • Anotação após o marcador (visível na letra e na cifra):{' '}
                     <span className="font-mono text-emerald-300">[REFRAO]:2x</span> →{' '}
                     <span className="text-stone-200">REFRÃO: 2x</span>
+                  </p>
+                  <p>
+                    • Estrofe e parte:{' '}
+                    <span className="font-mono text-emerald-300">[ESTROFE]</span> →{' '}
+                    <span className="text-stone-200">ESTROFE</span>;{' '}
+                    <span className="font-mono text-emerald-300">[ESTROFE]:1</span> →{' '}
+                    <span className="text-stone-200">ESTROFE 1</span>;{' '}
+                    <span className="font-mono text-emerald-300">[ESTROFE]:AUTO</span> → próximo número;{' '}
+                    <span className="font-mono text-emerald-300">[ESTROFE]:OFF</span> → sem título. O mesmo vale
+                    para <span className="font-mono text-emerald-300">[PARTE]</span>.
+                  </p>
+                  <p>
+                    • Bloco sem título: linha só com{' '}
+                    <span className="font-mono text-emerald-300">[]</span> ou{' '}
+                    <span className="font-mono text-emerald-300">[OFF]</span> antes do trecho.
                   </p>
                   <p>
                     • Cifras: <span className="font-mono text-emerald-300">[C]</span>,{' '}
