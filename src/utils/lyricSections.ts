@@ -213,8 +213,8 @@ export function parseLyricSections(lyrics: string): LyricSection[] {
 
   const bumpLabel = (def: LyricSectionDef): string => {
     const n = nextNumber(def.type);
-    // Refrão nunca é numerado
-    if (def.type === 'chorus' || n === 1) return def.name;
+    // Refrão e pré-refrão nunca são numerados
+    if (def.type === 'chorus' || def.type === 'pre_chorus' || n === 1) return def.name;
     return `${def.name} ${n}`;
   };
 
@@ -314,12 +314,6 @@ export function parseLyricSections(lyrics: string): LyricSection[] {
   return sections;
 }
 
-const LYRICS_VISIBLE = new Set(
-  LYRIC_SECTION_DEFS.filter((d) => d.showInLyrics).map((d) => d.type),
-);
-// Blocos sem tag (legado) também aparecem no modo letra
-LYRICS_VISIBLE.add('verse');
-
 /** Há texto cantado além de cifras `[C]` / marcadores. */
 function sectionHasSungText(section: LyricSection): boolean {
   return section.lines.some((line) => line.replace(/\[[^\]]*\]/g, '').trim().length > 0);
@@ -327,9 +321,8 @@ function sectionHasSungText(section: LyricSection): boolean {
 
 /**
  * Modo cifra: todas as seções (inclui intro, solo, comentários…).
- * Modo letra: trechos cantados (estrofe, pré/pós-refrão, refrão, ponte, outro).
- * Também inclui seções “instrumentais” (intro/solo/…) que na prática têm letra —
- * comum em cifras importadas onde a letra fica sob [INTRO].
+ * Modo letra: só trechos com texto cantado (acordes `[C]` sozinhos não contam).
+ * Divisórias `[PARTE]` permanecem mesmo sem linhas.
  */
 export function filterSectionsForView(
   sections: LyricSection[],
@@ -338,7 +331,7 @@ export function filterSectionsForView(
   if (mode === 'chords') return sections;
   return sections.filter((s) => {
     if (s.type === 'comment') return false;
-    if (LYRICS_VISIBLE.has(s.type)) return true;
+    if (s.type === 'part') return true;
     return sectionHasSungText(s);
   });
 }

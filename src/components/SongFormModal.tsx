@@ -1071,7 +1071,7 @@ Então mi[C]nh'alma [F]canta a ti, Se[C]nhor:
                 <div className="rounded-xl border border-stone-800 bg-stone-950/60 px-3.5 py-3 text-xs text-stone-400 leading-relaxed space-y-1.5">
                   <p className="font-semibold text-stone-300">Dicas</p>
                   <p>
-                    • Cada marcador fica em uma linha, antes do trecho. O refrão não é numerado.
+                    • Cada marcador fica em uma linha, antes do trecho. Refrão e pré-refrão não são numerados.
                   </p>
                   <p>
                     • Quebra de página no telão: linha só com{' '}

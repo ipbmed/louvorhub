@@ -44,7 +44,9 @@ function splitChordLyric(line: string): { chordLine: string; lyricLine: string }
 
   let chordLine = '';
   for (const { index, chord } of chordMarks) {
-    if (chordLine.length > index) {
+    const overlaps = chordLine.length > index;
+    const abuts = chordLine.length === index && chordLine.length > 0;
+    if (overlaps || abuts) {
       if (!chordLine.endsWith(' ')) chordLine += ' ';
       chordLine += chord;
     } else {
